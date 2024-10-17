@@ -1,22 +1,28 @@
 import UIKit
 
+// Make categoryEmojis accessible from other classes
+let categoryEmojis: [Int: String] = [
+    9: "🧐", 10: "📚", 11: "🎭", 12: "🎵", 13: "🎭", 14: "📺",
+    15: "🎮", 16: "🎲", 17: "🌿", 18: "💻", 19: "➕", 20: "🧚",
+    21: "⚽", 22: "🌍", 23: "📜", 24: "🗳️", 25: "🌟", 26: "🌟",
+    27: "🐾", 28: "🚗", 29: "📚", 30: "📱", 31: "🟦", 32: "🐭"
+]
+
+// TriviaViewController.swift
 class TriviaViewController: UIViewController, CAAnimationDelegate {
-    
+
     // Trivia question data
     var currentQuestion: TriviaQuestion?
     var currentQuestionIndex = 0
     var score = 0
-    
+
     // Category data
     var allCategories: [TriviaCategory] = []
     var selectedCategories: [TriviaCategory] = []
-    let categoryEmojis: [Int: String] = [
-        9: "🧐", 10: "📚", 11: "🎭", 12: "🎵", 13: "🎭", 14: "📺",
-        15: "🎮", 16: "🎲", 17: "🌿", 18: "💻", 19: "➕", 20: "🧚",
-        21: "⚽", 22: "🌍", 23: "📜", 24: "🗳️", 25: "🌟", 26: "🌟",
-        27: "🐾", 28: "🚗", 29: "📚", 30: "📱", 31: "🟦", 32: "🐭"
-    ]
-    
+
+    // Accept the number of players and selected categories
+    var numberOfPlayers: Int = 1 // Default to 1
+
     // UI Elements
     let questionLabel = UILabel()
     var optionButtons: [UIButton] = []
@@ -26,17 +32,17 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var arrowView: UIImageView!
     let categoryNameLabel = UILabel()
     var displayLink: CADisplayLink?
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         fetchCategories()
     }
-    
+
     // Setup the UI
     func setupUI() {
         view.backgroundColor = UIColor.systemBackground
-        
+
         // Question label
         questionLabel.translatesAutoresizingMaskIntoConstraints = false
         questionLabel.textAlignment = .center
@@ -49,7 +55,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             questionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             questionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
-        
+
         // Score label
         scoreLabel.translatesAutoresizingMaskIntoConstraints = false
         scoreLabel.textAlignment = .center
@@ -61,51 +67,60 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
-    
-    // Fetch categories from the API
+
+    // Fetch categories
     func fetchCategories() {
-        let urlString = "https://opentdb.com/api_category.php"
-        guard let url = URL(string: urlString) else {
-            print("Invalid URL for categories")
-            return
-        }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Failed to fetch categories: \(error)")
+        if !selectedCategories.isEmpty {
+            // Use the selected categories
+            self.allCategories = selectedCategories
+            DispatchQueue.main.async {
+                self.setupWheel()
+            }
+        } else {
+            // Fetch categories from the API
+            let urlString = "https://opentdb.com/api_category.php"
+            guard let url = URL(string: urlString) else {
+                print("Invalid URL for categories")
                 return
             }
-            
-            guard let data = data else {
-                print("No data returned for categories")
-                return
-            }
-            
-            do {
-                let decoder = JSONDecoder()
-                let categoryResponse = try decoder.decode(CategoryListResponse.self, from: data)
-                
-                // Map the categories to emojis
-                self.allCategories = categoryResponse.triviaCategories.compactMap { apiCategory in
-                    if let emoji = self.categoryEmojis[apiCategory.id] {
-                        return TriviaCategory(id: apiCategory.id, name: apiCategory.name, emoji: emoji)
-                    } else {
-                        return nil // Exclude categories without an emoji
+
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("Failed to fetch categories: \(error)")
+                    return
+                }
+
+                guard let data = data else {
+                    print("No data returned for categories")
+                    return
+                }
+
+                do {
+                    let decoder = JSONDecoder()
+                    let categoryResponse = try decoder.decode(CategoryListResponse.self, from: data)
+
+                    // Map the categories to emojis
+                    self.allCategories = categoryResponse.triviaCategories.compactMap { apiCategory in
+                        if let emoji = categoryEmojis[apiCategory.id] {
+                            return TriviaCategory(id: apiCategory.id, name: apiCategory.name, emoji: emoji)
+                        } else {
+                            return nil // Exclude categories without an emoji
+                        }
                     }
+
+                    // Randomly select 5 categories
+                    self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
+
+                    DispatchQueue.main.async {
+                        self.setupWheel()
+                    }
+                } catch {
+                    print("Failed to decode categories: \(error)")
                 }
-                
-                // Randomly select 5 categories
-                self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
-                
-                DispatchQueue.main.async {
-                    self.setupWheel()
-                }
-            } catch {
-                print("Failed to decode categories: \(error)")
-            }
-        }.resume()
+            }.resume()
+        }
     }
-    
+
     // Setup the wheel UI
     func setupWheel() {
         // Remove existing wheel if any
@@ -113,32 +128,32 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton?.removeFromSuperview()
         arrowView?.removeFromSuperview()
         categoryNameLabel.removeFromSuperview()
-        
+
         // Create a wheel view
         wheelView = WheelView(categories: selectedCategories)
         wheelView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(wheelView)
-        
+
         NSLayoutConstraint.activate([
             wheelView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             wheelView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             wheelView.widthAnchor.constraint(equalToConstant: 300),
             wheelView.heightAnchor.constraint(equalTo: wheelView.widthAnchor)
         ])
-        
+
         // Add arrow indicator
         arrowView = UIImageView(image: UIImage(systemName: "arrowtriangle.down.fill"))
         arrowView.tintColor = .red
         arrowView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(arrowView)
-        
+
         NSLayoutConstraint.activate([
             arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
             arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
             arrowView.widthAnchor.constraint(equalToConstant: 30),
             arrowView.heightAnchor.constraint(equalToConstant: 30)
         ])
-        
+
         // Add category name label with wrapping
         categoryNameLabel.translatesAutoresizingMaskIntoConstraints = false
         categoryNameLabel.textAlignment = .center
@@ -149,10 +164,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         view.addSubview(categoryNameLabel)
         NSLayoutConstraint.activate([
             categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView.topAnchor, constant: -10),
-            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping by setting leading and trailing constraints
+            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping
             categoryNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
-        
+
         // Add spin button
         spinButton = UIButton(type: .system)
         spinButton.setTitle("Spin", for: .normal)
@@ -160,18 +175,18 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton.translatesAutoresizingMaskIntoConstraints = false
         spinButton.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
         view.addSubview(spinButton)
-        
+
         NSLayoutConstraint.activate([
             spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
             spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
-    
+
     // Spin the wheel
     @objc func spinWheel() {
         // Disable the spin button during animation
         spinButton.isEnabled = false
-        
+
         let randomRotation = CGFloat(Double.random(in: 2 * Double.pi * 3...2 * Double.pi * 5)) // Rotate 3 to 5 times
         let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
         rotationAnimation.fromValue = 0
@@ -182,17 +197,17 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         rotationAnimation.isRemovedOnCompletion = false
         rotationAnimation.delegate = self
         wheelView.layer.add(rotationAnimation, forKey: "rotationAnimation")
-        
+
         // Start display link to update category name
         displayLink = CADisplayLink(target: self, selector: #selector(updateCategoryName))
         displayLink?.add(to: .main, forMode: .default)
     }
-    
+
     // Update the category name label during spinning
     @objc func updateCategoryName() {
         let currentRotation = (wheelView.layer.presentation()?.value(forKeyPath: "transform.rotation.z") as? CGFloat) ?? 0
         let normalizedRotation = currentRotation.truncatingRemainder(dividingBy: 2 * CGFloat.pi)
-        
+
         let anglePerSegment = (2 * CGFloat.pi) / CGFloat(selectedCategories.count)
         let adjustedRotation = (normalizedRotation + (CGFloat.pi / 2)).truncatingRemainder(dividingBy: 2 * CGFloat.pi)
         var index = Int(adjustedRotation / anglePerSegment)
@@ -200,22 +215,22 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             index = selectedCategories.count + index
         }
         let selectedIndex = (selectedCategories.count - index) % selectedCategories.count
-        
+
         let currentCategory = selectedCategories[selectedIndex]
         categoryNameLabel.text = currentCategory.name
     }
-    
+
     // Animation delegate method
     func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         // Stop updating the category name
         displayLink?.invalidate()
         displayLink = nil
-        
+
         // Get the angle where the wheel stopped
         let presentationLayer = wheelView.layer.presentation()
         let currentRotation = presentationLayer?.value(forKeyPath: "transform.rotation.z") as? CGFloat ?? 0
         let normalizedRotation = currentRotation.truncatingRemainder(dividingBy: 2 * CGFloat.pi)
-        
+
         // Determine the selected category based on rotation
         let anglePerSegment = (2 * CGFloat.pi) / CGFloat(selectedCategories.count)
         let adjustedRotation = (normalizedRotation + (CGFloat.pi / 2)).truncatingRemainder(dividingBy: 2 * CGFloat.pi)
@@ -224,13 +239,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             index = selectedCategories.count + index
         }
         let selectedIndex = (selectedCategories.count - index) % selectedCategories.count
-        
+
         let selectedCategory = selectedCategories[selectedIndex]
         categoryNameLabel.text = selectedCategory.name
         // Fetch question from the selected category
         self.loadQuestionFromCategory(category: selectedCategory)
     }
-    
+
     // Load question from the selected category
     func loadQuestionFromCategory(category: TriviaCategory) {
         let urlString = "https://opentdb.com/api.php?amount=1&category=\(category.id)&type=multiple"
@@ -238,18 +253,18 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             print("Invalid URL for question")
             return
         }
-        
+
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("Failed to fetch question: \(error)")
                 return
             }
-            
+
             guard let data = data else {
                 print("No data returned for question")
                 return
             }
-            
+
             do {
                 let decoder = JSONDecoder()
                 let apiResponse = try decoder.decode(OpenTriviaResponse.self, from: data)
@@ -262,7 +277,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 allAnswers = allAnswers.map { $0.htmlDecoded() }
                 let shuffledOptions = allAnswers.shuffled()
                 let correctAnswerIndex = shuffledOptions.firstIndex(of: result.correctAnswer.htmlDecoded()) ?? 0
-                
+
                 let question = TriviaQuestion(
                     question: result.question.htmlDecoded(),
                     options: shuffledOptions,
@@ -276,7 +291,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
         }.resume()
     }
-    
+
     // Show the question UI
     func showQuestion(question: TriviaQuestion) {
         // Hide the wheel and spin button
@@ -284,17 +299,17 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton.isHidden = true
         arrowView.isHidden = true
         categoryNameLabel.isHidden = true
-        
+
         // Set up question UI
         currentQuestion = question
         currentQuestionIndex += 1 // Keep track of the number of times
         questionLabel.text = question.question
         questionLabel.isHidden = false
-        
+
         // Remove existing buttons
         optionButtons.forEach { $0.removeFromSuperview() }
         optionButtons.removeAll()
-        
+
         for (index, option) in question.options.enumerated() {
             let button = UIButton(type: .system)
             button.translatesAutoresizingMaskIntoConstraints = false
@@ -306,7 +321,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             button.addTarget(self, action: #selector(optionSelected(_:)), for: .touchUpInside)
             view.addSubview(button)
             optionButtons.append(button)
-            
+
             NSLayoutConstraint.activate([
                 button.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: CGFloat(40 + index * 60)),
                 button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -314,31 +329,31 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 button.heightAnchor.constraint(equalToConstant: 50)
             ])
         }
-        
+
         // Update score
         scoreLabel.text = "Score: \(score)"
         scoreLabel.isHidden = false
     }
-    
+
     // Handle option selection with animation
     @objc func optionSelected(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else { return }
-        
+
         let selectedIndex = sender.tag
         let isCorrect = selectedIndex == currentQuestion.correctAnswer
-        
+
         if isCorrect {
             score += 1 // Correct answer, increment score
         }
-        
+
         // Update score label
         scoreLabel.text = "Score: \(score)"
-        
+
         // Animate the selected button
         UIView.animate(withDuration: 0.3) {
             sender.backgroundColor = isCorrect ? UIColor.systemGreen : UIColor.systemRed
         }
-        
+
         // If incorrect, highlight the correct answer
         if !isCorrect {
             let correctButton = optionButtons[currentQuestion.correctAnswer]
@@ -346,10 +361,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 correctButton.backgroundColor = UIColor.systemGreen
             }
         }
-        
+
         // Disable all buttons to prevent multiple taps
         optionButtons.forEach { $0.isEnabled = false }
-        
+
         // After a delay, go back to wheel or show results
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             // Reset button colors
@@ -362,7 +377,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             self.questionLabel.isHidden = true
             self.scoreLabel.isHidden = true
             self.currentQuestion = nil
-            
+
             if self.currentQuestionIndex < 3 {
                 // Show the wheel again
                 self.wheelView.isHidden = false
@@ -376,7 +391,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
         }
     }
-    
+
     // Show retry button after 3 questions
     func showRetryButton() {
         let retryButton = UIButton(type: .system)
@@ -385,18 +400,18 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         retryButton.translatesAutoresizingMaskIntoConstraints = false
         retryButton.addTarget(self, action: #selector(resetGame), for: .touchUpInside)
         view.addSubview(retryButton)
-        
+
         NSLayoutConstraint.activate([
             retryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             retryButton.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
-    
+
     // Reset the game
     @objc func resetGame() {
         // Remove retry button
         view.subviews.filter { $0 is UIButton && ($0 as! UIButton).title(for: .normal) == "Retry" }.forEach { $0.removeFromSuperview() }
-        
+
         score = 0
         currentQuestionIndex = 0
         scoreLabel.text = "Score: \(score)"
@@ -404,45 +419,48 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         questionLabel.isHidden = true
         optionButtons.forEach { $0.removeFromSuperview() }
         optionButtons.removeAll()
-        
-        // Randomly select 5 categories
-        self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
-        self.setupWheel()
+
+        // Show the wheel again
+        self.wheelView.isHidden = false
+        self.spinButton.isHidden = false
+        self.arrowView.isHidden = false
+        self.categoryNameLabel.isHidden = false
+        self.spinButton.isEnabled = true
     }
 }
 
 // WheelView class to draw the wheel
 class WheelView: UIView {
     var categories: [TriviaCategory]
-    
+
     init(categories: [TriviaCategory]) {
         self.categories = categories
         super.init(frame: .zero)
         backgroundColor = .clear
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     override func draw(_ rect: CGRect) {
         // Draw the wheel
         guard let context = UIGraphicsGetCurrentContext() else { return }
-        
+
         let centerPoint = CGPoint(x: rect.midX, y: rect.midY)
         let radius = rect.width / 2
-        
+
         let anglePerSegment = (2 * CGFloat.pi) / CGFloat(categories.count)
-        
+
         for (index, category) in categories.enumerated() {
             context.move(to: centerPoint)
             let startAngle = CGFloat(index) * anglePerSegment - CGFloat.pi / 2
             let endAngle = startAngle + anglePerSegment
-            
+
             context.addArc(center: centerPoint, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
-            
+
             context.setFillColor(UIColor(hue: CGFloat(index) / CGFloat(categories.count), saturation: 0.5, brightness: 1.0, alpha: 1.0).cgColor)
             context.fillPath()
-            
+
             // Draw the emoji
             let emojiString = NSAttributedString(string: category.emoji, attributes: [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 40)])
             let textAngle = startAngle + anglePerSegment / 2
@@ -484,7 +502,7 @@ struct OpenTriviaQuestion: Codable {
     let question: String
     let correctAnswer: String
     let incorrectAnswers: [String]
-    
+
     enum CodingKeys: String, CodingKey {
         case question
         case correctAnswer = "correct_answer"
@@ -502,7 +520,7 @@ struct TriviaCategory: Codable {
 // CategoryListResponse model
 struct CategoryListResponse: Codable {
     let triviaCategories: [TriviaCategoryAPI]
-    
+
     enum CodingKeys: String, CodingKey {
         case triviaCategories = "trivia_categories"
     }

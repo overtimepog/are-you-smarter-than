@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		36D3766F2CC04AF4004B6C5B /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 36D3766E2CC04AF4004B6C5B /* SocketIO */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		36D376372CBF55E7004B6C5B /* are you smarter than.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "are you smarter than.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36D3766F2CC04AF4004B6C5B /* SocketIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "are you smarter than";
 			packageProductDependencies = (
+				36D3766E2CC04AF4004B6C5B /* SocketIO */,
 			);
 			productName = "are you smarter than";
 			productReference = 36D376372CBF55E7004B6C5B /* are you smarter than.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 36D3762E2CBF55E7004B6C5B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				36D3766D2CC04AF4004B6C5B /* XCRemoteSwiftPackageReference "socket.io-client-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 36D376382CBF55E7004B6C5B /* Products */;
 			projectDirPath = "";
@@ -320,6 +329,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		36D3766D2CC04AF4004B6C5B /* XCRemoteSwiftPackageReference "socket.io-client-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		36D3766E2CC04AF4004B6C5B /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 36D3766D2CC04AF4004B6C5B /* XCRemoteSwiftPackageReference "socket.io-client-swift" */;
+			productName = SocketIO;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 36D3762F2CBF55E7004B6C5B /* Project object */;
 }

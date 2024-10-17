@@ -1,180 +1,128 @@
-# main.py
-
-from flask import Flask, jsonify, request, abort, g
-from db_manager import DBManager
-from functools import wraps
+from flask import Flask, request, jsonify
+from flask_socketio import SocketIO, join_room, leave_room, emit
+import random
+import string
 import uuid
+import threading
 
-# Initialize the Flask app and the database manager
 app = Flask(__name__)
-db = DBManager("trivia_game.db")
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-def device_token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        device_token = None
-        if 'Device-Token' in request.headers:
-            device_token = request.headers['Device-Token']
+rooms = {}  # Store room data including question goals and players
+rooms_lock = threading.Lock()  # Lock to prevent race conditions when accessing the rooms dictionary
 
-        if not device_token:
-            return jsonify({'message': 'Device token is missing!'}), 401
+def generate_room_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-        player = db.get_player_by_device_token(device_token)
-        if not player:
-            return jsonify({'message': 'Invalid device token!'}), 401
+@app.route('/create_room', methods=['POST'])
+def create_room():
+    data = request.json
+    room_code = generate_room_code()
+    question_goal = data.get('question_goal', 10)  # Default to 10 questions
+    max_players = data.get('max_players', 8)       # Default to 8 players
 
-        g.current_user = player
-        return f(*args, **kwargs)
-    return decorated
+    # Check for room code collisions and regenerate if needed
+    with rooms_lock:
+        while room_code in rooms:
+            room_code = generate_room_code()
 
-# User registration (no password required)
-@app.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    username = data.get("username")
-    if not username:
-        abort(400, "Username is required")
-    if db.get_player(username):
-        abort(400, "Username already exists")
-    device_token = str(uuid.uuid4())
-    success = db.add_player(username, device_token)
-    if not success:
-        abort(400, "Username or device token already exists")
-    # Send the device token to the client
-    return jsonify({"message": f"Player '{username}' registered successfully.", "device_token": device_token}), 201
+        rooms[room_code] = {
+            'players': {},
+            'game_started': False,
+            'question_goal': question_goal,
+            'max_players': max_players
+        }
+    return jsonify({'room_code': room_code})
 
-# Player routes
-@app.route("/players/me", methods=["GET"])
-@device_token_required
-def get_current_player():
-    player = g.current_user
-    # Exclude device_token from the response for security
-    player_data = dict(player)
-    player_data.pop('device_token', None)
-    return jsonify(player_data)
+@app.route('/join_room', methods=['POST'])
+def join_room_route():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
 
-# Game routes
-@app.route("/games/", methods=["POST"])
-@device_token_required
-def create_game():
-    data = request.get_json()
-    player2_id = data.get("player2_id")
-    player1_id = g.current_user['id']
-    if not player2_id:
-        abort(400, "player2_id is required")
-    # Ensure player2 exists
-    player2 = db.get_player_by_id(player2_id)
-    if not player2:
-        abort(400, "Player 2 not found")
-    game_id = db.create_game(player1_id, player2_id)
-    return jsonify({"game_id": game_id}), 201
+    with rooms_lock:
+        if room_code in rooms:
+            if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
+                return jsonify({'success': False, 'message': 'Room is full'}), 403
 
-@app.route("/games/<int:game_id>", methods=["GET"])
-@device_token_required
-def get_game(game_id):
-    game = db.get_game(game_id)
-    if not game:
-        abort(404, "Game not found")
-    # Ensure that the current user is a participant in the game
-    if g.current_user['id'] not in [game['player1_id'], game['player2_id']]:
-        abort(403, "You are not authorized to access this game")
-    return jsonify(dict(game))
+            player_id = str(uuid.uuid4())  # Generate a unique player identifier
+            rooms[room_code]['players'][player_name] = {
+                'player_id': player_id,
+                'score': 0,
+                'sid': None  # Will be set when the player connects via SocketIO
+            }
+            return jsonify({'success': True})
+    return jsonify({'success': False, 'message': 'Room not found'}), 404
 
-# Game progress routes
-@app.route("/games/progress/", methods=["POST"])
-@device_token_required
-def add_game_progress():
-    data = request.get_json()
-    game_id = data.get("game_id")
-    question_id = data.get("question_id")
-    selected_answer = data.get("selected_answer")
-    player_id = g.current_user['id']
-    if not all([game_id, question_id, selected_answer]):
-        abort(400, "All fields are required")
-    # Ensure that the user is a participant in the game
-    game = db.get_game(game_id)
-    if not game:
-        abort(404, "Game not found")
-    if player_id not in [game['player1_id'], game['player2_id']]:
-        abort(403, "You are not authorized to update this game")
+@app.route('/get_players', methods=['POST'])
+def get_players():
+    data = request.json
+    room_code = data['room_code']
 
-    # Get the correct answer
-    question = db.get_question_by_id(question_id)
-    if not question:
-        abort(404, "Question not found")
-    correct_answer = question['correct_answer']
-    is_correct = (selected_answer == correct_answer)
+    with rooms_lock:
+        if room_code in rooms:
+            players = list(rooms[room_code]['players'].keys())
+            return jsonify({'players': players})
+    return jsonify({'success': False, 'message': 'Room not found'}), 404
 
-    # Add game progress
-    db.add_game_progress(game_id, player_id, question_id, selected_answer, is_correct)
-    return jsonify({"message": "Game progress added successfully.", "is_correct": is_correct}), 201
+@socketio.on('join_game')
+def handle_join_game(data):
+    room_code = data['room_code']
+    player_name = data['player_name']
+    sid = request.sid
 
-@app.route("/games/<int:game_id>/progress", methods=["GET"])
-@device_token_required
-def get_game_progress(game_id):
-    # Ensure that the current user is a participant in the game
-    game = db.get_game(game_id)
-    if not game:
-        abort(404, "Game not found")
-    if g.current_user['id'] not in [game['player1_id'], game['player2_id']]:
-        abort(403, "You are not authorized to access this game progress")
-    progress = db.get_game_progress(game_id)
-    return jsonify([dict(row) for row in progress])
+    with rooms_lock:
+        if room_code in rooms:
+            join_room(room_code)
+            if player_name in rooms[room_code]['players']:
+                rooms[room_code]['players'][player_name]['sid'] = sid
+                emit('player_joined', player_name, room=room_code)
+            else:
+                # Player did not join via HTTP endpoint
+                leave_room(room_code)
+                return
+        else:
+            # Room does not exist
+            leave_room(room_code)
+            return
 
-# Category routes
-@app.route("/categories/", methods=["POST"])
-@device_token_required
-def add_category():
-    # Optional: Implement admin check if needed
-    data = request.get_json()
-    category_id = data.get("id")
-    name = data.get("name")
-    emoji = data.get("emoji")
-    if not all([category_id, name, emoji]):
-        abort(400, "All fields are required")
-    db.add_category(category_id, name, emoji)
-    return jsonify({"message": f"Category '{name}' added successfully."}), 201
+@socketio.on('start_game')
+def handle_start_game(data):
+    room_code = data['room_code']
 
-@app.route("/categories/", methods=["GET"])
-def get_all_categories():
-    categories = db.get_all_categories()
-    return jsonify([dict(row) for row in categories])
+    with rooms_lock:
+        if room_code in rooms:
+            rooms[room_code]['game_started'] = True
+            emit('game_started', room=room_code)
+        else:
+            return
 
-# Questions routes
-@app.route("/questions/", methods=["POST"])
-@device_token_required
-def add_question():
-    # Optional: Implement admin check if needed
-    data = request.get_json()
-    question_text = data.get("question")
-    correct_answer = data.get("correct_answer")
-    if not all([question_text, correct_answer]):
-        abort(400, "Both question and correct_answer are required")
-    question_id = db.add_question(question_text, correct_answer)
-    if question_id == -1:
-        abort(500, "Failed to add question")
-    return jsonify({"message": f"Question added successfully.", "question_id": question_id}), 201
+@socketio.on('correct_answer')
+def handle_correct_answer(data):
+    room_code = data['room_code']
+    player_name = data['player_name']
 
-@app.route("/questions/<int:question_id>", methods=["GET"])
-@device_token_required
-def get_question(question_id):
-    question = db.get_question_by_id(question_id)
-    if not question:
-        abort(404, "Question not found")
-    # Do not send the correct_answer to the client
-    question_data = {
-        "id": question["id"],
-        "question": question["question"]
-    }
-    return jsonify(question_data)
+    with rooms_lock:
+        if room_code in rooms and player_name in rooms[room_code]['players']:
+            rooms[room_code]['players'][player_name]['score'] += 1
+            current_score = rooms[room_code]['players'][player_name]['score']
+            question_goal = rooms[room_code]['question_goal']
 
-# Cleanup on shutdown
-@app.teardown_appcontext
-def shutdown(exception=None):
-    print("Shutting down the server...")
-    db.close()
+            if current_score >= question_goal:
+                emit('game_won', player_name, room=room_code)
+            else:
+                emit('player_correct', {'player': player_name, 'score': current_score}, room=room_code)
 
-# Run the Flask app
-if __name__ == "__main__":
-    print("Starting Flask server...")
-    app.run(host="0.0.0.0", port=3000, debug=True)
+@socketio.on('disconnect')
+def handle_disconnect():
+    sid = request.sid
+    with rooms_lock:
+        for room_code, room in rooms.items():
+            for player_name in list(room['players']):
+                if sid == room['players'][player_name]['sid']:
+                    del room['players'][player_name]
+                    emit('player_left', player_name, room=room_code)
+                    break
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=3000)
