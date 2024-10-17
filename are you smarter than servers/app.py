@@ -30,7 +30,8 @@ def create_room():
             'players': {},
             'game_started': False,
             'question_goal': question_goal,
-            'max_players': max_players
+            'max_players': max_players,
+            'winners': []
         }
     return jsonify({'room_code': room_code})
 
@@ -42,6 +43,9 @@ def join_room_route():
 
     with rooms_lock:
         if room_code in rooms:
+            if player_name in rooms[room_code]['players']:
+                return jsonify({'success': False, 'message': 'Username already taken'}), 403
+
             if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
                 return jsonify({'success': False, 'message': 'Room is full'}), 403
 
@@ -51,7 +55,7 @@ def join_room_route():
                 'score': 0,
                 'sid': None  # Will be set when the player connects via SocketIO
             }
-            return jsonify({'success': True})
+            return jsonify({'success': True, 'player_id': player_id})
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @app.route('/get_players', methods=['POST'])
@@ -62,23 +66,24 @@ def get_players():
     with rooms_lock:
         if room_code in rooms:
             players = list(rooms[room_code]['players'].keys())
-            return jsonify({'players': players})
+            return jsonify({'players': players, 'winners': rooms[room_code]['winners']})
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @socketio.on('join_game')
 def handle_join_game(data):
     room_code = data['room_code']
     player_name = data['player_name']
+    player_id = data['player_id']
     sid = request.sid
 
     with rooms_lock:
         if room_code in rooms:
-            join_room(room_code)
-            if player_name in rooms[room_code]['players']:
+            if player_name in rooms[room_code]['players'] and rooms[room_code]['players'][player_name]['player_id'] == player_id:
+                join_room(room_code)
                 rooms[room_code]['players'][player_name]['sid'] = sid
                 emit('player_joined', player_name, room=room_code)
             else:
-                # Player did not join via HTTP endpoint
+                # Player did not join via HTTP endpoint or player_id mismatch
                 leave_room(room_code)
                 return
         else:
@@ -101,17 +106,22 @@ def handle_start_game(data):
 def handle_correct_answer(data):
     room_code = data['room_code']
     player_name = data['player_name']
+    player_id = data['player_id']
 
     with rooms_lock:
         if room_code in rooms and player_name in rooms[room_code]['players']:
-            rooms[room_code]['players'][player_name]['score'] += 1
-            current_score = rooms[room_code]['players'][player_name]['score']
-            question_goal = rooms[room_code]['question_goal']
+            # Verify the player_id matches the stored player_id and session ID matches
+            player = rooms[room_code]['players'][player_name]
+            if player['player_id'] == player_id and player['sid'] == request.sid:
+                player['score'] += 1
+                current_score = player['score']
+                question_goal = rooms[room_code]['question_goal']
 
-            if current_score >= question_goal:
-                emit('game_won', player_name, room=room_code)
-            else:
-                emit('player_correct', {'player': player_name, 'score': current_score}, room=room_code)
+                if current_score >= question_goal:
+                    rooms[room_code]['winners'].append(player_name)
+                    emit('game_won', player_name, room=room_code)
+                else:
+                    emit('player_correct', {'player': player_name, 'score': current_score}, room=room_code)
 
 @socketio.on('disconnect')
 def handle_disconnect():
