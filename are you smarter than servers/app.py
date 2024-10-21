@@ -60,8 +60,9 @@ def leave_room_route():
     with rooms_lock:
         if room_code in rooms and player_name in rooms[room_code]['players']:
             del rooms[room_code]['players'][player_name]
-            if not rooms[room_code]['players']:
-                rooms[room_code]['last_active'] = time.time()
+            room['last_active'] = time.time()  # Update last active time when a player leaves
+            if not room['players']:
+                del rooms[room_code]  # Delete room if no players are left
             return jsonify({'success': True, 'message': 'Player left the room'}), 200
     return jsonify({'success': False, 'message': 'Room or player not found'}), 404
 
@@ -116,6 +117,7 @@ def join_room_route():
                 'score': 0,
                 'sid': None  # Will be set when the player connects via SocketIO
             }
+            room['last_active'] = time.time()  # Update last active time when a player joins
             return jsonify({'success': True, 'player_id': player_id}), 200
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
