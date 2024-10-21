@@ -85,11 +85,12 @@ def create_room():
             'winners': [],
             'last_active': time.time()
         }
-    rooms[room_code]['players'][host_name] = {
-        'player_id': str(uuid.uuid4()),
-        'score': 0,
-        'sid': None
-    }
+    if host_name not in rooms[room_code]['players']:
+        rooms[room_code]['players'][host_name] = {
+            'player_id': str(uuid.uuid4()),
+            'score': 0,
+            'sid': None
+        }
     print(f"Room created with code: {room_code}, host: {host_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
     return jsonify({'room_code': room_code, 'success': True})
 
