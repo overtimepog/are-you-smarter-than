@@ -19,6 +19,8 @@ class LobbyViewController: UIViewController {
     let roomCodeLabel = UILabel()
     let playersTableView = UITableView()
     let refreshButton = UIButton(type: .system)
+    let startGameButton = UIButton(type: .system)
+    let leaveLobbyButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,10 +47,21 @@ class LobbyViewController: UIViewController {
         refreshButton.addTarget(self, action: #selector(refreshRoomData), for: .touchUpInside)
         refreshButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Add subviews
+        // Start Game Button
+        startGameButton.setTitle("Start Game", for: .normal)
+        startGameButton.addTarget(self, action: #selector(startGame), for: .touchUpInside)
+        startGameButton.translatesAutoresizingMaskIntoConstraints = false
+        startGameButton.isHidden = !isHost
+
+        // Leave Lobby Button
+        leaveLobbyButton.setTitle("Leave Lobby", for: .normal)
+        leaveLobbyButton.addTarget(self, action: #selector(leaveLobby), for: .touchUpInside)
+        leaveLobbyButton.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(roomCodeLabel)
         view.addSubview(playersTableView)
         view.addSubview(refreshButton)
+        view.addSubview(startGameButton)
+        view.addSubview(leaveLobbyButton)
 
         // Layout constraints
         NSLayoutConstraint.activate([
@@ -61,7 +74,13 @@ class LobbyViewController: UIViewController {
             playersTableView.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
 
             refreshButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            startGameButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
+            startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            leaveLobbyButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            leaveLobbyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
 
@@ -109,6 +128,15 @@ class LobbyViewController: UIViewController {
 
     @objc func refreshRoomData() {
         fetchRoomData()  // Refresh the room data when the button is pressed
+    }
+    @objc func startGame() {
+        // Logic to start the game
+        print("Game started by host")
+    }
+
+    @objc func leaveLobby() {
+        // Logic to leave the lobby
+        dismiss(animated: true, completion: nil)
     }
 }
 
