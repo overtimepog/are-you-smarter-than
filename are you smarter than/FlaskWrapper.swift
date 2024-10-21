@@ -32,8 +32,11 @@ class FlaskWrapper {
                 return
             }
 
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            guard let data = data else {
+                completion(.failure(NSError(domain: "No data received", code: 0, userInfo: nil)))
+                return
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let roomCode = json["room_code"] as? String else {
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("Failed to decode room data. Response: \(jsonString)")
