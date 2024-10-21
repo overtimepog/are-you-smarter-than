@@ -57,8 +57,9 @@ class CreateRoomViewController: UIViewController {
             playerNameTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             playerNameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
             playerNameTextField.widthAnchor.constraint(equalToConstant: 300),
-            questionGoalTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
-            questionGoalTextField.widthAnchor.constraint(equalToConstant: 300),
+            questionGoalTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            questionGoalTextField.topAnchor.constraint(equalTo: playerNameTextField.bottomAnchor, constant: 20),
+            questionGoalTextField.widthAnchor.constraint(equalTo: playerNameTextField.widthAnchor),
 
             maxPlayersTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             maxPlayersTextField.topAnchor.constraint(equalTo: questionGoalTextField.bottomAnchor, constant: 20),
