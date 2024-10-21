@@ -60,5 +60,5 @@ class WinViewController: UIViewController {
         // Logic to leave the game
         self.dismiss(animated: true, completion: nil)
     }
-    }
+}
 }
