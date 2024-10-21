@@ -3,6 +3,7 @@ import UIKit
 class FlaskWrapper {
     static func transitionToLobby(from viewController: UIViewController, roomCode: String, playerName: String) {
         DispatchQueue.main.async {
+            print("Room created successfully with room code: \(roomCode)")
             let lobbyVC = LobbyViewController()
             lobbyVC.roomCode = roomCode
             lobbyVC.playerName = playerName
