@@ -10,6 +10,7 @@ import UIKit
 class CreateRoomViewController: UIViewController {
 
     // UI Elements
+    let playerNameTextField = UITextField()
     let questionGoalTextField = UITextField()
     let maxPlayersTextField = UITextField()
     let createButton = UIButton(type: .system)
@@ -24,7 +25,9 @@ class CreateRoomViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
 
-        questionGoalTextField.placeholder = "Enter Question Goal (e.g., 10)"
+        playerNameTextField.placeholder = "Enter Your Name"
+        playerNameTextField.borderStyle = .roundedRect
+        playerNameTextField.translatesAutoresizingMaskIntoConstraints = false
         questionGoalTextField.borderStyle = .roundedRect
         questionGoalTextField.keyboardType = .numberPad
         questionGoalTextField.translatesAutoresizingMaskIntoConstraints = false
@@ -44,13 +47,15 @@ class CreateRoomViewController: UIViewController {
         statusLabel.textAlignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        view.addSubview(questionGoalTextField)
+        view.addSubview(playerNameTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(createButton)
         view.addSubview(statusLabel)
 
         NSLayoutConstraint.activate([
-            questionGoalTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            playerNameTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            playerNameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
+            playerNameTextField.widthAnchor.constraint(equalToConstant: 300),
             questionGoalTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100),
             questionGoalTextField.widthAnchor.constraint(equalToConstant: 300),
 
@@ -68,13 +73,14 @@ class CreateRoomViewController: UIViewController {
     }
 
     @objc func createRoom() {
-        guard let questionGoal = Int(questionGoalTextField.text ?? ""),
+        guard let playerName = playerNameTextField.text, !playerName.isEmpty,
+              let questionGoal = Int(questionGoalTextField.text ?? ""),
               let maxPlayers = Int(maxPlayersTextField.text ?? "") else {
             statusLabel.text = "Please enter valid numbers."
             return
         }
 
-        let parameters: [String: Any] = ["question_goal": questionGoal, "max_players": maxPlayers]
+        let parameters: [String: Any] = ["player_name": playerName, "question_goal": questionGoal, "max_players": maxPlayers]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
             statusLabel.text = "Invalid API URL."
