@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
 import string
@@ -13,6 +13,23 @@ rooms_lock = threading.Lock()  # Lock to prevent race conditions when accessing 
 
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+@app.route('/')
+def index():
+    smiley_html = '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Smiley Face</title>
+    </head>
+    <body style="display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0;">
+        <div style="font-size: 100px;">😊</div>
+    </body>
+    </html>
+    '''
+    return render_template_string(smiley_html)
 
 @app.route('/create_room', methods=['POST'])
 def create_room():
