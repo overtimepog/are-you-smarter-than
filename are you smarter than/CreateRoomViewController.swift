@@ -83,6 +83,7 @@ class CreateRoomViewController: UIViewController {
             return
         }
 
+        print("Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
         FlaskWrapper.createRoom(playerName: playerName, questionGoal: questionGoal, maxPlayers: maxPlayers) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
