@@ -1,27 +1,28 @@
 //
 //  LobbyViewController.swift
-//  are you smarter than
-//
-//  Created by Overtime on 10/17/24.
+//  Are You Smarter Than
 //
 
 import UIKit
 
 class LobbyViewController: UIViewController {
 
-    var isHost: Bool = false
-    var playerName: String = ""
-    var roomCode: String = ""
+    var roomCode: String = ""  // Set this when transitioning to the lobby
+    var players: [String] = []  // List to hold player names
+    var questionGoal: Int = 0
+    var maxPlayers: Int = 0
+    var gameStarted: Bool = false
 
     // UI Elements
     let roomCodeLabel = UILabel()
-    let avatarLabel = UILabel()
-    let playerNameLabel = UILabel()
-    let startGameButton = UIButton(type: .system)
+    let playersTableView = UITableView()
+    let refreshButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        fetchRoomData()  // Fetch room data when the view loads
+        playersTableView.dataSource = self
     }
 
     // Setup UI with Auto Layout
@@ -29,60 +30,102 @@ class LobbyViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         // Room Code Label
-        roomCodeLabel.text = "Room Code: \(roomCode)"
         roomCodeLabel.font = UIFont.systemFont(ofSize: 24)
         roomCodeLabel.textAlignment = .center
         roomCodeLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        // Avatar Label
-        avatarLabel.text = isHost ? "⭐️" : ["🐶", "🐱", "🐭", "🦊", "🐸", "🐵", "🐧", "🐯", "🐼"].randomElement() ?? "🐶"
-        avatarLabel.font = UIFont.systemFont(ofSize: 100)
-        avatarLabel.textAlignment = .center
-        avatarLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Players Table View
+        playersTableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlayerCell")
+        playersTableView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Player Name Label
-        playerNameLabel.text = playerName
-        playerNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        playerNameLabel.textAlignment = .center
-        playerNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Refresh Button
+        refreshButton.setTitle("Refresh", for: .normal)
+        refreshButton.addTarget(self, action: #selector(refreshRoomData), for: .touchUpInside)
+        refreshButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Start Game Button (Visible only for the host)
-        startGameButton.setTitle("Start Game", for: .normal)
-        startGameButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        startGameButton.addTarget(self, action: #selector(startGame), for: .touchUpInside)
-        startGameButton.translatesAutoresizingMaskIntoConstraints = false
-        startGameButton.isHidden = !isHost
-
-        // Add all subviews
+        // Add subviews
         view.addSubview(roomCodeLabel)
-        view.addSubview(avatarLabel)
-        view.addSubview(playerNameLabel)
-        view.addSubview(startGameButton)
+        view.addSubview(playersTableView)
+        view.addSubview(refreshButton)
 
-        // Apply Auto Layout constraints
+        // Layout constraints
         NSLayoutConstraint.activate([
-            // Room Code Label
             roomCodeLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             roomCodeLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            // Avatar Label
-            avatarLabel.topAnchor.constraint(equalTo: roomCodeLabel.bottomAnchor, constant: 40),
-            avatarLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            playersTableView.topAnchor.constraint(equalTo: roomCodeLabel.bottomAnchor, constant: 20),
+            playersTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            playersTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            playersTableView.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
 
-            // Player Name Label
-            playerNameLabel.topAnchor.constraint(equalTo: avatarLabel.bottomAnchor, constant: 20),
-            playerNameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            // Start Game Button
-            startGameButton.topAnchor.constraint(equalTo: playerNameLabel.bottomAnchor, constant: 40),
-            startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            refreshButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
 
-    // Start Game Action (Host Only)
-    @objc func startGame() {
-        let triviaVC = TriviaViewController()
-        triviaVC.modalPresentationStyle = .fullScreen
-        present(triviaVC, animated: true, completion: nil)
+    // Fetch room data from the API
+    func fetchRoomData() {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
+            print("Invalid URL")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching room data: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data,
+                  let roomInfo = try? JSONDecoder().decode(RoomInfo.self, from: data) else {
+                print("Failed to decode room data")
+                return
+            }
+
+            // Update UI on the main thread
+            DispatchQueue.main.async {
+                self.updateUI(with: roomInfo)
+            }
+        }.resume()
     }
+
+    // Update the UI with fetched room data
+    func updateUI(with roomInfo: RoomInfo) {
+        self.players = roomInfo.players
+        self.questionGoal = roomInfo.question_goal
+        self.maxPlayers = roomInfo.max_players
+        self.gameStarted = roomInfo.game_started
+
+        roomCodeLabel.text = "Room Code: \(roomInfo.room_code)"
+        playersTableView.reloadData()
+    }
+
+    @objc func refreshRoomData() {
+        fetchRoomData()  // Refresh the room data when the button is pressed
+    }
+}
+
+// MARK: - UITableViewDataSource
+extension LobbyViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return players.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "PlayerCell", for: indexPath)
+        cell.textLabel?.text = players[indexPath.row]
+        return cell
+    }
+}
+
+// MARK: - RoomInfo Struct
+struct RoomInfo: Codable {
+    let room_code: String
+    let players: [String]
+    let question_goal: Int
+    let max_players: Int
+    let game_started: Bool
+    let winners: [String]
 }
