@@ -2,7 +2,8 @@ import UIKit
 
 class WinViewController: UIViewController {
 
-    // UI Elements
+    var roomCode: String = ""  // Set this when transitioning to the win view
+    var playerName: String = "" // Set this when transitioning to the win view
     let podiumView = UIView()
     let replayButton = UIButton(type: .system)
     let leaveButton = UIButton(type: .system)
@@ -51,14 +52,61 @@ class WinViewController: UIViewController {
 
     @objc func replayGame() {
         // Logic to replay the game
-        let lobbyVC = LobbyViewController()
-        lobbyVC.modalPresentationStyle = .fullScreen
-        self.present(lobbyVC, animated: true)
+        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/start_game") else {
+            print("Invalid API URL.")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error starting game: \(error.localizedDescription)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                // Transition to the lobby view
+                let lobbyVC = LobbyViewController()
+                lobbyVC.modalPresentationStyle = .fullScreen
+                self.present(lobbyVC, animated: true)
+            }
+        }.resume()
     }
 
     @objc func leaveGame() {
         // Logic to leave the game
-        self.dismiss(animated: true, completion: nil)
+        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/leave_room") else {
+            print("Invalid API URL.")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error leaving game: \(error.localizedDescription)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.dismiss(animated: true, completion: nil)
+            }
+        }.resume()
     }
 }
 }
