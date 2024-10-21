@@ -86,7 +86,7 @@ class CreateRoomViewController: UIViewController {
                 case .success(let roomCode):
                     let lobbyVC = LobbyViewController()
                     lobbyVC.isHost = true
-                    lobbyVC.playerName = "Host"
+                    lobbyVC.playerName = playerName
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
                     self?.present(lobbyVC, animated: true)
