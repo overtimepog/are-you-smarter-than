@@ -90,8 +90,8 @@ def create_room():
         'score': 0,
         'sid': None
     }
-    print(f"Room created with code: {room_code}, host: {host_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
-    print(f"Room created with code: {room_code}, host: {host_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
+    print(f"Room created with code: {room_code}, host: {first_player_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
+    print(f"Room created with code: {room_code}, host: {first_player_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
 @app.route('/join_room', methods=['POST'])
