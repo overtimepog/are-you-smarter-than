@@ -27,6 +27,8 @@ class LobbyViewController: UIViewController {
         setupUI()
         fetchRoomData()  // Fetch room data when the view loads
         playersTableView.dataSource = self
+        // Hide the start game button if the game has already started
+        startGameButton.isHidden = gameStarted || !isHost
     }
 
     // Setup UI with Auto Layout
@@ -130,8 +132,37 @@ class LobbyViewController: UIViewController {
         fetchRoomData()  // Refresh the room data when the button is pressed
     }
     @objc func startGame() {
-        // Logic to start the game
-        print("Game started by host")
+        guard isHost else { return }
+
+        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/start_game") else {
+            print("Invalid API URL.")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error starting game: \(error.localizedDescription)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                self.gameStarted = true
+                self.startGameButton.isHidden = true
+                // Transition to the game view
+                let triviaVC = TriviaViewController()
+                triviaVC.modalPresentationStyle = .fullScreen
+                self.present(triviaVC, animated: true)
+            }
+        }.resume()
     }
 
     @objc func leaveLobby() {

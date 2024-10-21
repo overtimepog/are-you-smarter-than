@@ -51,11 +51,14 @@ class WinViewController: UIViewController {
 
     @objc func replayGame() {
         // Logic to replay the game
-        dismiss(animated: true, completion: nil)
+        let lobbyVC = LobbyViewController()
+        lobbyVC.modalPresentationStyle = .fullScreen
+        self.present(lobbyVC, animated: true)
     }
 
     @objc func leaveGame() {
         // Logic to leave the game
+        self.dismiss(animated: true, completion: nil)
         dismiss(animated: true, completion: nil)
     }
 }
