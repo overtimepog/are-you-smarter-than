@@ -78,15 +78,18 @@ class LobbyViewController: UIViewController {
                 return
             }
 
-            guard let data = data,
-                  let roomInfo = try? JSONDecoder().decode(RoomInfo.self, from: data) else {
-                print("Failed to decode room data")
+            guard let data = data else {
+                print("No data received")
                 return
             }
 
-            // Update UI on the main thread
-            DispatchQueue.main.async {
-                self.updateUI(with: roomInfo)
+            do {
+                let roomInfo = try JSONDecoder().decode(RoomInfo.self, from: data)
+                DispatchQueue.main.async {
+                    self.updateUI(with: roomInfo)
+                }
+            } catch {
+                print("Failed to decode room data: \(error.localizedDescription)")
             }
         }.resume()
     }

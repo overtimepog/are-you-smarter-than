@@ -85,13 +85,27 @@ class JoinRoomViewController: UIViewController {
                 return
             }
 
-            DispatchQueue.main.async {
-                let lobbyVC = LobbyViewController()
-                lobbyVC.isHost = false
-                lobbyVC.playerName = playerName
-                lobbyVC.roomCode = roomCode
-                lobbyVC.modalPresentationStyle = .fullScreen
-                self.present(lobbyVC, animated: true)
+            guard let data = data else {
+                DispatchQueue.main.async { self.statusLabel.text = "No data received." }
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                   let success = json["success"] as? Bool, success {
+                    DispatchQueue.main.async {
+                        let lobbyVC = LobbyViewController()
+                        lobbyVC.isHost = false
+                        lobbyVC.playerName = playerName
+                        lobbyVC.roomCode = roomCode
+                        lobbyVC.modalPresentationStyle = .fullScreen
+                        self.present(lobbyVC, animated: true)
+                    }
+                } else {
+                    DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
+                }
+            } catch {
+                DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }
             }
         }.resume()
     }
