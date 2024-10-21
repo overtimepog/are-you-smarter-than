@@ -109,9 +109,17 @@ class LobbyViewController: UIViewController {
             }
 
             do {
-                let roomInfo = try JSONDecoder().decode(RoomInfo.self, from: data)
-                DispatchQueue.main.async {
-                    self.updateUI(with: roomInfo)
+                do {
+                    let roomInfo = try JSONDecoder().decode(RoomInfo.self, from: data)
+                    DispatchQueue.main.async {
+                        self.updateUI(with: roomInfo)
+                    }
+                } catch {
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Failed to decode room data: \(error.localizedDescription). Response: \(jsonString)")
+                    } else {
+                        print("Failed to decode room data: \(error.localizedDescription). Unable to convert data to string.")
+                    }
                 }
             } catch {
                 print("Failed to decode room data: \(error.localizedDescription)")
