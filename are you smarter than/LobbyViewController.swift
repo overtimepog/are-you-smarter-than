@@ -8,6 +8,7 @@ import UIKit
 class LobbyViewController: UIViewController {
 
     var roomCode: String = ""  // Set this when transitioning to the lobby
+    var playerName: String = "" // Set this when transitioning to the lobby
     var isHost: Bool = false   // Indicates if the user is the host
     var players: [String] = []  // List to hold player names
     var questionGoal: Int = 0
