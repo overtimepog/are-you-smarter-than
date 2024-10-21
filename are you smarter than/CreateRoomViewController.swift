@@ -84,6 +84,48 @@ class CreateRoomViewController: UIViewController {
         }
 
         print("Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
-        FlaskWrapper.createRoom(playerName: playerName, questionGoal: questionGoal, maxPlayers: maxPlayers, viewController: self)
+        let parameters: [String: Any] = [
+            "player_name": playerName,
+            "question_goal": questionGoal,
+            "max_players": maxPlayers
+        ]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
+            statusLabel.text = "Invalid API URL."
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
+                return
+            }
+
+            guard let data = data else {
+                DispatchQueue.main.async { self.statusLabel.text = "No data received." }
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                   let success = json["success"] as? Bool, success,
+                   let roomCode = json["room_code"] as? String {
+                    DispatchQueue.main.async {
+                        self.statusLabel.text = "Room created with code: \(roomCode)"
+                    }
+                } else {
+                    DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
+                }
+            } catch {
+                DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }
+            }
+        }.resume()
     }
 }
