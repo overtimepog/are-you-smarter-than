@@ -31,6 +31,22 @@ def index():
     '''
     return render_template_string(smiley_html)
 
+@app.route('/game_room/<room_code>', methods=['GET'])
+def get_room_info(room_code):
+    with rooms_lock:
+        if room_code in rooms:
+            room = rooms[room_code]
+            players = list(room['players'].keys())
+            return jsonify({
+                'room_code': room_code,
+                'players': players,
+                'question_goal': room['question_goal'],
+                'max_players': room['max_players'],
+                'game_started': room['game_started'],
+                'winners': room['winners']
+            }), 200
+    return jsonify({'success': False, 'message': 'Room not found'}), 404
+
 @app.route('/create_room', methods=['POST'])
 def create_room():
     data = request.json
@@ -150,6 +166,9 @@ def handle_disconnect():
                     del room['players'][player_name]
                     emit('player_left', player_name, room=room_code)
                     break
+                
+def generate_room_code():
+    return ''.join(random.choices(string.ascii_uppercase, k=6))
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=3000)
