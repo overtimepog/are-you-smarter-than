@@ -51,34 +51,14 @@ class WinViewController: UIViewController {
     }
 
     @objc func replayGame() {
-        // Logic to replay the game
-        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
-
-        guard let url = URL(string: "https://api.areyousmarterthan.xyz/start_game") else {
-            print("Invalid API URL.")
-            return
+        // Logic to replay the game by returning to the lobby
+        DispatchQueue.main.async {
+            let lobbyVC = LobbyViewController()
+            lobbyVC.roomCode = self.roomCode
+            lobbyVC.playerName = self.playerName
+            lobbyVC.modalPresentationStyle = .fullScreen
+            self.present(lobbyVC, animated: true)
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            guard let self = self else { return }
-
-            if let error = error {
-                print("Error starting game: \(error.localizedDescription)")
-                return
-            }
-
-            DispatchQueue.main.async {
-                // Transition to the lobby view
-                let lobbyVC = LobbyViewController()
-                lobbyVC.modalPresentationStyle = .fullScreen
-                self.present(lobbyVC, animated: true)
-            }
-        }.resume()
     }
 
     @objc func leaveGame() {
