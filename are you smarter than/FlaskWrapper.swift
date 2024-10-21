@@ -45,7 +45,9 @@ class FlaskWrapper {
                 return
             }
 
-            completion(.success(roomCode))
+            DispatchQueue.main.async {
+                completion(.success(roomCode))
+            }
         }.resume()
     }
 

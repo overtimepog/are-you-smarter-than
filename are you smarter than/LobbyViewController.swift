@@ -141,7 +141,9 @@ class LobbyViewController: UIViewController {
     }
 
     @objc func refreshRoomData() {
-        fetchRoomData()  // Refresh the room data when the button is pressed
+        DispatchQueue.main.async {
+            self.fetchRoomData()  // Refresh the room data when the button is pressed
+        }
     }
     @objc func startGame() {
         guard isHost else { return }
