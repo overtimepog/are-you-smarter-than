@@ -98,7 +98,10 @@ class LobbyViewController: UIViewController {
         }
 
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self else { return }
+            guard let self = self else { 
+                print("Self is nil, returning")
+                return 
+            }
 
             if let error = error {
                 print("Error fetching room data: \(error.localizedDescription)")
