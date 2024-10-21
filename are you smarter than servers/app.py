@@ -88,7 +88,7 @@ def join_room_route():
                 'score': 0,
                 'sid': None  # Will be set when the player connects via SocketIO
             }
-            return jsonify({'success': True, 'player_id': player_id})
+            return jsonify({'success': True, 'player_id': player_id}), 200
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @app.route('/get_players', methods=['POST'])
