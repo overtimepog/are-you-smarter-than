@@ -164,7 +164,10 @@ class LobbyViewController: UIViewController {
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            guard let self = self else { return }
+            guard let self = self else { 
+                print("Self is nil, returning")
+                return 
+            }
 
             if let error = error {
                 print("Error starting game: \(error.localizedDescription)")
