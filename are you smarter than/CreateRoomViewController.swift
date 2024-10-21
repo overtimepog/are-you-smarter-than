@@ -80,41 +80,20 @@ class CreateRoomViewController: UIViewController {
             return
         }
 
-        let parameters: [String: Any] = ["player_name": playerName, "question_goal": questionGoal, "max_players": maxPlayers]
-
-        guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
-            statusLabel.text = "Invalid API URL."
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            guard let self = self else { return }
-
-            if let error = error {
-                DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
-                return
-            }
-
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let roomCode = json["room_code"] as? String else {
-                DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
-                return
-            }
-
+        FlaskWrapper.createRoom(playerName: playerName, questionGoal: questionGoal, maxPlayers: maxPlayers) { [weak self] result in
             DispatchQueue.main.async {
-                let lobbyVC = LobbyViewController()
-                lobbyVC.isHost = true
-                lobbyVC.playerName = "Host"
-                lobbyVC.roomCode = roomCode
-                lobbyVC.modalPresentationStyle = .fullScreen
-                self.present(lobbyVC, animated: true)
+                switch result {
+                case .success(let roomCode):
+                    let lobbyVC = LobbyViewController()
+                    lobbyVC.isHost = true
+                    lobbyVC.playerName = "Host"
+                    lobbyVC.roomCode = roomCode
+                    lobbyVC.modalPresentationStyle = .fullScreen
+                    self?.present(lobbyVC, animated: true)
+                case .failure(let error):
+                    self?.statusLabel.text = "Error: \(error.localizedDescription)"
+                }
             }
-        }.resume()
+        }
     }
 }
