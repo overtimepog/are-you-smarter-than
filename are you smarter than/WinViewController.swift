@@ -52,13 +52,7 @@ class WinViewController: UIViewController {
 
     @objc func replayGame() {
         // Logic to replay the game by returning to the lobby
-        DispatchQueue.main.async {
-            let lobbyVC = LobbyViewController()
-            lobbyVC.roomCode = self.roomCode
-            lobbyVC.playerName = self.playerName
-            lobbyVC.modalPresentationStyle = .fullScreen
-            self.present(lobbyVC, animated: true)
-        }
+        FlaskWrapper.transitionToLobby(from: self, roomCode: roomCode, playerName: playerName)
     }
 
     @objc func leaveGame() {
