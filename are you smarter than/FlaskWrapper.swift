@@ -12,13 +12,13 @@ class FlaskWrapper {
         }
     }
     
-    static func createRoom(playerName: String, questionGoal: Int, maxPlayers: Int, completion: @escaping (Result<String, Error>) -> Void) {
+    static func createRoom(playerName: String, questionGoal: Int, maxPlayers: Int, viewController: UIViewController) {
         print("Starting to create room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
         let parameters: [String: Any] = ["player_name": playerName, "question_goal": questionGoal, "max_players": maxPlayers]
         print("Creating room with parameters: \(parameters)")
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
-            completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
+            print("Invalid URL")
             return
         }
 
@@ -29,12 +29,12 @@ class FlaskWrapper {
 
         URLSession.shared.dataTask(with: request) { data, _, error in
             if let error = error {
-                completion(.failure(error))
+                print("Error creating room: \(error.localizedDescription)")
                 return
             }
 
             guard let data = data else {
-                completion(.failure(NSError(domain: "No data received", code: 0, userInfo: nil)))
+                print("No data received")
                 return
             }
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -44,12 +44,11 @@ class FlaskWrapper {
                 } else {
                     print("Failed to decode room data. Unable to convert data to string.")
                 }
-                completion(.failure(NSError(domain: "Failed to create room", code: 0, userInfo: nil)))
                 return
             }
 
             DispatchQueue.main.async {
-                completion(.success(roomCode))
+                transitionToLobby(from: viewController, roomCode: roomCode, playerName: playerName)
             }
         }.resume()
     }

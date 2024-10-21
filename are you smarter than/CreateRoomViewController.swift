@@ -84,20 +84,6 @@ class CreateRoomViewController: UIViewController {
         }
 
         print("Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
-        FlaskWrapper.createRoom(playerName: playerName, questionGoal: questionGoal, maxPlayers: maxPlayers) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let roomCode):
-                    let lobbyVC = LobbyViewController()
-                    lobbyVC.isHost = true
-                    lobbyVC.playerName = playerName
-                    lobbyVC.roomCode = roomCode
-                    lobbyVC.modalPresentationStyle = .fullScreen
-                    self?.present(lobbyVC, animated: true)
-                case .failure(let error):
-                    self?.statusLabel.text = "Error: \(error.localizedDescription)"
-                }
-            }
-        }
+        FlaskWrapper.createRoom(playerName: playerName, questionGoal: questionGoal, maxPlayers: maxPlayers, viewController: self)
     }
 }
