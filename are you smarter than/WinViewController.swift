@@ -52,7 +52,35 @@ class WinViewController: UIViewController {
 
     @objc func replayGame() {
         // Logic to replay the game by returning to the lobby
-        FlaskWrapper.transitionToLobby(from: self, roomCode: roomCode, playerName: playerName)
+        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
+            print("Invalid API URL.")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error joining lobby: \(error.localizedDescription)")
+                return
+            }
+
+            DispatchQueue.main.async {
+                let lobbyVC = LobbyViewController()
+                lobbyVC.isHost = false
+                lobbyVC.playerName = self.playerName
+                lobbyVC.roomCode = self.roomCode
+                lobbyVC.modalPresentationStyle = .fullScreen
+                self.present(lobbyVC, animated: true)
+            }
+        }.resume()
     }
 
     @objc func leaveGame() {
