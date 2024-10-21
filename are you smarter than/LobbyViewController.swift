@@ -22,6 +22,8 @@ class LobbyViewController: UIViewController {
     let startGameButton = UIButton(type: .system)
     let leaveLobbyButton = UIButton(type: .system)
 
+    var refreshTimer: Timer?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -30,7 +32,7 @@ class LobbyViewController: UIViewController {
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
         // Set up a timer to refresh room data every 5 seconds
-        Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
+        refreshTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
     }
 
     // Setup UI with Auto Layout
@@ -180,6 +182,8 @@ class LobbyViewController: UIViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success:
+                    self?.refreshTimer?.invalidate()
+                    self?.refreshTimer = nil
                     self?.dismiss(animated: true, completion: nil)
                 case .failure(let error):
                     print("Error leaving lobby: \(error.localizedDescription)")

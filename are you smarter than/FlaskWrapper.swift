@@ -12,7 +12,9 @@ class FlaskWrapper {
     }
     
     static func createRoom(playerName: String, questionGoal: Int, maxPlayers: Int, completion: @escaping (Result<String, Error>) -> Void) {
+        print("Starting to create room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
         let parameters: [String: Any] = ["player_name": playerName, "question_goal": questionGoal, "max_players": maxPlayers]
+        print("Creating room with parameters: \(parameters)")
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
             completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
@@ -42,7 +44,11 @@ class FlaskWrapper {
     }
 
     static func joinRoom(roomCode: String, playerName: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        print("Starting to join room with roomCode: \(roomCode), playerName: \(playerName)")
+        print("Starting to leave room with roomCode: \(roomCode), playerName: \(playerName)")
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+        print("Leaving room with parameters: \(parameters)")
+        print("Joining room with parameters: \(parameters)")
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
             completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
