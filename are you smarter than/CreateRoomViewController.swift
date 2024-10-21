@@ -28,6 +28,7 @@ class CreateRoomViewController: UIViewController {
         playerNameTextField.placeholder = "Enter Your Name"
         playerNameTextField.borderStyle = .roundedRect
         playerNameTextField.translatesAutoresizingMaskIntoConstraints = false
+        questionGoalTextField.placeholder = "Max Question (e.g., 10)"
         questionGoalTextField.borderStyle = .roundedRect
         questionGoalTextField.keyboardType = .numberPad
         questionGoalTextField.translatesAutoresizingMaskIntoConstraints = false
