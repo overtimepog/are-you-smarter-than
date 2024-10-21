@@ -119,6 +119,13 @@ class CreateRoomViewController: UIViewController {
                    let roomCode = json["room_code"] as? String {
                     DispatchQueue.main.async {
                         self.statusLabel.text = "Room created with code: \(roomCode)"
+                        
+                        let lobbyVC = LobbyViewController()
+                        lobbyVC.isHost = true
+                        lobbyVC.playerName = playerName
+                        lobbyVC.roomCode = roomCode
+                        lobbyVC.modalPresentationStyle = .fullScreen
+                        self.present(lobbyVC, animated: true)
                     }
                 } else {
                     DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
