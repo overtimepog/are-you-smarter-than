@@ -29,6 +29,8 @@ class LobbyViewController: UIViewController {
         playersTableView.dataSource = self
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
+        // Set up a timer to refresh room data every 5 seconds
+        Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
     }
 
     // Setup UI with Auto Layout
@@ -75,7 +77,7 @@ class LobbyViewController: UIViewController {
             playersTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             playersTableView.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
 
-            refreshButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            refreshButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
             refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             startGameButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
