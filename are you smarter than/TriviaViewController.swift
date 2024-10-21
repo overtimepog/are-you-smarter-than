@@ -22,6 +22,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Accept the number of players and selected categories
     var numberOfPlayers: Int = 1 // Default to 1
+    var roomCode: String = ""
+    var playerName: String = ""
+    var playerId: String = ""
+    var isCorrect: Bool = false
 
     // UI Elements
     let questionLabel = UILabel()
