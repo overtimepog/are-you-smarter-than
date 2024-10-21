@@ -48,6 +48,7 @@ class CreateRoomViewController: UIViewController {
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(playerNameTextField)
+        view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(createButton)
         view.addSubview(statusLabel)
