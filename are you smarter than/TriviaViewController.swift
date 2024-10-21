@@ -27,6 +27,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     let questionLabel = UILabel()
     var optionButtons: [UIButton] = []
     let scoreLabel = UILabel()
+    var scoreAndQuestionLabel = UILabel()
     var wheelView: WheelView!
     var spinButton: UIButton!
     var arrowView: UIImageView!
@@ -37,6 +38,44 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         super.viewDidLoad()
         setupUI()
         fetchCategories()
+    }
+
+    func sendResultToServer(parameters: [String: Any]) {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/submit_answer") else {
+            print("Invalid URL for submitting answer")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error = error {
+                print("Error submitting answer: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let gameEnded = json["game_ended"] as? Bool else {
+                print("Failed to submit answer")
+                return
+            }
+
+            if gameEnded {
+                DispatchQueue.main.async {
+                    self.showWinViewController()
+                }
+            }
+        }.resume()
+    }
+
+    func showWinViewController() {
+        let winVC = WinViewController()
+        winVC.modalPresentationStyle = .fullScreen
+        self.present(winVC, animated: true)
     }
 
     // Setup the UI
@@ -56,7 +95,16 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             questionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
 
-        // Score label
+        // Score and Question label
+        scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
+        scoreAndQuestionLabel.textAlignment = .center
+        scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        scoreAndQuestionLabel.isHidden = true
+        view.addSubview(scoreAndQuestionLabel)
+        NSLayoutConstraint.activate([
+            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
         scoreLabel.translatesAutoresizingMaskIntoConstraints = false
         scoreLabel.textAlignment = .center
         scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
@@ -118,6 +166,14 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                     print("Failed to decode categories: \(error)")
                 }
             }.resume()
+            // Send result to server
+            let parameters: [String: Any] = [
+                "room_code": roomCode,
+                "player_name": playerName,
+                "player_id": playerId,
+                "correct": isCorrect
+            ]
+            sendResultToServer(parameters: parameters)
         }
     }
 
@@ -331,7 +387,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }
 
         // Update score
-        scoreLabel.text = "Score: \(score)"
+        scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+        scoreAndQuestionLabel.isHidden = false
         scoreLabel.isHidden = false
     }
 

@@ -110,7 +110,25 @@ def join_room_route():
             return jsonify({'success': True, 'player_id': player_id}), 200
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
-@app.route('/get_players', methods=['POST'])
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    correct = data['correct']
+
+    with rooms_lock:
+        if room_code in rooms and player_name in rooms[room_code]['players']:
+            player = rooms[room_code]['players'][player_name]
+            if correct:
+                player['score'] += 1
+
+            # Check if the game has ended
+            if player['score'] >= rooms[room_code]['question_goal']:
+                rooms[room_code]['winners'].append(player_name)
+                return jsonify({'game_ended': True}), 200
+
+    return jsonify({'game_ended': False}), 200
 def get_players():
     data = request.json
     room_code = data['room_code']
