@@ -202,4 +202,4 @@ def cleanup_rooms():
 
 cleanup_thread = threading.Thread(target=cleanup_rooms, daemon=True)
 cleanup_thread.start()
-    socketio.run(app, host='0.0.0.0', port=3000)
+socketio.run(app, host='0.0.0.0', port=3000)
