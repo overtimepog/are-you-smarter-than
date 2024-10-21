@@ -36,8 +36,8 @@ def index():
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     with rooms_lock:
-        if room_code in rooms:
-            room = rooms[room_code]
+        room = rooms.get(room_code)
+        if room:
             players = list(room['players'].keys())
             return jsonify({
                 'room_code': room_code,
