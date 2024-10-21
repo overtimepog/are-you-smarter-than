@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
+import time
+import threading
 import string
 import uuid
 import threading
@@ -56,6 +58,8 @@ def leave_room_route():
     with rooms_lock:
         if room_code in rooms and player_name in rooms[room_code]['players']:
             del rooms[room_code]['players'][player_name]
+            if not rooms[room_code]['players']:
+                rooms[room_code]['last_active'] = time.time()
             return jsonify({'success': True, 'message': 'Player left the room'}), 200
     return jsonify({'success': False, 'message': 'Room or player not found'}), 404
 
@@ -78,7 +82,8 @@ def create_room():
             'game_started': False,
             'question_goal': question_goal,
             'max_players': max_players,
-            'winners': []
+            'winners': [],
+            'last_active': time.time()
         }
     return jsonify({'room_code': room_code})
 
@@ -185,5 +190,16 @@ def handle_disconnect():
 def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase, k=6))
 
-if __name__ == '__main__':
+def cleanup_rooms():
+    while True:
+        with rooms_lock:
+            current_time = time.time()
+            for room_code in list(rooms.keys()):
+                room = rooms[room_code]
+                if not room['players'] and (current_time - room['last_active'] > 5 * 3600):
+                    del rooms[room_code]
+        time.sleep(3600)  # Check every hour
+
+cleanup_thread = threading.Thread(target=cleanup_rooms, daemon=True)
+cleanup_thread.start()
     socketio.run(app, host='0.0.0.0', port=3000)
