@@ -131,7 +131,7 @@ class LobbyViewController: UIViewController {
 
     // Update the UI with fetched room data
     func updateUI(with roomInfo: RoomInfo) {
-        self.players = [playerName] + roomInfo.players
+        self.players = roomInfo.players
         self.questionGoal = roomInfo.question_goal
         self.maxPlayers = roomInfo.max_players
         self.gameStarted = roomInfo.game_started
