@@ -31,11 +31,18 @@ def index():
     </body>
     </html>
     '''
+    print("Rendering index page with smiley face.")
     return render_template_string(smiley_html)
 
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
+    print(f"Fetching room info for room code: {room_code}")
+    print(f"Player {player_name} is leaving room {room_code}")
+    print(f"Player {player_name} is joining room {room_code}")
     with rooms_lock:
+        print(f"Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
+        print(f"Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
+        print(f"Current rooms: {list(rooms.keys())}")
         room = rooms.get(room_code)
         if room:
             players = list(room['players'].keys())
@@ -47,6 +54,8 @@ def get_room_info(room_code):
                 'game_started': room['game_started'],
                 'winners': room['winners']
             }), 200
+    print(f"Room not found for code: {room_code}")
+    print(f"Room not found for code: {room_code}")
     print(f"Room not found for code: {room_code}")
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
@@ -64,6 +73,7 @@ def leave_room_route():
             if not rooms[room_code]['players']:
                 del rooms[room_code]  # Delete room if no players are left
             return jsonify({'success': True, 'message': 'Player left the room'}), 200
+    print(f"Room or player not found for room code: {room_code}, player name: {player_name}")
     return jsonify({'success': False, 'message': 'Room or player not found'}), 404
 
 @app.route('/create_room', methods=['POST'])
@@ -88,6 +98,7 @@ def create_room():
             'winners': [],
             'last_active': time.time()
         }
+    print(f"Adding first player {first_player_name} to room {room_code}")
     rooms[room_code]['players'][first_player_name] = {
         'player_id': str(uuid.uuid4()),
         'score': 0,
