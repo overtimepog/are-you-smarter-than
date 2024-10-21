@@ -53,6 +53,7 @@ def get_room_info(room_code):
 @app.route('/leave_room', methods=['POST'])
 def leave_room_route():
     data = request.json
+    print(f"Received create room request with data: {data}")
     room_code = data['room_code']
     player_name = data['player_name']
 

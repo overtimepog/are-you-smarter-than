@@ -27,7 +27,10 @@ class FlaskWrapper {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
 
-        URLSession.shared.dataTask(with: request) { data, _, error in
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let httpResponse = response as? HTTPURLResponse {
+                print("HTTP Response Code: \(httpResponse.statusCode)")
+            }
             if let error = error {
                 print("Error creating room: \(error.localizedDescription)")
                 return
