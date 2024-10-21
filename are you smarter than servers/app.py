@@ -77,7 +77,7 @@ def create_room():
         while room_code in rooms:
             room_code = generate_room_code()
 
-        first_player_name = data.get('player_name', 'Host')
+        first_player_name = data.get('player_name')
         rooms[room_code] = {
             'host': first_player_name,
             'players': {},
@@ -93,7 +93,6 @@ def create_room():
         'sid': None
     }
     print(f"Room created with code: {room_code}, host: {first_player_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
-    print(f"Room data after creation: {rooms[room_code]}")
     print(f"Room data after creation: {rooms[room_code]}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
