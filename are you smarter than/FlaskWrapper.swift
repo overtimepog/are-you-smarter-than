@@ -41,6 +41,8 @@ class FlaskWrapper {
                   let roomCode = json["room_code"] as? String else {
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("Failed to decode room data. Response: \(jsonString)")
+                } else {
+                    print("Failed to decode room data. Unable to convert data to string.")
                 }
                 completion(.failure(NSError(domain: "Failed to create room", code: 0, userInfo: nil)))
                 return
