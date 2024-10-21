@@ -40,7 +40,7 @@ class FlaskWrapper {
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let roomCode = json["room_code"] as? String else {
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("Failed to decode room data. Response: \(jsonString)")
+                    print("Failed to decode room data. Response: \(jsonString). Parameters: \(parameters)")
                 } else {
                     print("Failed to decode room data. Unable to convert data to string.")
                 }

@@ -47,6 +47,7 @@ def get_room_info(room_code):
                 'game_started': room['game_started'],
                 'winners': room['winners']
             }), 200
+    print(f"Room not found for code: {room_code}")
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @app.route('/leave_room', methods=['POST'])
