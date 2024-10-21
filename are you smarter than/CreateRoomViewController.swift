@@ -76,7 +76,7 @@ class CreateRoomViewController: UIViewController {
 
         let parameters: [String: Any] = ["question_goal": questionGoal, "max_players": maxPlayers]
 
-        guard let url = URL(string: "http://<your-server-ip>:3000/create_room") else {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
             statusLabel.text = "Invalid API URL."
             return
         }

@@ -67,7 +67,7 @@ class JoinRoomViewController: UIViewController {
 
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
 
-        guard let url = URL(string: "http://<your-server-ip>:3000/join_room") else {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
             statusLabel.text = "Invalid API URL."
             return
         }
