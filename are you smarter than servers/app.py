@@ -47,6 +47,18 @@ def get_room_info(room_code):
             }), 200
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
+@app.route('/leave_room', methods=['POST'])
+def leave_room_route():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+
+    with rooms_lock:
+        if room_code in rooms and player_name in rooms[room_code]['players']:
+            del rooms[room_code]['players'][player_name]
+            return jsonify({'success': True, 'message': 'Player left the room'}), 200
+    return jsonify({'success': False, 'message': 'Room or player not found'}), 404
+
 @app.route('/create_room', methods=['POST'])
 def create_room():
     data = request.json
@@ -59,7 +71,9 @@ def create_room():
         while room_code in rooms:
             room_code = generate_room_code()
 
+        host_name = data.get('player_name', 'Host')
         rooms[room_code] = {
+            'host': host_name,
             'players': {},
             'game_started': False,
             'question_goal': question_goal,
@@ -130,7 +144,8 @@ def handle_start_game(data):
 
     with rooms_lock:
         if room_code in rooms:
-            rooms[room_code]['game_started'] = True
+            if data['player_name'] == rooms[room_code]['host']:
+                rooms[room_code]['game_started'] = True
             emit('game_started', room=room_code)
         else:
             return
