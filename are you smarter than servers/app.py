@@ -75,9 +75,9 @@ def create_room():
         while room_code in rooms:
             room_code = generate_room_code()
 
-        host_name = data.get('player_name', 'Host')
+        first_player_name = data.get('player_name', 'Host')
         rooms[room_code] = {
-            'host': host_name,
+            'host': first_player_name,
             'players': {},
             'game_started': False,
             'question_goal': question_goal,
@@ -85,7 +85,7 @@ def create_room():
             'winners': [],
             'last_active': time.time()
         }
-    rooms[room_code]['players'][host_name] = {
+    rooms[room_code]['players'][first_player_name] = {
         'player_id': str(uuid.uuid4()),
         'score': 0,
         'sid': None

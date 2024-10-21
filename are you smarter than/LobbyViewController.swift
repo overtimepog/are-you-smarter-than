@@ -79,10 +79,10 @@ class LobbyViewController: UIViewController {
             playersTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             playersTableView.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
 
-            refreshButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
-            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            startGameButton.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
+            startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            startGameButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
+            refreshButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
             startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             leaveLobbyButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
