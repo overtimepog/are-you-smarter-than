@@ -188,10 +188,6 @@ def handle_join_game(data):
         # Player did not join via HTTP endpoint or player_id mismatch
         leave_room(room_code)
         return
-    else:
-        # Room does not exist
-        leave_room(room_code)
-        return
 
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer():
