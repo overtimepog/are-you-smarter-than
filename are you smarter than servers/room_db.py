@@ -5,21 +5,11 @@ from contextlib import closing
 DATABASE = 'trivia_game.db'
 
 def init_db():
+    with open('schema.sql', 'r') as f:
+        schema = f.read()
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS rooms (
-                    room_code TEXT PRIMARY KEY,
-                    host TEXT,
-                    players TEXT,
-                    game_started BOOLEAN,
-                    question_goal INTEGER,
-                    max_players INTEGER,
-                    winners TEXT,
-                    last_active REAL,
-                    creation_time REAL
-                )
-            ''')
+            conn.executescript(schema)
 
 def add_room(room_code, host, question_goal, max_players):
     with closing(sqlite3.connect(DATABASE)) as conn:
