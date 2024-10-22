@@ -5,6 +5,7 @@ class WinViewController: UIViewController {
 
     var roomCode: String = ""  // Set this when transitioning to the win view
     var playerName: String = "" // Set this when transitioning to the win view
+    var rankings: [[String: Any]] = [] // Add this property to hold rankings
     let podiumView = UIView()
     let replayButton = UIButton(type: .system)
     let leaveButton = UIButton(type: .system)
