@@ -31,20 +31,15 @@ def index():
     </body>
     </html>
     '''
-    print("Rendering index page with smiley face.")
     return render_template_string(smiley_html)
 
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
     with rooms_lock:
-        print(f"[DEBUG] Current state of rooms: {rooms}")
-        print(f"[DEBUG] Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
-        print(f"[DEBUG] Current rooms: {list(rooms.keys())}")
         room = rooms.get(room_code)
         if room:
             players = list(room['players'].keys())
-            print(f"[DEBUG] Room found: {room_code} with players: {players}")
             return jsonify({
                 'room_code': room_code,
                 'players': players,
@@ -53,13 +48,11 @@ def get_room_info(room_code):
                 'game_started': room['game_started'],
                 'winners': room['winners']
             }), 200
-    print(f"[DEBUG] Room not found for code: {room_code}")
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @app.route('/leave_room', methods=['POST'])
 def leave_room_route():
     data = request.json
-    print(f"[DEBUG] Received leave room request with data: {data}")
     room_code = data['room_code']
     player_name = data['player_name']
 
@@ -71,7 +64,6 @@ def leave_room_route():
                 del rooms[room_code]  # Delete room if no players are left
             return jsonify({'success': True, 'message': 'Player left the room'}), 200
     print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
-    return jsonify({'success': False, 'message': 'Room or player not found'}), 404
 
 @app.route('/create_room', methods=['POST'])
 def create_room():
@@ -95,14 +87,11 @@ def create_room():
             'winners': [],
             'last_active': time.time()
         }
-    print(f"[DEBUG] Adding first player {first_player_name} to room {room_code}")
     rooms[room_code]['players'][first_player_name] = {
         'player_id': str(uuid.uuid4()),
         'score': 0,
         'sid': None
     }
-    print(f"[DEBUG] Room created with code: {room_code}, host: {first_player_name}, question_goal: {question_goal}, max_players: {max_players}, players: {list(rooms[room_code]['players'].keys())}")
-    print(f"[DEBUG] Room data after creation: {rooms[room_code]}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
 @app.route('/join_room', methods=['POST'])
