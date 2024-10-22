@@ -159,7 +159,6 @@ class LobbyViewController: UIViewController {
         guard isHost else { return }
 
         print("[DEBUG] Attempting to start game with roomCode: \(roomCode), playerName: \(playerName)")
-        print("[DEBUG] Attempting to leave lobby with roomCode: \(roomCode), playerName: \(playerName)")
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/start_game") else {

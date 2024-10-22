@@ -79,13 +79,27 @@ class WinViewController: UIViewController {
                 return
             }
 
-            DispatchQueue.main.async {
-                let lobbyVC = LobbyViewController()
-                lobbyVC.isHost = false
-                lobbyVC.playerName = self.playerName
-                lobbyVC.roomCode = self.roomCode
-                lobbyVC.modalPresentationStyle = .fullScreen
-                self.present(lobbyVC, animated: true)
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                   let success = json["success"] as? Bool, success {
+                    DispatchQueue.main.async {
+                        let lobbyVC = LobbyViewController()
+                        lobbyVC.isHost = false
+                        lobbyVC.playerName = self.playerName
+                        lobbyVC.roomCode = self.roomCode
+                        lobbyVC.modalPresentationStyle = .fullScreen
+                        self.present(lobbyVC, animated: true)
+                    }
+                } else {
+                    print("Failed to join room")
+                }
+            } catch {
+                print("Error parsing response: \(error.localizedDescription)")
             }
         }.resume()
     }

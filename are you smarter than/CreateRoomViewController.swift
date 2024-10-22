@@ -118,12 +118,6 @@ class CreateRoomViewController: UIViewController {
             }
 
             do {
-                if let dataString = String(data: data, encoding: .utf8) {
-                    print("[DEBUG] Response data: \(dataString)")
-                } else {
-                    print("[DEBUG] Unable to convert response data to string.")
-                }
-                
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let success = json["success"] as? Bool, success,
                    let roomCode = json["room_code"] as? String {

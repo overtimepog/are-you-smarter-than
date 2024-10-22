@@ -107,11 +107,7 @@ class JoinRoomViewController: UIViewController {
                     if let message = json["message"] as? String {
                         DispatchQueue.main.async { self.statusLabel.text = message }
                     } else {
-                        if let message = json["message"] as? String {
-                            DispatchQueue.main.async { self.statusLabel.text = message }
-                        } else {
-                            DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
-                        }
+                        DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
                     }
                 }
             } catch {
