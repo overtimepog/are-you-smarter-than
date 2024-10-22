@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		36D3766F2CC04AF4004B6C5B /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 36D3766E2CC04AF4004B6C5B /* SocketIO */; };
+		36EEB2662CC739FD00FC7FE6 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = 36EEB2652CC739FD00FC7FE6 /* SwiftyJSON */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36EEB2662CC739FD00FC7FE6 /* SwiftyJSON in Frameworks */,
 				36D3766F2CC04AF4004B6C5B /* SocketIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +73,7 @@
 			name = "are you smarter than";
 			packageProductDependencies = (
 				36D3766E2CC04AF4004B6C5B /* SocketIO */,
+				36EEB2652CC739FD00FC7FE6 /* SwiftyJSON */,
 			);
 			productName = "are you smarter than";
 			productReference = 36D376372CBF55E7004B6C5B /* are you smarter than.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				36D3766D2CC04AF4004B6C5B /* XCRemoteSwiftPackageReference "socket.io-client-swift" */,
+				36EEB2642CC739FD00FC7FE6 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 36D376382CBF55E7004B6C5B /* Products */;
@@ -343,6 +347,14 @@
 				kind = branch;
 			};
 		};
+		36EEB2642CC739FD00FC7FE6 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -350,6 +362,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 36D3766D2CC04AF4004B6C5B /* XCRemoteSwiftPackageReference "socket.io-client-swift" */;
 			productName = SocketIO;
+		};
+		36EEB2652CC739FD00FC7FE6 /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 36EEB2642CC739FD00FC7FE6 /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
