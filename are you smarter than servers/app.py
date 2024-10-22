@@ -3,6 +3,8 @@ from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
 import time
+from room_db import init_db, add_room, get_room, update_room, delete_room
+import time
 import string
 import uuid
 import signal
@@ -12,7 +14,7 @@ app = Flask(__name__)
 Compress(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-rooms = {}  # Store room data including question goals and players
+init_db()
 
 # Create a mapping from session IDs to player and room information
 session_to_player = {}
@@ -30,13 +32,8 @@ def update_last_active(room_code):
         print(f"[DEBUG] [update_last_active] Attempted to update last active time for non-existent room {room_code}")
 
 def cleanup_room(room_code):
-    if room_code in rooms:
-        print(f"[DEBUG] [cleanup_room] Preparing to delete room {room_code}. Current room data: {rooms[room_code]}")
-        # Delete the room
-        del rooms[room_code]
-        print(f"[DEBUG] [cleanup_room] Room {room_code} deleted during cleanup")
-    else:
-        print(f"[DEBUG] [cleanup_room] Attempted to delete non-existent room {room_code}")
+    delete_room(room_code)
+    print(f"[DEBUG] [cleanup_room] Room {room_code} deleted from database")
 
 def initialize_room(room_code, host_name, question_goal, max_players):
     return {
@@ -70,7 +67,7 @@ def index():
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
-    room = rooms.get(room_code)
+    room = get_room(room_code)
     if room is None:
         print(f"[DEBUG] [get_room_info] Room data at time of request: {rooms}")
     if room:
@@ -161,15 +158,8 @@ def create_room():
         attempts += 1
 
     first_player_name = data.get('player_name')
-    rooms[room_code] = initialize_room(room_code, first_player_name, question_goal, max_players)
-    print(f"[DEBUG] Room data before adding first player: {rooms[room_code]}, host: {first_player_name}")
-    rooms[room_code]['players'][first_player_name] = {
-        'player_id': str(uuid.uuid4()),
-        'score': 0,
-        'sid': ""  # Initialize 'sid' with an empty string to avoid inconsistencies
-    }
-    update_last_active(room_code)  # Update last active time
-    print(f"[DEBUG] Room data after adding first player: {rooms[room_code]}, host: {first_player_name}")
+    add_room(room_code, first_player_name, question_goal, max_players)
+    print(f"[DEBUG] Room created successfully with room code: {room_code}")
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
 
     return jsonify({'room_code': room_code, 'success': True}), 200
