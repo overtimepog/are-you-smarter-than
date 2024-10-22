@@ -45,10 +45,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
         // Show the wheel again
         self.wheelView.isHidden = false
-        self.spinButton.isHidden = false
-        self.arrowView.isHidden = false
+        self.spinButton?.isHidden = false
+        self.arrowView?.isHidden = false
         self.categoryNameLabel.isHidden = false
-        self.spinButton.isEnabled = true
+        self.spinButton?.isEnabled = true
         self.nextButton.isHidden = true // Hide the next button
     }
 
@@ -78,9 +78,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var optionButtons: [UIButton] = []
     let scoreAndQuestionLabel = UILabel()
     var wheelView: WheelView!
-    var nextButton: UIButton!
-    var spinButton: UIButton!
-    var arrowView: UIImageView!
+    var nextButton: UIButton?
+    var spinButton: UIButton?
+    var arrowView: UIImageView?
     let categoryNameLabel = UILabel()
     var displayLink: CADisplayLink?
 
@@ -97,7 +97,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         view.addSubview(nextButton)
         
         NSLayoutConstraint.activate([
-            nextButton.topAnchor.constraint(equalTo: spinButton.bottomAnchor, constant: 20),
+            nextButton.topAnchor.constraint(equalTo: spinButton?.bottomAnchor ?? view.bottomAnchor, constant: 20),
             nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
         
@@ -421,8 +421,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     func showQuestion(question: TriviaQuestion) {
         // Hide the wheel and spin button
         wheelView.isHidden = true
-        spinButton.isHidden = true
-        arrowView.isHidden = true
+        spinButton?.isHidden = true
+        arrowView?.isHidden = true
         categoryNameLabel.isHidden = true
         
         // Set up question UI
