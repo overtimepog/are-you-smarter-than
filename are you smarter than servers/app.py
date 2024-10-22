@@ -38,12 +38,13 @@ def index():
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
     with rooms_lock:
-        print(f"Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
-        print(f"Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
-        print(f"Current rooms: {list(rooms.keys())}")
+        print(f"[DEBUG] Current state of rooms: {rooms}")
+        print(f"[DEBUG] Current players in room {room_code}: {list(rooms.get(room_code, {}).get('players', {}).keys())}")
+        print(f"[DEBUG] Current rooms: {list(rooms.keys())}")
         room = rooms.get(room_code)
         if room:
             players = list(room['players'].keys())
+            print(f"[DEBUG] Room found: {room_code} with players: {players}")
             return jsonify({
                 'room_code': room_code,
                 'players': players,
@@ -52,7 +53,6 @@ def get_room_info(room_code):
                 'game_started': room['game_started'],
                 'winners': room['winners']
             }), 200
-    print(f"[DEBUG] Room not found for code: {room_code}")
     print(f"[DEBUG] Room not found for code: {room_code}")
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
