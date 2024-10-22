@@ -19,7 +19,7 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.conn.close()
 
     def test_add_and_get_room(self):
-        # Add a room and retrieve it
+        print("[DEBUG] Running test_add_and_get_room")
         add_room('test123', 'host1', 10, 4)
         room = get_room('test123')
         self.assertIsNotNone(room)
@@ -27,7 +27,7 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.assertEqual(room['host'], 'host1')
 
     def test_update_room(self):
-        # Update room details
+        print("[DEBUG] Running test_update_room")
         add_room('test456', 'host2', 5, 3)
         update_room('test456', players=['player1', 'player2'], game_started=True)
         room = get_room('test456')
@@ -35,7 +35,7 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.assertEqual(room['players'], ['player1', 'player2'])
 
     def test_add_and_get_player_score(self):
-        # Add player scores and retrieve them
+        print("[DEBUG] Running test_add_and_get_player_score")
         add_player_score('test123', 'player1', 100)
         scores = get_player_scores('test123')
         self.assertEqual(len(scores), 1)
@@ -43,14 +43,14 @@ class TestDatabaseFunctions(unittest.TestCase):
         self.assertEqual(scores[0]['score'], 100)
 
     def test_get_player_statistics(self):
-        # Retrieve player statistics
+        print("[DEBUG] Running test_get_player_statistics")
         add_player_score('test123', 'player2', 150)
         stats = get_player_statistics('player2')
         self.assertEqual(len(stats), 1)
         self.assertEqual(stats[0]['score'], 150)
 
     def test_get_game_history(self):
-        # Retrieve game history
+        print("[DEBUG] Running test_get_game_history")
         add_player_score('test123', 'player3', 200)
         history = get_game_history('test123')
         self.assertEqual(len(history), 2)  # Assuming previous tests added scores
