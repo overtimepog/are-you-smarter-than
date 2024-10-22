@@ -36,6 +36,7 @@ def index():
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
+    print(f"[DEBUG] Room Info: {rooms.get(room_code)}")
     with rooms_lock:
         room = rooms.get(room_code)
         if room:
