@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
-import time
+from room_db import init_db, add_room, get_room, update_room, delete_room, get_all_rooms, get_player_scores, add_player_score, get_player_statistics, get_game_history
 from room_db import init_db, add_room, get_room, update_room, delete_room, get_all_rooms
 import time
 import string
@@ -178,7 +178,17 @@ def handle_join_game(data):
         leave_room(room_code)
         return
 
-@app.route('/get_player_scores/<room_code>', methods=['GET'])
+@app.route('/get_player_statistics/<player_name>', methods=['GET'])
+def get_player_statistics_route(player_name):
+    print(f"[DEBUG] [get_player_statistics_route] Fetching statistics for player: {player_name}")
+    stats = get_player_statistics(player_name)
+    return jsonify({'player_name': player_name, 'statistics': stats}), 200
+
+@app.route('/get_game_history/<room_code>', methods=['GET'])
+def get_game_history_route(room_code):
+    print(f"[DEBUG] [get_game_history_route] Fetching game history for room code: {room_code}")
+    history = get_game_history(room_code)
+    return jsonify({'room_code': room_code, 'history': history}), 200
 def get_player_scores_route(room_code):
     print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
     scores = get_player_scores(room_code)

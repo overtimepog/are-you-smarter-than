@@ -66,7 +66,17 @@ def get_player_scores(room_code):
         with conn:
             rooms = conn.execute('SELECT room_code FROM rooms').fetchall()
             return [room[0] for room in rooms]
-def delete_room(room_code):
+def get_player_statistics(player_name):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            stats = conn.execute('SELECT room_code, score, timestamp FROM player_scores WHERE player_name = ?', (player_name,)).fetchall()
+            return [{'room_code': stat[0], 'score': stat[1], 'timestamp': stat[2]} for stat in stats]
+
+def get_game_history(room_code):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            history = conn.execute('SELECT player_name, score, timestamp FROM player_scores WHERE room_code = ?', (room_code,)).fetchall()
+            return [{'player_name': entry[0], 'score': entry[1], 'timestamp': entry[2]} for entry in history]
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('DELETE FROM rooms WHERE room_code = ?', (room_code,))
