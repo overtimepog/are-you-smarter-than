@@ -4,8 +4,6 @@ import random
 import time
 import string
 import uuid
-from apscheduler.schedulers.background import BackgroundScheduler
-import threading
 import signal
 import sys
 
@@ -13,14 +11,11 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = {}  # Store room data including question goals and players
-room_threads = {}  # Store threads for each room
-scheduler = BackgroundScheduler()
 
 # Create a mapping from session IDs to player and room information
 session_to_player = {}
 
-# Start the scheduler
-scheduler.start()
+MAX_ROOMS = 100  # Define a maximum number of rooms
 
 def generate_room_code():
     return str(uuid.uuid4())[:6]  # Generate a unique room code using a UUID
@@ -29,21 +24,8 @@ def update_last_active(room_code):
     if room_code in rooms:
         rooms[room_code]['last_active'] = time.time()
 
-def manage_room_lifecycle(room_code, stop_event, wait_time=30):
-    while not stop_event.wait(wait_time):  # Wait for the configured time or until the event is set
-        if room_code not in rooms:
-            break
-        current_time = time.time()
-        if current_time - rooms[room_code]['last_active'] > 6 * 3600:
-            cleanup_room(room_code)
-            break
-
 def cleanup_room(room_code):
     if room_code in rooms:
-        # Stop the room's lifecycle thread
-        if room_code in room_threads:
-            room_threads[room_code]['stop_event'].set()
-            del room_threads[room_code]
         # Delete the room
         del rooms[room_code]
         print(f"[DEBUG] Room {room_code} deleted during cleanup")
@@ -56,7 +38,8 @@ def initialize_room(room_code, host_name, question_goal, max_players):
         'question_goal': question_goal,
         'max_players': max_players,
         'winners': [],
-        'last_active': time.time()
+        'last_active': time.time(),
+        'creation_time': time.time()
     }
 
 @app.route('/')
@@ -141,33 +124,6 @@ def join_room_route():
     print(f"[DEBUG] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
-@app.route('/submit_answer', methods=['POST'])
-def submit_answer():
-    data = request.json
-    room_code = data['room_code']
-    player_name = data['player_name']
-    correct = data['correct']
-    print(f"[DEBUG] Player {player_name} submitted answer for room {room_code}. Correct: {correct}")
-
-    if room_code in rooms and player_name in rooms[room_code]['players']:
-        player = rooms[room_code]['players'][player_name]
-        if correct:
-            player['score'] += 1
-            print(f"[DEBUG] Player {player_name} score updated to {player['score']}")
-
-        update_last_active(room_code)  # Update last active time
-
-        # Check if the game has ended
-        if player['score'] >= rooms[room_code]['question_goal']:
-            rooms[room_code]['winners'].append(player_name)
-            print(f"[DEBUG] Player {player_name} won the game in room {room_code}")
-            # Broadcast game end and rankings to all players
-            rankings = sorted(rooms[room_code]['players'].items(), key=lambda x: x[1]['score'], reverse=True)
-            emit('game_ended', {'winners': rooms[room_code]['winners'], 'rankings': rankings}, room=room_code)
-            return jsonify({'game_ended': True, 'rankings': [{'player_name': player, 'score': score['score']} for player, score in rankings]}), 200
-
-    return jsonify({'game_ended': False}), 200
-
 @app.route('/create_room', methods=['POST'])
 def create_room():
     data = request.json
@@ -204,12 +160,6 @@ def create_room():
     print(f"[DEBUG] Room data after adding first player: {rooms[room_code]}, host: {first_player_name}")
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
 
-    # Start a thread to manage the room lifecycle
-    stop_event = threading.Event()
-    room_thread = threading.Thread(target=manage_room_lifecycle, args=(room_code, stop_event, 30), daemon=True)
-    room_threads[room_code] = {'thread': room_thread, 'stop_event': stop_event}
-    room_thread.start()
-
     return jsonify({'room_code': room_code, 'success': True}), 200
 
 @socketio.on('join_game')
@@ -236,36 +186,32 @@ def handle_join_game(data):
         leave_room(room_code)
         return
 
-@socketio.on('start_game')
-def handle_start_game(data):
-    room_code = data['room_code']
-
-    if room_code in rooms:
-        if data['player_name'] == rooms[room_code]['host']:
-            rooms[room_code]['game_started'] = True
-        emit('game_started', room=room_code)
-    else:
-        return
-
-@socketio.on('correct_answer')
-def handle_correct_answer(data):
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    data = request.json
     room_code = data['room_code']
     player_name = data['player_name']
-    player_id = data['player_id']
+    correct = data['correct']
+    print(f"[DEBUG] Player {player_name} submitted answer for room {room_code}. Correct: {correct}")
 
     if room_code in rooms and player_name in rooms[room_code]['players']:
-        # Verify the player_id matches the stored player_id and session ID matches
         player = rooms[room_code]['players'][player_name]
-        if player['player_id'] == player_id and player['sid'] == request.sid:
+        if correct:
             player['score'] += 1
-            current_score = player['score']
-            question_goal = rooms[room_code]['question_goal']
+            print(f"[DEBUG] Player {player_name} score updated to {player['score']}")
 
-            if current_score >= question_goal:
-                rooms[room_code]['winners'].append(player_name)
-                emit('game_won', player_name, room=room_code)
-            else:
-                emit('player_correct', {'player': player_name, 'score': current_score}, room=room_code)
+        update_last_active(room_code)  # Update last active time
+
+        # Check if the game has ended
+        if player['score'] >= rooms[room_code]['question_goal']:
+            rooms[room_code]['winners'].append(player_name)
+            print(f"[DEBUG] Player {player_name} won the game in room {room_code}")
+            # Broadcast game end and rankings to all players
+            rankings = sorted(rooms[room_code]['players'].items(), key=lambda x: x[1]['score'], reverse=True)
+            emit('game_ended', {'winners': rooms[room_code]['winners'], 'rankings': rankings}, room=room_code)
+            return jsonify({'game_ended': True, 'rankings': [{'player_name': player, 'score': score['score']} for player, score in rankings]}), 200
+
+    return jsonify({'game_ended': False}), 200
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -282,19 +228,30 @@ def handle_disconnect():
 
 def cleanup_rooms():
     current_time = time.time()
+    room_count = len(rooms)
     for room_code in list(rooms.keys()):
         room = rooms[room_code]
-        if (not room['players'] or (current_time - room['last_active'] > 6 * 3600)):
-            cleanup_room(room_code)
+        players_count = len(room['players'])
+        last_active = room['last_active']
+        creation_time = room['creation_time']
 
-# Schedule the cleanup_rooms function to run every hour
-scheduler.add_job(cleanup_rooms, 'interval', hours=1)
+        if (room_count > MAX_ROOMS or current_time - last_active > 12 * 3600):
+            if players_count == 1:
+                player_name = list(room['players'].keys())[0]
+                if current_time - creation_time > 3 * 3600 and current_time - last_active > 1800:
+                    cleanup_room(room_code)
+                    room_count -= 1
+            elif players_count == 0:
+                cleanup_room(room_code)
+                room_count -= 1
+
+# Schedule the cleanup_rooms function to be called manually every hour using SocketIO event
+@socketio.on('cleanup_rooms_event')
+def handle_cleanup_rooms_event():
+    cleanup_rooms()
 
 def graceful_shutdown(*args):
     print("[DEBUG] Shutting down server...")
-    scheduler.shutdown()
-    for room_code, thread_info in room_threads.items():
-        thread_info['stop_event'].set()
     socketio.stop()
     sys.exit(0)
 
