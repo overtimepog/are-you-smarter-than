@@ -59,7 +59,11 @@ def update_room(room_code, players=None, game_started=None, winners=None, last_a
             if last_active is not None:
                 conn.execute('UPDATE rooms SET last_active = ? WHERE room_code = ?', (last_active, room_code))
 
-def delete_room(room_code):
+def get_all_rooms():
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            rooms = conn.execute('SELECT room_code FROM rooms').fetchall()
+            return [room[0] for room in rooms]
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('DELETE FROM rooms WHERE room_code = ?', (room_code,))
