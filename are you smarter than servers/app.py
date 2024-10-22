@@ -92,7 +92,7 @@ def get_room_info(room_code):
             'winners': room['winners']
         }), 200
     print(f"[DEBUG] Room not found for room code: {room_code}")
-    return jsonify({'success': False, 'message': 'Room not found'}), 404
+    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @app.route('/leave_room', methods=['POST'])
 def leave_room_route():
@@ -111,7 +111,7 @@ def leave_room_route():
             cleanup_room(room_code)  # Use structured cleanup process
         return jsonify({'success': True, 'message': 'Player left the room'}), 200
     print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
-    return jsonify({'success': False, 'message': 'Room or player not found'}), 404
+    return jsonify({'success': False, 'message': f'Room with code {room_code} or player {player_name} not found'}), 404
 
 @app.route('/join_room', methods=['POST'])
 def join_room_route():
@@ -123,11 +123,11 @@ def join_room_route():
     if room_code in rooms:
         if player_name in rooms[room_code]['players']:
             print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
-            return jsonify({'success': False, 'message': 'Username already taken'}), 403
+            return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
 
         if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
             print(f"[DEBUG] Room {room_code} is full")
-            return jsonify({'success': False, 'message': 'Room is full'}), 403
+            return jsonify({'success': False, 'message': f'Room {room_code} is full'}), 403
 
         player_id = str(uuid.uuid4())  # Generate a unique player identifier
         rooms[room_code]['players'][player_name] = {
@@ -139,7 +139,7 @@ def join_room_route():
         print(f"[DEBUG] Player {player_name} joined room {room_code}")
         return jsonify({'success': True, 'player_id': player_id}), 200
     print(f"[DEBUG] Room not found for room code: {room_code}")
-    return jsonify({'success': False, 'message': 'Room not found'}), 404
+    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer():
@@ -188,7 +188,7 @@ def create_room():
     while room_code in rooms:
         if attempts >= max_attempts:
             print("[ERROR] Maximum attempts reached while generating a unique room code.")
-            return jsonify({'success': False, 'message': 'Unable to generate unique room code, please try again later.'}), 500
+            return jsonify({'success': False, 'message': 'Unable to generate a unique room code after multiple attempts, please try again later.'}), 500
         room_code = generate_room_code()
         attempts += 1
 
