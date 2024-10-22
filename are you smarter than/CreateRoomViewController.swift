@@ -56,6 +56,7 @@ class CreateRoomViewController: UIViewController {
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(backButton)
+        view.addSubview(playerNameTextField)
         view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(createButton)
