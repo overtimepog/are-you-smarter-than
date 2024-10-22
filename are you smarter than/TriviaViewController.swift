@@ -15,20 +15,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         case solo
         case multiplayer
         
-        // Add next button
-        nextButton = UIButton(type: .system)
-        nextButton.setTitle("Next", for: .normal)
-        nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        nextButton.translatesAutoresizingMaskIntoConstraints = false
-        nextButton.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
-        view.addSubview(nextButton)
-        
-        NSLayoutConstraint.activate([
-            nextButton.topAnchor.constraint(equalTo: spinButton.bottomAnchor, constant: 20),
-            nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-        
-        nextButton.isHidden = true // Initially hide the next button
     }
 
     // Handle next button press
@@ -96,6 +82,21 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        
+        // Add next button
+        nextButton = UIButton(type: .system)
+        nextButton.setTitle("Next", for: .normal)
+        nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        nextButton.translatesAutoresizingMaskIntoConstraints = false
+        nextButton.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
+        view.addSubview(nextButton)
+        
+        NSLayoutConstraint.activate([
+            nextButton.topAnchor.constraint(equalTo: spinButton.bottomAnchor, constant: 20),
+            nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+        
+        nextButton.isHidden = true // Initially hide the next button
         fetchCategories()
         questionLabel.isHidden = true
         scoreAndQuestionLabel.isHidden = false
