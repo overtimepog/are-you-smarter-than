@@ -25,10 +25,7 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        questionLabel.isHidden = true
-        scoreLabel.isHidden = true
         fetchCategories()
-        setupWheel()
     }
 
     // Setup the wheel UI
@@ -40,7 +37,7 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
         categoryNameLabel.removeFromSuperview()
 
         // Create a wheel view
-        wheelView = WheelView(categories: selectedCategories.map { TriviaCategory(id: $0.id, name: $0.name, emoji: $0.emoji) })
+        wheelView = WheelView(categories: selectedCategories)
         wheelView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(wheelView)
 
