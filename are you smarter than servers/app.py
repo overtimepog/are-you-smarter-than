@@ -3,7 +3,7 @@ from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
 import time
-from room_db import init_db, add_room, get_room, update_room, delete_room
+from room_db import init_db, add_room, get_room, update_room, delete_room, get_all_rooms
 import time
 import string
 import uuid
@@ -65,17 +65,6 @@ def index():
 def get_room_info(room_code):
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = get_room(room_code)
-    if room:
-        players = room['players']
-        print(f"[DEBUG] [get_room_info] Room found: {room}")
-        return jsonify({
-            'room_code': room_code,
-            'players': players,
-            'question_goal': room['question_goal'],
-            'max_players': room['max_players'],
-            'game_started': room['game_started'],
-            'winners': room['winners']
-        }), 200
     if room:
         players = list(room['players'].keys())
         print(f"[DEBUG] [get_room_info] Room found: {room}")
