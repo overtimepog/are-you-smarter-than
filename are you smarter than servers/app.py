@@ -36,7 +36,9 @@ def index():
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
+    print(f"[DEBUG] Current rooms state before accessing: {rooms}")
     with rooms_lock:
+        print(f"[DEBUG] Current rooms state after acquiring lock: {rooms}")
         room = rooms.get(room_code)
         if room:
             players = list(room['players'].keys())
