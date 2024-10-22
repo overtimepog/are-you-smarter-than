@@ -49,7 +49,19 @@ def update_room(room_code, players=None, game_started=None, winners=None, last_a
             if last_active is not None:
                 conn.execute('UPDATE rooms SET last_active = ? WHERE room_code = ?', (last_active, room_code))
 
-def get_all_rooms():
+def add_player_score(room_code, player_name, score):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            conn.execute('''
+                INSERT INTO player_scores (room_code, player_name, score, timestamp)
+                VALUES (?, ?, ?, ?)
+            ''', (room_code, player_name, score, time.time()))
+
+def get_player_scores(room_code):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            scores = conn.execute('SELECT player_name, score FROM player_scores WHERE room_code = ?', (room_code,)).fetchall()
+            return [{'player_name': score[0], 'score': score[1]} for score in scores]
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             rooms = conn.execute('SELECT room_code FROM rooms').fetchall()

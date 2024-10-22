@@ -178,7 +178,11 @@ def handle_join_game(data):
         leave_room(room_code)
         return
 
-@app.route('/submit_answer', methods=['POST'])
+@app.route('/get_player_scores/<room_code>', methods=['GET'])
+def get_player_scores_route(room_code):
+    print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
+    scores = get_player_scores(room_code)
+    return jsonify({'room_code': room_code, 'scores': scores}), 200
 def submit_answer():
     data = request.json
     room_code = data['room_code']
@@ -191,7 +195,8 @@ def submit_answer():
         player = room['players'][player_name]
         if correct:
             player['score'] += 1
-            print(f"[DEBUG] Player {player_name} score updated to {player['score']}")
+            add_player_score(room_code, player_name, player['score'])
+            print(f"[DEBUG] Player {player_name} score logged in database with score {player['score']}")
 
         update_last_active(room_code)  # Update last active time
 
