@@ -17,6 +17,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         
     }
 
+    var difficulty: String = "easy" // Default difficulty
 
     // Handle next button press
     @objc func nextQuestion() {
@@ -37,6 +38,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 return
             }
             self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
+
+            // Update difficulty based on question index
+            if currentQuestionIndex >= 10 && currentQuestionIndex < 20 {
+                difficulty = "medium"
+            } else if currentQuestionIndex >= 20 {
+                difficulty = "hard"
+            }
         } else if self.gameMode == .multiplayer {
             if currentQuestionIndex >= questionGoal {
                 showWinViewController()
@@ -195,7 +203,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
             scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         } else {
-            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
             // Fetch categories from the API
             let urlString = "https://opentdb.com/api_category.php"
             guard let url = URL(string: urlString) else {
@@ -385,7 +393,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Load question from the selected category
     func loadQuestionFromCategory(category: TriviaCategory) {
-        let urlString = "https://opentdb.com/api.php?amount=1&category=\(category.id)&type=multiple"
+        let urlString = "https://opentdb.com/api.php?amount=1&category=\(category.id)&type=multiple&difficulty=\(difficulty)"
         guard let url = URL(string: urlString) else {
             print("Invalid URL for question")
             return
@@ -492,7 +500,7 @@ button.titleLabel?.minimumScaleFactor = 0.5
         guard let currentQuestion = currentQuestion else { return }
 
         let selectedIndex = sender.tag
-        let isCorrect = selectedIndex == currentQuestion.correctAnswer
+        isCorrect = selectedIndex == currentQuestion.correctAnswer
 
         if isCorrect {
             score += 1 // Correct answer, increment score
@@ -507,14 +515,14 @@ button.titleLabel?.minimumScaleFactor = 0.5
 
         // Update score and streak labels
         if gameMode == .solo {
-            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
         } else {
             scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         }
 
         // Animate the selected button
         UIView.animate(withDuration: 0.3) {
-            sender.backgroundColor = isCorrect ? UIColor.systemGreen : UIColor.systemRed
+            sender.backgroundColor = self.isCorrect ? UIColor.systemGreen : UIColor.systemRed
         }
 
         // If incorrect, highlight the correct answer
@@ -531,7 +539,18 @@ button.titleLabel?.minimumScaleFactor = 0.5
         // After a delay, show the next button
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.nextButton?.isHidden = false
+            self?.nextButton?.removeTarget(nil, action: nil, for: .allEvents)
+            if self?.isCorrect == true {
+                self?.nextButton?.addTarget(self, action: #selector(self?.nextQuestion), for: .touchUpInside)
+            } else {
+                self?.nextButton?.addTarget(self, action: #selector(self?.returnToMainMenu), for: .touchUpInside)
+            }
         }
+    }
+
+    // Return to main menu
+    @objc func returnToMainMenu() {
+        self.navigationController?.popToRootViewController(animated: true)
     }
 
     // Show retry button after 3 questions
