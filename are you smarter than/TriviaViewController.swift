@@ -36,6 +36,11 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 return
             }
             self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
+        } else if self.gameMode == .multiplayer {
+            if currentQuestionIndex >= questionGoal {
+                showWinViewController()
+                return
+            }
         }
 
         // Show the wheel again
@@ -453,8 +458,8 @@ button.titleLabel?.minimumScaleFactor = 0.5
         }
         
         // Update score and check if game should end based on game mode
+        scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
         if gameMode == .multiplayer {
-            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
             if currentQuestionIndex >= questionGoal {
                 showWinViewController()
                 return
@@ -466,8 +471,6 @@ button.titleLabel?.minimumScaleFactor = 0.5
                 "correct": isCorrect
             ]
             sendResultToServer(parameters: parameters)
-        } else {
-            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
         }
         scoreAndQuestionLabel.isHidden = false
     }
