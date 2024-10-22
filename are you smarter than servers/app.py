@@ -19,6 +19,7 @@ init_db()  # Initialize the database with the necessary tables
 session_to_player = {}
 
 MAX_ROOMS = 100  # Define a maximum number of rooms allowed at a time
+used_room_codes = set()  # Track used room codes to avoid collisions
 
 def generate_room_code():
     # Generate a unique room code consisting of 6 uppercase letters or digits
@@ -32,6 +33,7 @@ def update_last_active(room_code):
 def cleanup_room(room_code):
     # Delete a room from the database to free up resources
     delete_room(room_code)
+    used_room_codes.discard(room_code)  # Remove the room code from the set of used codes
     print(f"[DEBUG] [cleanup_room] Room {room_code} deleted from database")
 
 @app.route('/')
@@ -96,21 +98,22 @@ def join_room_route():
     player_name = data['player_name']
     print(f"[DEBUG] Player {player_name} attempting to join room {room_code}")
 
-    if add_player_to_room(room_code, player_name):
-        update_last_active(room_code)  # Update last active time
-        player_id = str(uuid.uuid4())  # Generate a unique player identifier
-        print(f"[DEBUG] Player {player_name} joined room {room_code}")
-        return jsonify({'success': True, 'player_id': player_id}), 200
     room = get_room(room_code)
     if not room:
         print(f"[DEBUG] Room not found for room code: {room_code}")
         return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
-    if player_name in room['players']:
-        print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
-        return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
     if len(room['players']) >= room['max_players']:
         print(f"[DEBUG] Room {room_code} is full")
         return jsonify({'success': False, 'message': f'Room {room_code} is full'}), 403
+    if player_name in room['players']:
+        print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
+        return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
+
+    if add_player_to_room(room_code, player_name):
+        update_last_active(room_code)  # Update last active time
+        player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))  # Generate a shorter, human-readable player identifier
+        print(f"[DEBUG] Player {player_name} joined room {room_code}")
+        return jsonify({'success': True, 'player_id': player_id}), 200
 
 @app.route('/create_room', methods=['POST'])
 def create_room():
@@ -132,7 +135,7 @@ def create_room():
         return jsonify({'success': False, 'message': 'Invalid max players. It must be a positive integer.'}), 400
 
     # Check for room code collisions and regenerate if needed
-    while get_room(room_code):
+    while room_code in used_room_codes or get_room(room_code):
         if attempts >= max_attempts:
             print("[ERROR] Maximum attempts reached while generating a unique room code.")
             return jsonify({'success': False, 'message': 'Unable to generate a unique room code after multiple attempts, please try again later.'}), 500
@@ -141,6 +144,7 @@ def create_room():
 
     first_player_name = data.get('player_name')
     add_room(room_code, first_player_name, question_goal, max_players)  # Add room to the database
+    used_room_codes.add(room_code)  # Add the new room code to the set of used codes
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
 
     return jsonify({'room_code': room_code, 'success': True}), 200
@@ -155,11 +159,15 @@ def handle_join_game(data):
 
     room = get_room(room_code)
     if room and player_name in room['players']:
-        join_room(room_code)  # Join the room via SocketIO
-        session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}  # Store player info
-        current_players = room['players']
-        update_last_active(room_code)  # Update last active time
-        emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
+        try:
+            join_room(room_code)  # Attempt to join the room via SocketIO
+            session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}  # Store player info
+            current_players = room['players']
+            update_last_active(room_code)  # Update last active time
+            emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
+        except Exception as e:
+            print(f"[ERROR] Failed to join room {room_code}: {e}")
+            emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
     else:
         # Player did not join via HTTP endpoint or player_id mismatch
         leave_room(room_code)
@@ -179,6 +187,7 @@ def get_game_history_route(room_code):
     history = get_game_history(room_code)
     return jsonify({'room_code': room_code, 'history': history}), 200
 
+@app.route('/get_player_scores/<room_code>', methods=['GET'])
 def get_player_scores_route(room_code):
     # Fetch the scores of all players in a specific room
     print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
