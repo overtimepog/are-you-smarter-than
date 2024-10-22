@@ -184,10 +184,10 @@ def handle_join_game(data):
         current_players = room['players']
         update_last_active(room_code)  # Update last active time
         emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
-        else:
-            # Player did not join via HTTP endpoint or player_id mismatch
-            leave_room(room_code)
-            return
+    else:
+        # Player did not join via HTTP endpoint or player_id mismatch
+        leave_room(room_code)
+        return
     else:
         # Room does not exist
         leave_room(room_code)
