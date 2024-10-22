@@ -1,4 +1,5 @@
 import UIKit
+import SwiftyJSON
 
 class WinViewController: UIViewController {
 
@@ -84,22 +85,18 @@ class WinViewController: UIViewController {
                 return
             }
 
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                   let success = json["success"] as? Bool, success {
-                    DispatchQueue.main.async {
-                        let lobbyVC = LobbyViewController()
-                        lobbyVC.isHost = false
-                        lobbyVC.playerName = self.playerName
-                        lobbyVC.roomCode = self.roomCode
-                        lobbyVC.modalPresentationStyle = .fullScreen
-                        self.present(lobbyVC, animated: true)
-                    }
-                } else {
-                    print("Failed to join room")
+            let json = JSON(data)
+            if json["success"].boolValue {
+                DispatchQueue.main.async {
+                    let lobbyVC = LobbyViewController()
+                    lobbyVC.isHost = false
+                    lobbyVC.playerName = self.playerName
+                    lobbyVC.roomCode = self.roomCode
+                    lobbyVC.modalPresentationStyle = .fullScreen
+                    self.present(lobbyVC, animated: true)
                 }
-            } catch {
-                print("Error parsing response: \(error.localizedDescription)")
+            } else {
+                print("Failed to join room")
             }
         }.resume()
     }

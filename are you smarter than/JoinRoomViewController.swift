@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftyJSON
 
 class JoinRoomViewController: UIViewController {
 
@@ -92,26 +93,19 @@ class JoinRoomViewController: UIViewController {
                 return
             }
 
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                   let success = json["success"] as? Bool, success {
-                    DispatchQueue.main.async {
-                        let lobbyVC = LobbyViewController()
-                        lobbyVC.isHost = false
-                        lobbyVC.playerName = playerName
-                        lobbyVC.roomCode = roomCode
-                        lobbyVC.modalPresentationStyle = .fullScreen
-                        self.present(lobbyVC, animated: true)
-                    }
-                } else {
-                    if let message = json["message"] as? String {
-                        DispatchQueue.main.async { self.statusLabel.text = message }
-                    } else {
-                        DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
-                    }
+            let json = JSON(data)
+            if json["success"].boolValue {
+                DispatchQueue.main.async {
+                    let lobbyVC = LobbyViewController()
+                    lobbyVC.isHost = false
+                    lobbyVC.playerName = playerName
+                    lobbyVC.roomCode = roomCode
+                    lobbyVC.modalPresentationStyle = .fullScreen
+                    self.present(lobbyVC, animated: true)
                 }
-            } catch {
-                DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }
+            } else {
+                let message = json["message"].stringValue
+                DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to join room." : message }
             }
         }.resume()
     }

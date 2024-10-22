@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import SwiftyJSON
 
 class LobbyViewController: UIViewController {
 
@@ -121,16 +122,16 @@ class LobbyViewController: UIViewController {
             }
 
             do {
-                do {
-                    let roomInfo = try JSONDecoder().decode(RoomInfo.self, from: data)
+                let json = JSON(data)
+                if let roomInfo = RoomInfo(json: json) {
                     DispatchQueue.main.async {
                         self.updateUI(with: roomInfo)
                     }
-                } catch {
+                } else {
                     if let jsonString = String(data: data, encoding: .utf8) {
-                        print("Failed to decode room data: \(error.localizedDescription). Response: \(jsonString)")
+                        print("Failed to decode room data. Response: \(jsonString)")
                     } else {
-                        print("Failed to decode room data: \(error.localizedDescription). Unable to convert data to string.")
+                        print("Failed to decode room data. Unable to convert data to string.")
                     }
                 }
             } catch {

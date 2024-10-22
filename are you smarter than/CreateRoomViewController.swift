@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftyJSON
 
 class CreateRoomViewController: UIViewController {
 
@@ -117,30 +118,22 @@ class CreateRoomViewController: UIViewController {
                 return
             }
 
-            do {
-                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                   let success = json["success"] as? Bool, success,
-                   let roomCode = json["room_code"] as? String {
-                    DispatchQueue.main.async {
-                        print("[DEBUG] Room created with code: \(roomCode)")
-                        self.statusLabel.text = "Room created with code: \(roomCode)"
-                        
-                        let lobbyVC = LobbyViewController()
-                        lobbyVC.isHost = true
-                        lobbyVC.playerName = playerName
-                        lobbyVC.roomCode = roomCode
-                        lobbyVC.modalPresentationStyle = .fullScreen
-                        self.present(lobbyVC, animated: true)
-                    }
-                } else {
-                    if let message = json["message"] as? String {
-                        DispatchQueue.main.async { self.statusLabel.text = message }
-                    } else {
-                        DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
-                    }
+            let json = JSON(data)
+            if json["success"].boolValue, let roomCode = json["room_code"].string {
+                DispatchQueue.main.async {
+                    print("[DEBUG] Room created with code: \(roomCode)")
+                    self.statusLabel.text = "Room created with code: \(roomCode)"
+                    
+                    let lobbyVC = LobbyViewController()
+                    lobbyVC.isHost = true
+                    lobbyVC.playerName = playerName
+                    lobbyVC.roomCode = roomCode
+                    lobbyVC.modalPresentationStyle = .fullScreen
+                    self.present(lobbyVC, animated: true)
                 }
-            } catch {
-                DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }
+            } else {
+                let message = json["message"].stringValue
+                DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to create room." : message }
             }
         }.resume()
     }
