@@ -10,7 +10,8 @@ class TestDatabaseFunctions(unittest.TestCase):
         init_db()
 
     def setUp(self):
-        # Connect to the database
+        # Re-initialize the database schema to ensure a clean state for each test
+        init_db()
         self.conn = sqlite3.connect('trivia_game.db')
         self.cursor = self.conn.cursor()
 
