@@ -337,7 +337,10 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
 
         // If incorrect, highlight the correct answer
         if !isCorrect {
-            let correctButton = optionButtons[currentQuestion.correctAnswer]
+            guard let correctButton = optionButtons[safe: currentQuestion.correctAnswer] else {
+                print("[DEBUG] Correct button not found")
+                return
+            }
             UIView.animate(withDuration: 0.3) {
                 correctButton.backgroundColor = UIColor.systemGreen
             }
@@ -419,4 +422,9 @@ struct SoloCategoryListResponse: Codable {
 struct SoloTriviaCategoryAPI: Codable {
     let id: Int
     let name: String
+}
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
 }
