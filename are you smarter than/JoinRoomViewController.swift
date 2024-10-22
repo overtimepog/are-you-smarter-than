@@ -16,6 +16,7 @@ class JoinRoomViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("[DEBUG] JoinRoomViewController loaded")
         setupUI()
     }
 
@@ -65,6 +66,7 @@ class JoinRoomViewController: UIViewController {
             return
         }
 
+        print("[DEBUG] Attempting to join room with roomCode: \(roomCode), playerName: \(playerName)")
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {

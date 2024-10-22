@@ -18,6 +18,7 @@ class CreateRoomViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("[DEBUG] CreateRoomViewController loaded")
         setupUI()
     }
 
@@ -83,7 +84,7 @@ class CreateRoomViewController: UIViewController {
             return
         }
 
-        print("Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
+        print("[DEBUG] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
         let parameters: [String: Any] = [
             "player_name": playerName,
             "question_goal": questionGoal,

@@ -26,6 +26,7 @@ class LobbyViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("[DEBUG] LobbyViewController loaded with roomCode: \(roomCode), playerName: \(playerName), isHost: \(isHost)")
         setupUI()
         fetchRoomData()  // Fetch room data when the view loads
         playersTableView.dataSource = self
@@ -92,6 +93,7 @@ class LobbyViewController: UIViewController {
 
     // Fetch room data from the API
     func fetchRoomData() {
+        print("[DEBUG] Fetching room data for roomCode: \(roomCode)")
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
             print("Invalid URL")
             return
@@ -151,6 +153,8 @@ class LobbyViewController: UIViewController {
     @objc func startGame() {
         guard isHost else { return }
 
+        print("[DEBUG] Attempting to start game with roomCode: \(roomCode), playerName: \(playerName)")
+        print("[DEBUG] Attempting to leave lobby with roomCode: \(roomCode), playerName: \(playerName)")
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/start_game") else {
