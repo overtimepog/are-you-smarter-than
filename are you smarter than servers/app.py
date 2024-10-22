@@ -238,12 +238,15 @@ def cleanup_rooms():
         creation_time = room['creation_time']
 
         if (room_count > MAX_ROOMS or current_time - last_active > 12 * 3600):
+            print(f"[DEBUG] Evaluating room {room_code} for cleanup. Room count: {room_count}, Players count: {players_count}, Last active: {last_active}, Creation time: {creation_time}")
             if players_count == 1:
                 player_name = list(room['players'].keys())[0]
                 if current_time - creation_time > 3 * 3600 and current_time - last_active > 1800:
+                    print(f"[DEBUG] Cleaning up room {room_code} due to inactivity. Player: {player_name}")
                     cleanup_room(room_code)
                     room_count -= 1
             elif players_count == 0:
+                print(f"[DEBUG] Cleaning up empty room {room_code}")
                 cleanup_room(room_code)
                 room_count -= 1
 
