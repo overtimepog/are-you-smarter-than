@@ -156,6 +156,7 @@ def create_room():
         first_player_name = data.get('player_name')
         rooms[room_code] = {
             'host': first_player_name,
+            'host': first_player_name,
             'players': {},
             'game_started': False,
             'question_goal': question_goal,
