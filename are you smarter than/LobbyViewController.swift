@@ -40,6 +40,11 @@ class LobbyViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
 
+        // Debug: Check for NaN values in UI setup
+        if playersTableView.frame.width.isNaN || playersTableView.frame.height.isNaN {
+            print("[DEBUG] NaN detected in playersTableView dimensions")
+        }
+
         // Room Code Label
         roomCodeLabel.font = UIFont.systemFont(ofSize: 24)
         roomCodeLabel.textAlignment = .center

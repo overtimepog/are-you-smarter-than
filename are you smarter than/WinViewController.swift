@@ -18,6 +18,11 @@ class WinViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
 
+        // Debug: Check for NaN values in UI setup
+        if podiumView.frame.width.isNaN || podiumView.frame.height.isNaN {
+            print("[DEBUG] NaN detected in podiumView dimensions")
+        }
+
         // Podium View
         podiumView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(podiumView)
