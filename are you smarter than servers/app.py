@@ -127,7 +127,10 @@ def create_room():
     # Validate input parameters
     question_goal = data.get('question_goal', 10)  # Default to 10 questions
     max_players = data.get('max_players', 8)       # Default to 8 players
-    if not isinstance(question_goal, int) or question_goal <= 0:
+    difficulty = data.get('difficulty', 'easy')  # Default to 'easy' if not provided
+    if difficulty not in ['easy', 'medium', 'hard']:
+        print("[DEBUG] Invalid difficulty provided.")
+        return jsonify({'success': False, 'message': 'Invalid difficulty. It must be one of: easy, medium, hard.'}), 400
         print("[DEBUG] Invalid question goal provided.")
         return jsonify({'success': False, 'message': 'Invalid question goal. It must be a positive integer.'}), 400
     if not isinstance(max_players, int) or max_players <= 0:
@@ -143,7 +146,7 @@ def create_room():
         attempts += 1
 
     first_player_name = data.get('player_name')
-    add_room(room_code, first_player_name, question_goal, max_players)  # Add room to the database
+    add_room(room_code, first_player_name, question_goal, max_players, difficulty)  # Add room to the database
     used_room_codes.add(room_code)  # Add the new room code to the set of used codes
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
 
