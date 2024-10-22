@@ -37,7 +37,7 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
         categoryNameLabel.removeFromSuperview()
 
         // Create a wheel view
-        wheelView = WheelView(categories: selectedCategories)
+        wheelView = WheelView(categories: selectedCategories.map { TriviaCategory(id: $0.id, name: $0.name, emoji: $0.emoji) })
         wheelView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(wheelView)
 
