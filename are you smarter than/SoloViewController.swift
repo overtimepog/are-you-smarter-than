@@ -1,7 +1,7 @@
 import UIKit
 
 // SoloViewController.swift
-class SoloViewController: UIViewController {
+class SoloViewController: UIViewController, CAAnimationDelegate {
 
     // Trivia question data
     var currentQuestion: SoloTriviaQuestion?
@@ -38,7 +38,7 @@ class SoloViewController: UIViewController {
         categoryNameLabel.removeFromSuperview()
 
         // Create a wheel view
-        wheelView = WheelView(categories: selectedCategories)
+        wheelView = WheelView(categories: selectedCategories.map { TriviaCategory(id: $0.id, name: $0.name, emoji: $0.emoji) })
         wheelView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(wheelView)
 
@@ -129,7 +129,7 @@ class SoloViewController: UIViewController {
     }
 
     // Animation delegate method
-    func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+    @objc func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         // Stop updating the category name
         displayLink?.invalidate()
         displayLink = nil
