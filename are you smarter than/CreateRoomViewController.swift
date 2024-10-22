@@ -87,15 +87,16 @@ class CreateRoomViewController: UIViewController {
     }
 
     @objc func createRoom() {
-        print("[DEBUG] Create Room button tapped")
+        print("[DEBUG] [createRoom] Create Room button tapped")
         guard let playerName = playerNameTextField.text, !playerName.isEmpty,
               let questionGoal = Int(questionGoalTextField.text ?? ""),
               let maxPlayers = Int(maxPlayersTextField.text ?? "") else {
+            print("[DEBUG] [createRoom] Invalid input: playerName: \(playerNameTextField.text ?? ""), questionGoal: \(questionGoalTextField.text ?? ""), maxPlayers: \(maxPlayersTextField.text ?? "")")
             statusLabel.text = "Please enter valid numbers."
             return
         }
 
-        print("[DEBUG] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
+        print("[DEBUG] [createRoom] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers)")
         let parameters: [String: Any] = [
             "player_name": playerName,
             "question_goal": questionGoal,
@@ -103,6 +104,7 @@ class CreateRoomViewController: UIViewController {
         ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
+            print("[DEBUG] [createRoom] Invalid API URL.")
             statusLabel.text = "Invalid API URL."
             return
         }
@@ -116,19 +118,20 @@ class CreateRoomViewController: UIViewController {
             guard let self = self else { return }
 
             if let error = error {
+                print("[DEBUG] [createRoom] Error creating room: \(error.localizedDescription)")
                 DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
-                print("[DEBUG] Error creating room: \(error.localizedDescription)")
                 return
             }
 
             guard let data = data else {
+                print("[DEBUG] [createRoom] No data received.")
                 DispatchQueue.main.async { self.statusLabel.text = "No data received." }
-                print("[DEBUG] No data received.")
                 return
             }
 
             let json = JSON(data)
             if json["success"].boolValue, let roomCode = json["room_code"].string {
+                print("[DEBUG] [createRoom] Room created successfully with code: \(roomCode)")
                 DispatchQueue.main.async {
                     print("[DEBUG] Room created with code: \(roomCode)")
                     self.statusLabel.text = "Room created with code: \(roomCode)"
@@ -142,6 +145,7 @@ class CreateRoomViewController: UIViewController {
                 }
             } else {
                 let message = json["message"].stringValue
+                print("[DEBUG] [createRoom] Room creation failed with message: \(message)")
                 DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to create room." : message }
             }
         }.resume()
