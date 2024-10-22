@@ -14,14 +14,14 @@ def init_db():
         with conn:
             conn.executescript(schema)
 
-def add_room(room_code, host, question_goal, max_players):
+def add_room(room_code, host, question_goal, max_players, difficulty):
     players = [host]
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('''
-                INSERT INTO rooms (room_code, host, players, game_started, question_goal, max_players, winners, last_active, creation_time)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (room_code, host, str(players), False, question_goal, max_players, '[]', time.time(), time.time()))
+                INSERT INTO rooms (room_code, host, players, game_started, question_goal, max_players, winners, last_active, creation_time, difficulty)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (room_code, host, str(players), False, question_goal, max_players, '[]', time.time(), time.time(), difficulty))
 
 def get_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     question_goal INTEGER,
     max_players INTEGER,
     winners TEXT,
+    difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
     last_active REAL,
     creation_time REAL
 );
