@@ -412,14 +412,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }
 
         // Update score and check if game should end based on game mode
-        switch gameMode {
-        case .solo:
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
-            if currentQuestionIndex >= 3 {
-                showWinViewController()
-                return
-            }
-        case .multiplayer:
+        if gameMode == .multiplayer {
             scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
             if currentQuestionIndex >= questionGoal {
                 showWinViewController()
@@ -432,6 +425,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 "correct": isCorrect
             ]
             sendResultToServer(parameters: parameters)
+        } else {
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
         }
         scoreAndQuestionLabel.isHidden = false
         scoreLabel.isHidden = false
@@ -488,20 +483,20 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             self.currentQuestion = nil
 
             if self.gameMode == .solo {
+                if !isCorrect {
+                    // Return to main menu if the answer is incorrect
+                    self.dismiss(animated: true, completion: nil)
+                    return
+                }
                 self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
             }
 
-            if self.currentQuestionIndex < 3 {
-                // Show the wheel again
-                self.wheelView.isHidden = false
-                self.spinButton.isHidden = false
-                self.arrowView.isHidden = false
-                self.categoryNameLabel.isHidden = false
-                self.spinButton.isEnabled = true
-            } else {
-                // Show retry button
-                self.showRetryButton()
-            }
+            // Show the wheel again
+            self.wheelView.isHidden = false
+            self.spinButton.isHidden = false
+            self.arrowView.isHidden = false
+            self.categoryNameLabel.isHidden = false
+            self.spinButton.isEnabled = true
         }
     }
 
