@@ -52,6 +52,8 @@ class TestDatabaseFunctions(unittest.TestCase):
 
     def test_get_game_history(self):
         print("[DEBUG] Running test_get_game_history")
+        add_player_score('test123', 'player1', 100)
+        add_player_score('test123', 'player2', 150)
         add_player_score('test123', 'player3', 200)
         history = get_game_history('test123')
         self.assertEqual(len(history), 2)  # Assuming previous tests added scores
