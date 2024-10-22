@@ -36,6 +36,124 @@ def index():
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
+    with rooms_lock:
+        room = rooms.get(room_code)
+        if room:
+            players = list(room['players'].keys())
+            print(f"[DEBUG] Room found: {room}")
+            return jsonify({
+                'room_code': room_code,
+                'players': players,
+                'question_goal': room['question_goal'],
+                'max_players': room['max_players'],
+                'game_started': room['game_started'],
+                'winners': room['winners']
+            }), 200
+    print(f"[DEBUG] Room not found for room code: {room_code}")
+    return jsonify({'success': False, 'message': 'Room not found'}), 404
+
+@app.route('/leave_room', methods=['POST'])
+def leave_room_route():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    print(f"[DEBUG] Player {player_name} attempting to leave room {room_code}")
+
+    with rooms_lock:
+        if room_code in rooms and player_name in rooms[room_code]['players']:
+            del rooms[room_code]['players'][player_name]
+            rooms[room_code]['last_active'] = time.time()  # Update last active time when a player leaves
+            if not rooms[room_code]['players']:
+                del rooms[room_code]  # Delete room if no players are left
+                print(f"[DEBUG] Room {room_code} deleted as no players are left")
+            return jsonify({'success': True, 'message': 'Player left the room'}), 200
+    print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
+    return jsonify({'success': False, 'message': 'Room or player not found'}), 404
+
+@app.route('/create_room', methods=['POST'])
+def create_room():
+    data = request.json
+    print("[DEBUG] Attempting to create a new room.")
+    room_code = generate_room_code()
+    question_goal = data.get('question_goal', 10)  # Default to 10 questions
+    max_players = data.get('max_players', 8)       # Default to 8 players
+
+    # Check for room code collisions and regenerate if needed
+    with rooms_lock:
+        while room_code in rooms:
+            room_code = generate_room_code()
+
+        first_player_name = data.get('player_name')
+        rooms[room_code] = {
+            'host': first_player_name,
+            'players': {},
+            'game_started': False,
+            'question_goal': question_goal,
+            'max_players': max_players,
+            'winners': [],
+            'last_active': time.time()
+        }
+    rooms[room_code]['players'][first_player_name] = {
+        'player_id': str(uuid.uuid4()),
+        'score': 0,
+        'sid': None
+    }
+    print(f"[DEBUG] Room created successfully with room code: {room_code}")
+    return jsonify({'room_code': room_code, 'success': True}), 200
+
+@app.route('/join_room', methods=['POST'])
+def join_room_route():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    print(f"[DEBUG] Player {player_name} attempting to join room {room_code}")
+
+    with rooms_lock:
+        if room_code in rooms:
+            if player_name in rooms[room_code]['players']:
+                print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
+                return jsonify({'success': False, 'message': 'Username already taken'}), 403
+
+            if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
+                print(f"[DEBUG] Room {room_code} is full")
+                return jsonify({'success': False, 'message': 'Room is full'}), 403
+
+            player_id = str(uuid.uuid4())  # Generate a unique player identifier
+            rooms[room_code]['players'][player_name] = {
+                'player_id': player_id,
+                'score': 0,
+                'sid': None  # Will be set when the player connects via SocketIO
+            }
+            rooms[room_code]['last_active'] = time.time()  # Update last active time when a player joins
+            print(f"[DEBUG] Player {player_name} joined room {room_code}")
+            return jsonify({'success': True, 'player_id': player_id}), 200
+    print(f"[DEBUG] Room not found for room code: {room_code}")
+    return jsonify({'success': False, 'message': 'Room not found'}), 404
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    correct = data['correct']
+    print(f"[DEBUG] Player {player_name} submitted answer for room {room_code}. Correct: {correct}")
+
+    with rooms_lock:
+        if room_code in rooms and player_name in rooms[room_code]['players']:
+            player = rooms[room_code]['players'][player_name]
+            if correct:
+                player['score'] += 1
+                print(f"[DEBUG] Player {player_name} score updated to {player['score']}")
+
+            # Check if the game has ended
+            if player['score'] >= rooms[room_code]['question_goal']:
+                rooms[room_code]['winners'].append(player_name)
+                print(f"[DEBUG] Player {player_name} won the game in room {room_code}")
+                return jsonify({'game_ended': True}), 200
+
+    return jsonify({'game_ended': False}), 200
+def get_room_info(room_code):
+    print(f"[DEBUG] Fetching room info for room code: {room_code}")
     print(f"[DEBUG] Room Info: {rooms.get(room_code)}")
     with rooms_lock:
         room = rooms.get(room_code)
