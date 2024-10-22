@@ -70,36 +70,6 @@ def leave_room_route():
     print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
     return jsonify({'success': False, 'message': 'Room or player not found'}), 404
 
-@app.route('/create_room', methods=['POST'])
-def create_room():
-    data = request.json
-    print("[DEBUG] Attempting to create a new room.")
-    room_code = generate_room_code()
-    question_goal = data.get('question_goal', 10)  # Default to 10 questions
-    max_players = data.get('max_players', 8)       # Default to 8 players
-
-    # Check for room code collisions and regenerate if needed
-    with rooms_lock:
-        while room_code in rooms:
-            room_code = generate_room_code()
-
-        first_player_name = data.get('player_name')
-        rooms[room_code] = {
-            'host': first_player_name,
-            'players': {},
-            'game_started': False,
-            'question_goal': question_goal,
-            'max_players': max_players,
-            'winners': [],
-            'last_active': time.time()
-        }
-    rooms[room_code]['players'][first_player_name] = {
-        'player_id': str(uuid.uuid4()),
-        'score': 0,
-        'sid': None
-    }
-    print(f"[DEBUG] Room created successfully with room code: {room_code}")
-    return jsonify({'room_code': room_code, 'success': True}), 200
 
 @app.route('/join_room', methods=['POST'])
 def join_room_route():
