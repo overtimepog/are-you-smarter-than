@@ -1,6 +1,6 @@
 import unittest
 import sqlite3
-from are_you_smarter_than_servers.room_db import init_db, add_room, get_room, update_room, add_player_score, get_player_scores, get_player_statistics, get_game_history
+from room_db import init_db, add_room, get_room, update_room, add_player_score, get_player_scores, get_player_statistics, get_game_history
 
 class TestDatabaseFunctions(unittest.TestCase):
 
