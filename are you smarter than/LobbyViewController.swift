@@ -123,7 +123,8 @@ class LobbyViewController: UIViewController {
 
             do {
                 let json = JSON(data)
-                if let roomInfo = RoomInfo(json: json) {
+                let decoder = JSONDecoder()
+                if let roomInfo = try? decoder.decode(RoomInfo.self, from: data) {
                     DispatchQueue.main.async {
                         self.updateUI(with: roomInfo)
                     }
