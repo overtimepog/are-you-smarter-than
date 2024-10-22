@@ -2,19 +2,25 @@ import UIKit
 
 // Make categoryEmojis accessible from other classes
 let categoryEmojis: [Int: String] = [
-    9: "🧐", 10: "📚", 11: "🎭", 12: "🎵", 13: "🎭", 14: "📺",
-    15: "🎮", 16: "🎲", 17: "🌿", 18: "💻", 19: "➕", 20: "🧚",
-    21: "⚽", 22: "🌍", 23: "📜", 24: "🗳️", 25: "🌟", 26: "🌟",
-    27: "🐾", 28: "🚗", 29: "📚", 30: "📱", 31: "🟦", 32: "🐭"
+    9: "🤔", 10: "📚", 11: "🎭", 12: "🎵", 13: "🎭", 14: "📺",
+    15: "🎮", 16: "🎲", 17: "🍿", 18: "💻", 19: "➕", 20: "🧚",
+    21: "⚽", 22: "🌍", 23: "📝", 24: "🗳️", 25: "🌟", 26: "🌟",
+    27: "🐾", 28: "🚗", 29: "📚", 30: "📱", 31: "🔵", 32: "🐭"
 ]
 
 // TriviaViewController.swift
 class TriviaViewController: UIViewController, CAAnimationDelegate {
 
+    enum GameMode {
+        case solo
+        case multiplayer
+    }
+
     // Trivia question data
     var currentQuestion: TriviaQuestion?
     var currentQuestionIndex = 0
     var score = 0
+    var streak = 0 // For solo mode
 
     // Category data
     var allCategories: [TriviaCategory] = []
@@ -26,6 +32,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var playerName: String = ""
     var playerId: String = ""
     var isCorrect: Bool = false
+
+    // Game mode
+    var gameMode: GameMode = .solo
 
     // UI Elements
     let questionLabel = UILabel()
@@ -42,6 +51,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         super.viewDidLoad()
         setupUI()
         fetchCategories()
+        questionLabel.isHidden = true
+        scoreLabel.isHidden = true
     }
 
     func sendResultToServer(parameters: [String: Any]) {
@@ -177,7 +188,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 "player_id": playerId,
                 "correct": isCorrect
             ]
-            sendResultToServer(parameters: parameters)
+            if gameMode == .multiplayer {
+                sendResultToServer(parameters: parameters)
+            }
         }
     }
 
@@ -390,8 +403,12 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ])
         }
 
-        // Update score
-        scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+        // Update score based on game mode
+        if gameMode == .solo {
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
+        } else {
+            scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+        }
         scoreAndQuestionLabel.isHidden = false
         scoreLabel.isHidden = false
     }
@@ -405,6 +422,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
         if isCorrect {
             score += 1 // Correct answer, increment score
+            if gameMode == .solo {
+                streak += 1
+            }
+        } else {
+            if gameMode == .solo {
+                streak = 0
+            }
         }
 
         // Update score label
@@ -438,6 +462,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             self.questionLabel.isHidden = true
             self.scoreLabel.isHidden = true
             self.currentQuestion = nil
+
+            if self.gameMode == .solo {
+                self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
+            }
 
             if self.currentQuestionIndex < 3 {
                 // Show the wheel again
@@ -474,6 +502,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         view.subviews.filter { $0 is UIButton && ($0 as! UIButton).title(for: .normal) == "Retry" }.forEach { $0.removeFromSuperview() }
 
         score = 0
+        streak = 0
         currentQuestionIndex = 0
         scoreLabel.text = "Score: \(score)"
         scoreLabel.isHidden = true
