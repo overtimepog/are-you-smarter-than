@@ -89,6 +89,67 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
         ])
     }
 
+    // Setup the wheel UI
+    func setupWheel() {
+        // Remove existing wheel if any
+        wheelView?.removeFromSuperview()
+        spinButton?.removeFromSuperview()
+        arrowView?.removeFromSuperview()
+        categoryNameLabel.removeFromSuperview()
+
+        // Create a wheel view
+        wheelView = WheelView(categories: selectedCategories.map { TriviaCategory(id: $0.id, name: $0.name, emoji: $0.emoji) })
+        wheelView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(wheelView)
+
+        NSLayoutConstraint.activate([
+            wheelView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            wheelView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            wheelView.widthAnchor.constraint(equalToConstant: 300),
+            wheelView.heightAnchor.constraint(equalTo: wheelView.widthAnchor)
+        ])
+
+        // Add arrow indicator
+        arrowView = UIImageView(image: UIImage(systemName: "arrowtriangle.down.fill"))
+        arrowView.tintColor = .red
+        arrowView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(arrowView)
+
+        NSLayoutConstraint.activate([
+            arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
+            arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
+            arrowView.widthAnchor.constraint(equalToConstant: 30),
+            arrowView.heightAnchor.constraint(equalToConstant: 30)
+        ])
+
+        // Add category name label with wrapping
+        categoryNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        categoryNameLabel.textAlignment = .center
+        categoryNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        categoryNameLabel.textColor = .label
+        categoryNameLabel.numberOfLines = 0 // Allow multiple lines for wrapping
+        categoryNameLabel.lineBreakMode = .byWordWrapping
+        view.addSubview(categoryNameLabel)
+        NSLayoutConstraint.activate([
+            categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView.topAnchor, constant: -10),
+            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping
+            categoryNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+
+        // Add spin button
+        spinButton = UIButton(type: .system)
+        spinButton.setTitle("Spin", for: .normal)
+        spinButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        spinButton.translatesAutoresizingMaskIntoConstraints = false
+        spinButton.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
+        view.addSubview(spinButton)
+
+        NSLayoutConstraint.activate([
+            spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
+            spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
+
     // Spin the wheel
     @objc func spinWheel() {
         // Disable the spin button during animation
