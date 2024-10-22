@@ -9,6 +9,9 @@ def init_db():
         schema = f.read()
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
+            conn.execute('DROP TABLE IF EXISTS player_scores')
+            conn.execute('DROP TABLE IF EXISTS rooms')
+        with conn:
             conn.executescript(schema)
 
 def add_room(room_code, host, question_goal, max_players):
