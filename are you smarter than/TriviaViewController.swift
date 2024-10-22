@@ -41,7 +41,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     let questionLabel = UILabel()
     var optionButtons: [UIButton] = []
     let scoreLabel = UILabel()
-    var scoreAndQuestionLabel = UILabel()
+    let scoreAndQuestionLabel = UILabel()
     var wheelView: WheelView!
     var spinButton: UIButton!
     var arrowView: UIImageView!
@@ -120,25 +120,29 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         ])
 
         // Score and Question label
-        scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
-        scoreAndQuestionLabel.textAlignment = .center
-        scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        scoreAndQuestionLabel.isHidden = false
-        view.addSubview(scoreAndQuestionLabel)
-        NSLayoutConstraint.activate([
-            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
+        if scoreAndQuestionLabel.superview == nil {
+            scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
+            scoreAndQuestionLabel.textAlignment = .center
+            scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+            scoreAndQuestionLabel.isHidden = false
+            view.addSubview(scoreAndQuestionLabel)
+            NSLayoutConstraint.activate([
+                scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+                scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+        }
 
-        scoreLabel.translatesAutoresizingMaskIntoConstraints = false
-        scoreLabel.textAlignment = .center
-        scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        scoreLabel.isHidden = false
-        view.addSubview(scoreLabel)
-        NSLayoutConstraint.activate([
-            scoreLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
+        if scoreLabel.superview == nil {
+            scoreLabel.translatesAutoresizingMaskIntoConstraints = false
+            scoreLabel.textAlignment = .center
+            scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+            scoreLabel.isHidden = false
+            view.addSubview(scoreLabel)
+            NSLayoutConstraint.activate([
+                scoreLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+                scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+        }
     }
 
     // Fetch categories
