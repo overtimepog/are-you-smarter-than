@@ -64,6 +64,3 @@ def get_all_rooms():
         with conn:
             rooms = conn.execute('SELECT room_code FROM rooms').fetchall()
             return [room[0] for room in rooms]
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            conn.execute('DELETE FROM rooms WHERE room_code = ?', (room_code,))
