@@ -77,6 +77,7 @@ class CreateRoomViewController: UIViewController {
     }
 
     @objc func createRoom() {
+        print("[DEBUG] Create Room button tapped")
         guard let playerName = playerNameTextField.text, !playerName.isEmpty,
               let questionGoal = Int(questionGoalTextField.text ?? ""),
               let maxPlayers = Int(maxPlayersTextField.text ?? "") else {
@@ -106,11 +107,13 @@ class CreateRoomViewController: UIViewController {
 
             if let error = error {
                 DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
+                print("[DEBUG] Error creating room: \(error.localizedDescription)")
                 return
             }
 
             guard let data = data else {
                 DispatchQueue.main.async { self.statusLabel.text = "No data received." }
+                print("[DEBUG] No data received.")
                 return
             }
 
@@ -125,6 +128,7 @@ class CreateRoomViewController: UIViewController {
                    let success = json["success"] as? Bool, success,
                    let roomCode = json["room_code"] as? String {
                     DispatchQueue.main.async {
+                        print("[DEBUG] Room created with code: \(roomCode)")
                         self.statusLabel.text = "Room created with code: \(roomCode)"
                         
                         let lobbyVC = LobbyViewController()
