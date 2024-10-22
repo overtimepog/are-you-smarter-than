@@ -136,8 +136,10 @@ def create_room():
     question_goal = data.get('question_goal', 10)  # Default to 10 questions
     max_players = data.get('max_players', 8)       # Default to 8 players
     if not isinstance(question_goal, int) or question_goal <= 0:
+        print("[DEBUG] Invalid question goal provided.")
         return jsonify({'success': False, 'message': 'Invalid question goal. It must be a positive integer.'}), 400
     if not isinstance(max_players, int) or max_players <= 0:
+        print("[DEBUG] Invalid max players provided.")
         return jsonify({'success': False, 'message': 'Invalid max players. It must be a positive integer.'}), 400
 
     # Check for room code collisions and regenerate if needed
