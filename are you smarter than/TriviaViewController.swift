@@ -49,7 +49,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         self.arrowView?.isHidden = false
         self.categoryNameLabel.isHidden = false
         self.spinButton?.isEnabled = true
-        self.nextButton.isHidden = true // Hide the next button
+        self.nextButton?.isHidden = true // Hide the next button
     }
 
     // Trivia question data
