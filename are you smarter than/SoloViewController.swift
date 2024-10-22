@@ -25,6 +25,8 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        questionLabel.isHidden = true
+        scoreLabel.isHidden = true
         fetchCategories()
         setupWheel()
     }
