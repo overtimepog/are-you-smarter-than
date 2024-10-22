@@ -163,11 +163,13 @@ def create_room():
             'winners': [],
             'last_active': time.time()
         }
+    print(f"[DEBUG] Room data before adding first player: {rooms[room_code]}")
     rooms[room_code]['players'][first_player_name] = {
         'player_id': str(uuid.uuid4()),
         'score': 0,
         'sid': None
     }
+    print(f"[DEBUG] Room data after adding first player: {rooms[room_code]}")
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
