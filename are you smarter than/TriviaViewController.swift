@@ -40,7 +40,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     // UI Elements
     let questionLabel = UILabel()
     var optionButtons: [UIButton] = []
-    let scoreLabel = UILabel()
     let scoreAndQuestionLabel = UILabel()
     var wheelView: WheelView!
     var spinButton: UIButton!
@@ -53,7 +52,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         setupUI()
         fetchCategories()
         questionLabel.isHidden = true
-        scoreLabel.isHidden = false
         scoreAndQuestionLabel.isHidden = false
     }
 
@@ -120,29 +118,15 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         ])
 
         // Score and Question label
-        if scoreAndQuestionLabel.superview == nil {
-            scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
-            scoreAndQuestionLabel.textAlignment = .center
-            scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-            scoreAndQuestionLabel.isHidden = false
-            view.addSubview(scoreAndQuestionLabel)
-            NSLayoutConstraint.activate([
-                scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-                scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-            ])
-        }
-
-        if scoreLabel.superview == nil {
-            scoreLabel.translatesAutoresizingMaskIntoConstraints = false
-            scoreLabel.textAlignment = .center
-            scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-            scoreLabel.isHidden = false
-            view.addSubview(scoreLabel)
-            NSLayoutConstraint.activate([
-                scoreLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-                scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-            ])
-        }
+        scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
+        scoreAndQuestionLabel.textAlignment = .center
+        scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        scoreAndQuestionLabel.isHidden = false
+        view.addSubview(scoreAndQuestionLabel)
+        NSLayoutConstraint.activate([
+            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
 
     // Fetch categories
@@ -155,7 +139,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
             scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         } else {
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
+            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
             // Fetch categories from the API
             let urlString = "https://opentdb.com/api_category.php"
             guard let url = URL(string: urlString) else {
@@ -388,29 +372,31 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton.isHidden = true
         arrowView.isHidden = true
         categoryNameLabel.isHidden = true
-
+        
         // Set up question UI
         currentQuestion = question
         currentQuestionIndex += 1 // Keep track of the number of times
         questionLabel.text = question.question
         questionLabel.isHidden = false
-
+        
         // Remove existing buttons
         optionButtons.forEach { $0.removeFromSuperview() }
         optionButtons.removeAll()
-
+        
         for (index, option) in question.options.enumerated() {
             let button = UIButton(type: .system)
             button.translatesAutoresizingMaskIntoConstraints = false
             button.tag = index // Assign index to button
             button.setTitle(option, for: .normal)
+button.titleLabel?.adjustsFontSizeToFitWidth = true
+button.titleLabel?.minimumScaleFactor = 0.5
             button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
             button.backgroundColor = UIColor.systemGray6
             button.layer.cornerRadius = 10
             button.addTarget(self, action: #selector(optionSelected(_:)), for: .touchUpInside)
             view.addSubview(button)
             optionButtons.append(button)
-
+            
             NSLayoutConstraint.activate([
                 button.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: CGFloat(40 + index * 60)),
                 button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -418,10 +404,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 button.heightAnchor.constraint(equalToConstant: 50)
             ])
         }
-
+        
         // Update score and check if game should end based on game mode
         if gameMode == .multiplayer {
-            scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
             if currentQuestionIndex >= questionGoal {
                 showWinViewController()
                 return
@@ -434,10 +420,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ]
             sendResultToServer(parameters: parameters)
         } else {
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
+            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
         }
         scoreAndQuestionLabel.isHidden = false
-        scoreLabel.isHidden = false
     }
 
     // Handle option selection with animation
@@ -459,9 +444,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }
 
         // Update score and streak labels
-        scoreLabel.text = "Score: \(score)"
         if gameMode == .solo {
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
+            scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
         } else {
             scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         }
@@ -492,7 +476,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
             self.optionButtons.removeAll()
             self.questionLabel.isHidden = true
-            self.scoreLabel.isHidden = true
             self.currentQuestion = nil
 
             if self.gameMode == .solo {
@@ -536,8 +519,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         score = 0
         streak = 0
         currentQuestionIndex = 0
-        scoreLabel.text = "Score: \(score)"
-        scoreLabel.isHidden = true
         questionLabel.isHidden = true
         optionButtons.forEach { $0.removeFromSuperview() }
         optionButtons.removeAll()
@@ -603,8 +584,9 @@ extension String {
             .documentType: NSAttributedString.DocumentType.html,
             .characterEncoding: String.Encoding.utf8.rawValue
         ]
-        let decoded = try? NSAttributedString(data: data, options: options, documentAttributes: nil).string
-        return decoded ?? self
+        let decoded = (try? NSAttributedString(data: data, options: options, documentAttributes: nil))?.string ?? ""
+
+        return decoded
     }
 }
 
