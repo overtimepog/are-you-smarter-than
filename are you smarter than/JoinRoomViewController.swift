@@ -46,6 +46,7 @@ class JoinRoomViewController: UIViewController {
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(backButton)
+        view.addSubview(roomCodeTextField)
         view.addSubview(playerNameTextField)
         view.addSubview(joinButton)
         view.addSubview(statusLabel)
