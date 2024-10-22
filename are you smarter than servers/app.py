@@ -124,13 +124,14 @@ def submit_answer():
                 return jsonify({'game_ended': True}), 200
 
     return jsonify({'game_ended': False}), 200
+@app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
     print(f"[DEBUG] Fetching room info for room code: {room_code}")
-    print(f"[DEBUG] Room Info: {rooms.get(room_code)}")
     with rooms_lock:
         room = rooms.get(room_code)
         if room:
             players = list(room['players'].keys())
+            print(f"[DEBUG] Room found: {room}")
             return jsonify({
                 'room_code': room_code,
                 'players': players,
@@ -139,6 +140,7 @@ def get_room_info(room_code):
                 'game_started': room['game_started'],
                 'winners': room['winners']
             }), 200
+    print(f"[DEBUG] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 
