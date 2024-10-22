@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
 import time
@@ -8,6 +9,7 @@ import signal
 import sys
 
 app = Flask(__name__)
+Compress(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = {}  # Store room data including question goals and players
