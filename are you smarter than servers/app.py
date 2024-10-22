@@ -171,29 +171,6 @@ def create_room():
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
-@app.route('/join_room', methods=['POST'])
-def join_room_route():
-    data = request.json
-    room_code = data['room_code']
-    player_name = data['player_name']
-
-    with rooms_lock:
-        if room_code in rooms:
-            if player_name in rooms[room_code]['players']:
-                return jsonify({'success': False, 'message': 'Username already taken'}), 403
-
-            if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
-                return jsonify({'success': False, 'message': 'Room is full'}), 403
-
-            player_id = str(uuid.uuid4())  # Generate a unique player identifier
-            rooms[room_code]['players'][player_name] = {
-                'player_id': player_id,
-                'score': 0,
-                'sid': None  # Will be set when the player connects via SocketIO
-            }
-            rooms[room_code]['last_active'] = time.time()  # Update last active time when a player joins
-            return jsonify({'success': True, 'player_id': player_id}), 200
-    return jsonify({'success': False, 'message': 'Room not found'}), 404
 
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer():
