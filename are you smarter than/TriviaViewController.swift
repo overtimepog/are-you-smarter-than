@@ -28,7 +28,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Accept the number of players and selected categories
     var numberOfPlayers: Int = 1 // Default to 1
-    var roomCode: String = ""
+    var roomCode: String = "" // Set this when transitioning to the trivia view
+    var questionGoal: Int = 0 // Set this when transitioning to the trivia view
     var playerName: String = ""
     var playerId: String = ""
     var isCorrect: Bool = false
@@ -403,14 +404,30 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ])
         }
 
-        // Update score based on game mode
+        // Update score and check if game should end based on game mode
         if gameMode == .solo {
             scoreAndQuestionLabel.text = "Streak: \(streak)"
         } else {
             scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+            if currentQuestionIndex >= questionGoal {
+                // End game if max questions reached
+                showWinViewController()
+                return
+            }
         }
         scoreAndQuestionLabel.isHidden = false
         scoreLabel.isHidden = false
+
+        // Send result to server if in multiplayer mode
+        if gameMode == .multiplayer {
+            let parameters: [String: Any] = [
+                "room_code": roomCode,
+                "player_name": playerName,
+                "player_id": playerId,
+                "correct": isCorrect
+            ]
+            sendResultToServer(parameters: parameters)
+        }
     }
 
     // Handle option selection with animation
