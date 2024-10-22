@@ -249,7 +249,7 @@ class SoloViewController: UIViewController {
 
             do {
                 let decoder = JSONDecoder()
-                let apiResponse = try decoder.decode(SoloOpenTriviaResponse.self, from: data)
+                let apiResponse = try decoder.decode(OpenTriviaResponse.self, from: data)
                 guard let result = apiResponse.results.first else {
                     print("No questions found")
                     return
