@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS rooms (
 
 CREATE TABLE IF NOT EXISTS player_scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_code TEXT,
-    player_name TEXT,
-    score INTEGER,
-    timestamp REAL,
+    room_code TEXT NOT NULL,
+    player_name TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    timestamp REAL NOT NULL,
     FOREIGN KEY(room_code) REFERENCES rooms(room_code)
 );
