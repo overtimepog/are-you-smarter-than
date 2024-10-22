@@ -295,22 +295,26 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         categoryNameLabel.lineBreakMode = .byWordWrapping
         view.addSubview(categoryNameLabel)
         NSLayoutConstraint.activate([
-            categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView.topAnchor, constant: -10),
+            categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView?.topAnchor ?? view.topAnchor, constant: -10),
             categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping
             categoryNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
 
         // Add spin button
         spinButton = UIButton(type: .system)
-        spinButton.setTitle("Spin", for: .normal)
-        spinButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        spinButton.translatesAutoresizingMaskIntoConstraints = false
-        spinButton.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
-        view.addSubview(spinButton)
+        spinButton?.setTitle("Spin", for: .normal)
+        spinButton?.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        spinButton?.translatesAutoresizingMaskIntoConstraints = false
+        spinButton?.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
+        if let spinButton = spinButton {
+            view.addSubview(spinButton)
+        }
 
-        NSLayoutConstraint.activate([
-            spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
-            spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        if let spinButton = spinButton {
+            NSLayoutConstraint.activate([
+                spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
+                spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
         ])
     }
 
