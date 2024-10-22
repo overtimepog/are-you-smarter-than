@@ -164,7 +164,7 @@ def submit_answer():
             # Broadcast game end and rankings to all players
             rankings = sorted(rooms[room_code]['players'].items(), key=lambda x: x[1]['score'], reverse=True)
             emit('game_ended', {'winners': rooms[room_code]['winners'], 'rankings': rankings}, room=room_code)
-            return jsonify({'game_ended': True, 'rankings': rankings}), 200
+            return jsonify({'game_ended': True, 'rankings': [{'player_name': player, 'score': score['score']} for player, score in rankings]}), 200
 
     return jsonify({'game_ended': False}), 200
 

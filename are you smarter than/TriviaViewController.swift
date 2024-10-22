@@ -412,21 +412,19 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }
 
         // Update score and check if game should end based on game mode
-        if gameMode == .solo {
+        switch gameMode {
+        case .solo:
             scoreAndQuestionLabel.text = "Streak: \(streak)"
-        } else {
-            scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
-            if currentQuestionIndex >= questionGoal {
-                // End game if max questions reached
+            if currentQuestionIndex >= 3 {
                 showWinViewController()
                 return
             }
-        }
-        scoreAndQuestionLabel.isHidden = false
-        scoreLabel.isHidden = false
-
-        // Send result to server if in multiplayer mode
-        if gameMode == .multiplayer {
+        case .multiplayer:
+            scoreAndQuestionLabel.text = "\(score)/\(currentQuestionIndex)"
+            if currentQuestionIndex >= questionGoal {
+                showWinViewController()
+                return
+            }
             let parameters: [String: Any] = [
                 "room_code": roomCode,
                 "player_name": playerName,
@@ -435,6 +433,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ]
             sendResultToServer(parameters: parameters)
         }
+        scoreAndQuestionLabel.isHidden = false
+        scoreLabel.isHidden = false
     }
 
     // Handle option selection with animation
