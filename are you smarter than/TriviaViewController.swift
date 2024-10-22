@@ -17,51 +17,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         
     }
 
-    // Load question from the selected category
-    func loadQuestionFromCategory(category: TriviaCategory) {
-        let urlString = "https://opentdb.com/api.php?amount=1&category=\(category.id)&type=multiple"
-        guard let url = URL(string: urlString) else {
-            print("Invalid URL for question")
-            return
-        }
-
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Failed to fetch question: \(error)")
-                return
-            }
-
-            guard let data = data else {
-                print("No data returned for question")
-                return
-            }
-
-            do {
-                let decoder = JSONDecoder()
-                let apiResponse = try decoder.decode(OpenTriviaResponse.self, from: data)
-                guard let result = apiResponse.results.first else {
-                    print("No questions found")
-                    return
-                }
-                // Prepare options and find the correct answer index
-                var allAnswers = result.incorrectAnswers + [result.correctAnswer]
-                allAnswers = allAnswers.map { $0.htmlDecoded() }
-                let shuffledOptions = allAnswers.shuffled()
-                let correctAnswerIndex = shuffledOptions.firstIndex(of: result.correctAnswer.htmlDecoded()) ?? 0
-
-                let question = TriviaQuestion(
-                    question: result.question.htmlDecoded(),
-                    options: shuffledOptions,
-                    correctAnswer: correctAnswerIndex
-                )
-                DispatchQueue.main.async {
-                    self.showQuestion(question: question)
-                }
-            } catch {
-                print("Failed to decode question: \(error)")
-            }
-        }.resume()
-    }
 
     // Handle next button press
     @objc func nextQuestion() {
