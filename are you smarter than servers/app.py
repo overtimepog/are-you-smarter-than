@@ -139,20 +139,6 @@ def get_room_info(room_code):
             }), 200
     return jsonify({'success': False, 'message': 'Room not found'}), 404
 
-@app.route('/leave_room', methods=['POST'])
-def leave_room_route():
-    data = request.json
-    room_code = data['room_code']
-    player_name = data['player_name']
-
-    with rooms_lock:
-        if room_code in rooms and player_name in rooms[room_code]['players']:
-            del rooms[room_code]['players'][player_name]
-            rooms[room_code]['last_active'] = time.time()  # Update last active time when a player leaves
-            if not rooms[room_code]['players']:
-                del rooms[room_code]  # Delete room if no players are left
-            return jsonify({'success': True, 'message': 'Player left the room'}), 200
-    print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
 
 @app.route('/create_room', methods=['POST'])
 def create_room():
