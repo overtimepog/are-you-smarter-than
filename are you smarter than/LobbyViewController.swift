@@ -99,37 +99,38 @@ class LobbyViewController: UIViewController {
 
     // Fetch room data from the API
     func fetchRoomData() {
-        print("[DEBUG] Fetching room data for roomCode: \(roomCode)")
+        print("[DEBUG] [fetchRoomData] Fetching room data for roomCode: \(roomCode)")
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
             print("Invalid URL")
             return
         }
 
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self else { 
-                print("Self is nil, returning")
-                return 
+            guard let self = self else {
+                print("[DEBUG] [fetchRoomData] Self is nil, returning")
+                return
             }
 
             if let error = error {
-                print("Error fetching room data: \(error.localizedDescription)")
+                print("[DEBUG] [fetchRoomData] Error fetching room data: \(error.localizedDescription)")
                 return
             }
 
             guard let data = data else {
-                print("No data received")
+                print("[DEBUG] [fetchRoomData] No data received")
                 return
             }
 
             _ = JSON(data)
             let decoder = JSONDecoder()
             if let roomInfo = try? decoder.decode(RoomInfo.self, from: data) {
+                print("[DEBUG] [fetchRoomData] Room data decoded successfully: \(roomInfo)")
                 DispatchQueue.main.async {
                     self.updateUI(with: roomInfo)
                 }
             } else {
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("Failed to decode room data. Response: \(jsonString)")
+                    print("[DEBUG] [fetchRoomData] Failed to decode room data. Response: \(jsonString)")
                 } else {
                     print("Failed to decode room data. Unable to convert data to string.")
                 }
