@@ -529,8 +529,8 @@ button.titleLabel?.minimumScaleFactor = 0.5
         optionButtons.forEach { $0.isEnabled = false }
 
         // After a delay, show the next button
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.nextButton?.isHidden = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.nextButton?.isHidden = false
         }
     }
 
