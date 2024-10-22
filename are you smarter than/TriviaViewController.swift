@@ -123,20 +123,24 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         scoreAndQuestionLabel.textAlignment = .center
         scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         scoreAndQuestionLabel.isHidden = true
-        view.addSubview(scoreAndQuestionLabel)
-        NSLayoutConstraint.activate([
-            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-        scoreLabel.translatesAutoresizingMaskIntoConstraints = false
-        scoreLabel.textAlignment = .center
-        scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        scoreLabel.isHidden = true
-        view.addSubview(scoreLabel)
-        NSLayoutConstraint.activate([
-            scoreLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
+        if scoreAndQuestionLabel.superview == nil {
+            view.addSubview(scoreAndQuestionLabel)
+            NSLayoutConstraint.activate([
+                scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+                scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+        }
+        if scoreLabel.superview == nil {
+            scoreLabel.translatesAutoresizingMaskIntoConstraints = false
+            scoreLabel.textAlignment = .center
+            scoreLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+            scoreLabel.isHidden = true
+            view.addSubview(scoreLabel)
+            NSLayoutConstraint.activate([
+                scoreLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+                scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+        }
     }
 
     // Fetch categories
