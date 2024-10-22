@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from contextlib import closing
 
 DATABASE = 'trivia_game.db'

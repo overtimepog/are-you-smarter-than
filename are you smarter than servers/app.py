@@ -25,11 +25,8 @@ def generate_room_code():
     return str(uuid.uuid4())[:6]  # Generate a unique room code using a UUID
 
 def update_last_active(room_code):
-    if room_code in rooms:
-        rooms[room_code]['last_active'] = time.time()
-        print(f"[DEBUG] [update_last_active] Updated last active time for room {room_code}")
-    else:
-        print(f"[DEBUG] [update_last_active] Attempted to update last active time for non-existent room {room_code}")
+    update_room(room_code, last_active=time.time())
+    print(f"[DEBUG] [update_last_active] Updated last active time for room {room_code}")
 
 def cleanup_room(room_code):
     delete_room(room_code)
@@ -68,8 +65,17 @@ def index():
 def get_room_info(room_code):
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = get_room(room_code)
-    if room is None:
-        print(f"[DEBUG] [get_room_info] Room data at time of request: {rooms}")
+    if room:
+        players = room['players']
+        print(f"[DEBUG] [get_room_info] Room found: {room}")
+        return jsonify({
+            'room_code': room_code,
+            'players': players,
+            'question_goal': room['question_goal'],
+            'max_players': room['max_players'],
+            'game_started': room['game_started'],
+            'winners': room['winners']
+        }), 200
     if room:
         players = list(room['players'].keys())
         print(f"[DEBUG] [get_room_info] Room found: {room}")
@@ -91,13 +97,15 @@ def leave_room_route():
     player_name = data['player_name']
     print(f"[DEBUG] [leave_room_route] Player {player_name} attempting to leave room {room_code}")
 
-    if room_code in rooms and player_name in rooms[room_code]['players']:
-        player_sid = rooms[room_code]['players'][player_name]['sid']
+    room = get_room(room_code)
+    if room and player_name in room['players']:
+        player_sid = session_to_player.get(player_name, {}).get('sid')
         if player_sid in session_to_player:
             del session_to_player[player_sid]
-        del rooms[room_code]['players'][player_name]
+        room['players'].remove(player_name)
+        update_room(room_code, players=room['players'])
         update_last_active(room_code)  # Update last active time
-        if not rooms[room_code]['players']:
+        if not room['players']:
             cleanup_room(room_code)  # Use structured cleanup process
         return jsonify({'success': True, 'message': 'Player left the room'}), 200
     print(f"[DEBUG] [leave_room_route] Room or player not found for room code: {room_code}, player name: {player_name}")
@@ -110,21 +118,19 @@ def join_room_route():
     player_name = data['player_name']
     print(f"[DEBUG] Player {player_name} attempting to join room {room_code}")
 
-    if room_code in rooms:
-        if player_name in rooms[room_code]['players']:
+    room = get_room(room_code)
+    if room:
+        if player_name in room['players']:
             print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
             return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
 
-        if len(rooms[room_code]['players']) >= rooms[room_code]['max_players']:
+        if len(room['players']) >= room['max_players']:
             print(f"[DEBUG] Room {room_code} is full")
             return jsonify({'success': False, 'message': f'Room {room_code} is full'}), 403
 
         player_id = str(uuid.uuid4())  # Generate a unique player identifier
-        rooms[room_code]['players'][player_name] = {
-            'player_id': player_id,
-            'score': 0,
-            'sid': ""  # Initialize 'sid' with an empty string to avoid inconsistencies
-        }
+        room['players'].append(player_name)
+        update_room(room_code, players=room['players'])
         update_last_active(room_code)  # Update last active time
         print(f"[DEBUG] Player {player_name} joined room {room_code}")
         return jsonify({'success': True, 'player_id': player_id}), 200
@@ -150,7 +156,7 @@ def create_room():
         return jsonify({'success': False, 'message': 'Invalid max players. It must be a positive integer.'}), 400
 
     # Check for room code collisions and regenerate if needed
-    while room_code in rooms:
+    while get_room(room_code):
         if attempts >= max_attempts:
             print("[ERROR] Maximum attempts reached while generating a unique room code.")
             return jsonify({'success': False, 'message': 'Unable to generate a unique room code after multiple attempts, please try again later.'}), 500
@@ -171,12 +177,11 @@ def handle_join_game(data):
     player_id = data['player_id']
     sid = request.sid
 
-    if room_code in rooms:
-        if player_name in rooms[room_code]['players'] and rooms[room_code]['players'][player_name]['player_id'] == player_id:
-            join_room(room_code)
-            rooms[room_code]['players'][player_name]['sid'] = sid
-            session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
-            current_players = list(rooms[room_code]['players'].keys())
+    room = get_room(room_code)
+    if room and player_name in room['players']:
+        join_room(room_code)
+        session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
+        current_players = room['players']
             update_last_active(room_code)  # Update last active time
             emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
         else:
@@ -196,8 +201,9 @@ def submit_answer():
     correct = data['correct']
     print(f"[DEBUG] Player {player_name} submitted answer for room {room_code}. Correct: {correct}")
 
-    if room_code in rooms and player_name in rooms[room_code]['players']:
-        player = rooms[room_code]['players'][player_name]
+    room = get_room(room_code)
+    if room and player_name in room['players']:
+        player = room['players'][player_name]
         if correct:
             player['score'] += 1
             print(f"[DEBUG] Player {player_name} score updated to {player['score']}")
@@ -205,12 +211,13 @@ def submit_answer():
         update_last_active(room_code)  # Update last active time
 
         # Check if the game has ended
-        if player['score'] >= rooms[room_code]['question_goal']:
-            rooms[room_code]['winners'].append(player_name)
+        if player['score'] >= room['question_goal']:
+            room['winners'].append(player_name)
+            update_room(room_code, winners=room['winners'])
             print(f"[DEBUG] Player {player_name} won the game in room {room_code}")
             # Broadcast game end and rankings to all players
-            rankings = sorted(rooms[room_code]['players'].items(), key=lambda x: x[1]['score'], reverse=True)
-            emit('game_ended', {'winners': rooms[room_code]['winners'], 'rankings': rankings}, room=room_code)
+            rankings = sorted(room['players'].items(), key=lambda x: x[1]['score'], reverse=True)
+            emit('game_ended', {'winners': room['winners'], 'rankings': rankings}, room=room_code)
             return jsonify({'game_ended': True, 'rankings': [{'player_name': player, 'score': score['score']} for player, score in rankings]}), 200
 
     return jsonify({'game_ended': False}), 200
@@ -223,16 +230,18 @@ def handle_disconnect():
         room_code = player_info['room_code']
         player_name = player_info['player_name']
 
-        if room_code in rooms and player_name in rooms[room_code]['players']:
-            del rooms[room_code]['players'][player_name]
+        room = get_room(room_code)
+        if room and player_name in room['players']:
+            room['players'].remove(player_name)
+            update_room(room_code, players=room['players'])
             del session_to_player[sid]
             emit('player_left', player_name, room=room_code)
 
 def cleanup_rooms():
     current_time = time.time()
-    room_count = len(rooms)
-    for room_code in list(rooms.keys()):
-        room = rooms[room_code]
+    room_count = len(get_all_rooms())
+    for room_code in get_all_rooms():
+        room = get_room(room_code)
         players_count = len(room['players'])
         last_active = room['last_active']
         creation_time = room['creation_time']
