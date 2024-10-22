@@ -485,7 +485,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             if self.gameMode == .solo {
                 if !isCorrect {
                     // Return to main menu if the answer is incorrect
-                    self.dismiss(animated: true, completion: nil)
+                    self.navigationController?.popToRootViewController(animated: true)
                     return
                 }
                 self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
