@@ -25,12 +25,18 @@ def generate_room_code():
 def update_last_active(room_code):
     if room_code in rooms:
         rooms[room_code]['last_active'] = time.time()
+        print(f"[DEBUG] [update_last_active] Updated last active time for room {room_code}")
+    else:
+        print(f"[DEBUG] [update_last_active] Attempted to update last active time for non-existent room {room_code}")
 
 def cleanup_room(room_code):
     if room_code in rooms:
+        print(f"[DEBUG] [cleanup_room] Preparing to delete room {room_code}. Current room data: {rooms[room_code]}")
         # Delete the room
         del rooms[room_code]
-        print(f"[DEBUG] Room {room_code} deleted during cleanup")
+        print(f"[DEBUG] [cleanup_room] Room {room_code} deleted during cleanup")
+    else:
+        print(f"[DEBUG] [cleanup_room] Attempted to delete non-existent room {room_code}")
 
 def initialize_room(room_code, host_name, question_goal, max_players):
     return {
@@ -65,6 +71,8 @@ def index():
 def get_room_info(room_code):
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = rooms.get(room_code)
+    if room is None:
+        print(f"[DEBUG] [get_room_info] Room data at time of request: {rooms}")
     if room:
         players = list(room['players'].keys())
         print(f"[DEBUG] [get_room_info] Room found: {room}")
