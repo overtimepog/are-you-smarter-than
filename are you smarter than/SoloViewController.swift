@@ -25,7 +25,7 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        fetchCategories()
+        setupWheel()
     }
 
     // Setup the wheel UI
