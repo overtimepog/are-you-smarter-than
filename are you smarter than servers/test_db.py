@@ -21,7 +21,7 @@ class TestDatabaseFunctions(unittest.TestCase):
 
     def test_add_and_get_room(self):
         print("[DEBUG] Running test_add_and_get_room")
-        add_room('test123', 'host1', 10, 4)
+        add_room('test123', 'host1', 10, 4, 'easy')
         room = get_room('test123')
         self.assertIsNotNone(room)
         self.assertEqual(room['room_code'], 'test123')
@@ -29,7 +29,7 @@ class TestDatabaseFunctions(unittest.TestCase):
 
     def test_update_room(self):
         print("[DEBUG] Running test_update_room")
-        add_room('test456', 'host2', 5, 3)
+        add_room('test456', 'host2', 5, 3, 'medium')
         update_room('test456', players=['player1', 'player2'], game_started=True)
         room = get_room('test456')
         self.assertTrue(room['game_started'])
