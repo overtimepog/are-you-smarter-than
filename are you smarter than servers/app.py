@@ -68,6 +68,7 @@ def leave_room_route():
 @app.route('/create_room', methods=['POST'])
 def create_room():
     data = request.json
+    print("[DEBUG] Attempting to create a new room.")
     room_code = generate_room_code()
     question_goal = data.get('question_goal', 10)  # Default to 10 questions
     max_players = data.get('max_players', 8)       # Default to 8 players
@@ -92,6 +93,7 @@ def create_room():
         'score': 0,
         'sid': None
     }
+    print(f"[DEBUG] Room created successfully with room code: {room_code}")
     return jsonify({'room_code': room_code, 'success': True}), 200
 
 @app.route('/join_room', methods=['POST'])
