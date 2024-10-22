@@ -80,15 +80,22 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 return
             }
 
-            if gameEnded {
+            if gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                 DispatchQueue.main.async {
-                    self.showWinViewController()
+                    self.showWinViewController(with: rankings)
                 }
             }
         }.resume()
     }
 
-    func showWinViewController() {
+    func showWinViewController(with rankings: [[String: Any]]) {
+        let winVC = WinViewController()
+        winVC.modalPresentationStyle = .fullScreen
+        winVC.rankings = rankings // Pass rankings to the win view controller
+        self.present(winVC, animated: true)
+    }
+
+    func showWinViewController() { // Overloaded method for solo mode
         let winVC = WinViewController()
         winVC.modalPresentationStyle = .fullScreen
         self.present(winVC, animated: true)

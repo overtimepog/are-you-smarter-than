@@ -161,7 +161,10 @@ def submit_answer():
         if player['score'] >= rooms[room_code]['question_goal']:
             rooms[room_code]['winners'].append(player_name)
             print(f"[DEBUG] Player {player_name} won the game in room {room_code}")
-            return jsonify({'game_ended': True}), 200
+            # Broadcast game end and rankings to all players
+            rankings = sorted(rooms[room_code]['players'].items(), key=lambda x: x[1]['score'], reverse=True)
+            emit('game_ended', {'winners': rooms[room_code]['winners'], 'rankings': rankings}, room=room_code)
+            return jsonify({'game_ended': True, 'rankings': rankings}), 200
 
     return jsonify({'game_ended': False}), 200
 
