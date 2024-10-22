@@ -225,7 +225,7 @@ def cleanup_rooms():
             current_time = time.time()
             for room_code in list(rooms.keys()):
                 room = rooms[room_code]
-                if (not room['players'] or (current_time - room['last_active'] > 3 * 3600)):
+                if (not room['players'] or (current_time - room['last_active'] > 6 * 3600)):
                     del rooms[room_code]
         time.sleep(3600)  # Check every hour
 
