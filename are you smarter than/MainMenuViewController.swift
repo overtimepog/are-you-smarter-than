@@ -42,8 +42,9 @@ class MainMenuViewController: UIViewController {
         joinRoomButton.addTarget(self, action: #selector(joinRoom), for: .touchUpInside)
         view.addSubview(joinRoomButton)
         
+        let highestStreak = UserDefaults.standard.integer(forKey: "HighestStreak")
         let solobutton = UIButton(type: .system)
-        solobutton.setTitle("Solo", for: .normal)
+        solobutton.setTitle("Solo (Highest Streak: \(highestStreak))", for: .normal)
         solobutton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         solobutton.translatesAutoresizingMaskIntoConstraints = false
         solobutton.addTarget(self, action: #selector(startSolo), for: .touchUpInside)
