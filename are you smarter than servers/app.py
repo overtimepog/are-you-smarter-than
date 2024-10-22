@@ -63,11 +63,11 @@ def index():
 
 @app.route('/game_room/<room_code>', methods=['GET'])
 def get_room_info(room_code):
-    print(f"[DEBUG] Fetching room info for room code: {room_code}")
+    print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = rooms.get(room_code)
     if room:
         players = list(room['players'].keys())
-        print(f"[DEBUG] Room found: {room}")
+        print(f"[DEBUG] [get_room_info] Room found: {room}")
         return jsonify({
             'room_code': room_code,
             'players': players,
@@ -76,7 +76,7 @@ def get_room_info(room_code):
             'game_started': room['game_started'],
             'winners': room['winners']
         }), 200
-    print(f"[DEBUG] Room not found for room code: {room_code}")
+    print(f"[DEBUG] [get_room_info] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @app.route('/leave_room', methods=['POST'])
@@ -84,7 +84,7 @@ def leave_room_route():
     data = request.json
     room_code = data['room_code']
     player_name = data['player_name']
-    print(f"[DEBUG] Player {player_name} attempting to leave room {room_code}")
+    print(f"[DEBUG] [leave_room_route] Player {player_name} attempting to leave room {room_code}")
 
     if room_code in rooms and player_name in rooms[room_code]['players']:
         player_sid = rooms[room_code]['players'][player_name]['sid']
@@ -95,7 +95,7 @@ def leave_room_route():
         if not rooms[room_code]['players']:
             cleanup_room(room_code)  # Use structured cleanup process
         return jsonify({'success': True, 'message': 'Player left the room'}), 200
-    print(f"[DEBUG] Room or player not found for room code: {room_code}, player name: {player_name}")
+    print(f"[DEBUG] [leave_room_route] Room or player not found for room code: {room_code}, player name: {player_name}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} or player {player_name} not found'}), 404
 
 @app.route('/join_room', methods=['POST'])
