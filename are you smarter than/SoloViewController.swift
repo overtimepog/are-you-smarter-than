@@ -152,6 +152,12 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
         categoryNameLabel.text = selectedCategory.name
         // Fetch question from the selected category
         self.loadQuestionFromCategory(category: selectedCategory)
+        
+        // Hide the wheel and related UI elements
+        self.wheelView.isHidden = true
+        self.spinButton.isHidden = true
+        self.arrowView.isHidden = true
+        self.categoryNameLabel.isHidden = true
     }
 
     // Setup the UI
@@ -360,10 +366,13 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
                 self.arrowView.isHidden = false
                 self.categoryNameLabel.isHidden = false
                 self.spinButton.isEnabled = true
-            } else {
-                // End the game and return to main menu
-                self.dismiss(animated: true, completion: nil)
             }
+            // Show the wheel again
+            self.wheelView.isHidden = false
+            self.spinButton.isHidden = false
+            self.arrowView.isHidden = false
+            self.categoryNameLabel.isHidden = false
+            self.spinButton.isEnabled = true
         }
     }
 }
