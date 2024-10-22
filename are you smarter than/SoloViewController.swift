@@ -7,6 +7,11 @@ class SoloViewController: UIViewController {
     var currentQuestion: SoloTriviaQuestion?
     var currentQuestionIndex = 0
     var score = 0
+    var wheelView: WheelView!
+    var spinButton: UIButton!
+    var arrowView: UIImageView!
+    var categoryNameLabel = UILabel()
+    var displayLink: CADisplayLink?
 
     // Category data
     var allCategories: [SoloTriviaCategory] = []
@@ -21,6 +26,132 @@ class SoloViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         fetchCategories()
+        setupWheel()
+    }
+
+    // Setup the wheel UI
+    func setupWheel() {
+        // Remove existing wheel if any
+        wheelView?.removeFromSuperview()
+        spinButton?.removeFromSuperview()
+        arrowView?.removeFromSuperview()
+        categoryNameLabel.removeFromSuperview()
+
+        // Create a wheel view
+        wheelView = WheelView(categories: selectedCategories)
+        wheelView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(wheelView)
+
+        NSLayoutConstraint.activate([
+            wheelView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            wheelView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            wheelView.widthAnchor.constraint(equalToConstant: 300),
+            wheelView.heightAnchor.constraint(equalTo: wheelView.widthAnchor)
+        ])
+
+        // Add arrow indicator
+        arrowView = UIImageView(image: UIImage(systemName: "arrowtriangle.down.fill"))
+        arrowView.tintColor = .red
+        arrowView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(arrowView)
+
+        NSLayoutConstraint.activate([
+            arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
+            arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
+            arrowView.widthAnchor.constraint(equalToConstant: 30),
+            arrowView.heightAnchor.constraint(equalToConstant: 30)
+        ])
+
+        // Add category name label with wrapping
+        categoryNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        categoryNameLabel.textAlignment = .center
+        categoryNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        categoryNameLabel.textColor = .label
+        categoryNameLabel.numberOfLines = 0 // Allow multiple lines for wrapping
+        categoryNameLabel.lineBreakMode = .byWordWrapping
+        view.addSubview(categoryNameLabel)
+        NSLayoutConstraint.activate([
+            categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView.topAnchor, constant: -10),
+            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping
+            categoryNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+
+        // Add spin button
+        spinButton = UIButton(type: .system)
+        spinButton.setTitle("Spin", for: .normal)
+        spinButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        spinButton.translatesAutoresizingMaskIntoConstraints = false
+        spinButton.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
+        view.addSubview(spinButton)
+
+        NSLayoutConstraint.activate([
+            spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
+            spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
+
+    // Spin the wheel
+    @objc func spinWheel() {
+        // Disable the spin button during animation
+        spinButton.isEnabled = false
+
+        let randomRotation = CGFloat(Double.random(in: 2 * Double.pi * 3...2 * Double.pi * 5)) // Rotate 3 to 5 times
+        let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
+        rotationAnimation.fromValue = 0
+        rotationAnimation.toValue = randomRotation
+        rotationAnimation.duration = 3.0
+        rotationAnimation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        rotationAnimation.fillMode = .forwards
+        rotationAnimation.isRemovedOnCompletion = false
+        rotationAnimation.delegate = self
+        wheelView.layer.add(rotationAnimation, forKey: "rotationAnimation")
+
+        // Start display link to update category name
+        displayLink = CADisplayLink(target: self, selector: #selector(updateCategoryName))
+        displayLink?.add(to: .main, forMode: .default)
+    }
+
+    // Update the category name label during spinning
+    @objc func updateCategoryName() {
+        let currentRotation = (wheelView.layer.presentation()?.value(forKeyPath: "transform.rotation.z") as? CGFloat) ?? 0
+        let normalizedRotation = currentRotation.truncatingRemainder(dividingBy: 2 * CGFloat.pi)
+
+        let anglePerSegment = (2 * CGFloat.pi) / CGFloat(selectedCategories.count)
+        let adjustedRotation = (normalizedRotation + (CGFloat.pi / 2)).truncatingRemainder(dividingBy: 2 * CGFloat.pi)
+        var index = Int(adjustedRotation / anglePerSegment)
+        if adjustedRotation < 0 {
+            index = selectedCategories.count + index
+        }
+        let selectedIndex = (selectedCategories.count - index) % selectedCategories.count
+
+        let currentCategory = selectedCategories[selectedIndex]
+        categoryNameLabel.text = currentCategory.name
+    }
+
+    // Animation delegate method
+    func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+        // Stop updating the category name
+        displayLink?.invalidate()
+        displayLink = nil
+
+        // Get the angle where the wheel stopped
+        let presentationLayer = wheelView.layer.presentation()
+        let currentRotation = presentationLayer?.value(forKeyPath: "transform.rotation.z") as? CGFloat ?? 0
+        let normalizedRotation = currentRotation.truncatingRemainder(dividingBy: 2 * CGFloat.pi)
+
+        // Determine the selected category based on rotation
+        let anglePerSegment = (2 * CGFloat.pi) / CGFloat(selectedCategories.count)
+        let adjustedRotation = (normalizedRotation + (CGFloat.pi / 2)).truncatingRemainder(dividingBy: 2 * CGFloat.pi)
+        var index = Int(adjustedRotation / anglePerSegment)
+        if adjustedRotation < 0 {
+            index = selectedCategories.count + index
+        }
+        let selectedIndex = (selectedCategories.count - index) % selectedCategories.count
+
+        let selectedCategory = selectedCategories[selectedIndex]
+        categoryNameLabel.text = selectedCategory.name
+        // Fetch question from the selected category
+        self.loadQuestionFromCategory(category: selectedCategory)
     }
 
     // Setup the UI
@@ -210,54 +341,30 @@ class SoloViewController: UIViewController {
         // Disable all buttons to prevent multiple taps
         optionButtons.forEach { $0.isEnabled = false }
 
-        // After a delay, load the next question
+        // After a delay, load the next question or end the game
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.optionButtons.forEach { button in
-                button.backgroundColor = UIColor.systemGray6
-                button.isEnabled = true // Re-enable buttons for next question
-                button.removeFromSuperview()
-            }
-            self.optionButtons.removeAll()
-            self.questionLabel.isHidden = true
-            self.scoreLabel.isHidden = true
-            self.currentQuestion = nil
+            if isCorrect {
+                self.optionButtons.forEach { button in
+                    button.backgroundColor = UIColor.systemGray6
+                    button.isEnabled = true // Re-enable buttons for next question
+                    button.removeFromSuperview()
+                }
+                self.optionButtons.removeAll()
+                self.questionLabel.isHidden = true
+                self.scoreLabel.isHidden = true
+                self.currentQuestion = nil
 
-            if self.currentQuestionIndex < 3 {
-                self.loadQuestionFromCategory(category: self.selectedCategories.first!)
+                // Show the wheel again
+                self.wheelView.isHidden = false
+                self.spinButton.isHidden = false
+                self.arrowView.isHidden = false
+                self.categoryNameLabel.isHidden = false
+                self.spinButton.isEnabled = true
             } else {
-                self.showRetryButton()
+                // End the game and return to main menu
+                self.dismiss(animated: true, completion: nil)
             }
         }
-    }
-
-    // Show retry button after 3 questions
-    func showRetryButton() {
-        let retryButton = UIButton(type: .system)
-        retryButton.setTitle("Retry", for: .normal)
-        retryButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        retryButton.translatesAutoresizingMaskIntoConstraints = false
-        retryButton.addTarget(self, action: #selector(resetGame), for: .touchUpInside)
-        view.addSubview(retryButton)
-
-        NSLayoutConstraint.activate([
-            retryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            retryButton.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-    }
-
-    // Reset the game
-    @objc func resetGame() {
-        view.subviews.filter { $0 is UIButton && ($0 as! UIButton).title(for: .normal) == "Retry" }.forEach { $0.removeFromSuperview() }
-
-        score = 0
-        currentQuestionIndex = 0
-        scoreLabel.text = "Score: \(score)"
-        scoreLabel.isHidden = true
-        questionLabel.isHidden = true
-        optionButtons.forEach { $0.removeFromSuperview() }
-        optionButtons.removeAll()
-
-        self.loadQuestionFromCategory(category: self.selectedCategories.first!)
     }
 }
 
