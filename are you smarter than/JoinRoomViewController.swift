@@ -104,7 +104,15 @@ class JoinRoomViewController: UIViewController {
                         self.present(lobbyVC, animated: true)
                     }
                 } else {
-                    DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
+                    if let message = json["message"] as? String {
+                        DispatchQueue.main.async { self.statusLabel.text = message }
+                    } else {
+                        if let message = json["message"] as? String {
+                            DispatchQueue.main.async { self.statusLabel.text = message }
+                        } else {
+                            DispatchQueue.main.async { self.statusLabel.text = "Failed to join room." }
+                        }
+                    }
                 }
             } catch {
                 DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }

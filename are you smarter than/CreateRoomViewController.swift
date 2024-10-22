@@ -139,7 +139,11 @@ class CreateRoomViewController: UIViewController {
                         self.present(lobbyVC, animated: true)
                     }
                 } else {
-                    DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
+                    if let message = json["message"] as? String {
+                        DispatchQueue.main.async { self.statusLabel.text = message }
+                    } else {
+                        DispatchQueue.main.async { self.statusLabel.text = "Failed to create room." }
+                    }
                 }
             } catch {
                 DispatchQueue.main.async { self.statusLabel.text = "Error parsing response." }

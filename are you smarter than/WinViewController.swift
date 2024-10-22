@@ -59,7 +59,6 @@ class WinViewController: UIViewController {
     @objc func replayGame() {
         // Logic to replay the game by returning to the lobby
         print("[DEBUG] Attempting to replay game with roomCode: \(roomCode), playerName: \(playerName)")
-        print("[DEBUG] Attempting to leave game with roomCode: \(roomCode), playerName: \(playerName)")
         let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
