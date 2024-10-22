@@ -16,6 +16,7 @@ class CreateRoomViewController: UIViewController {
     let maxPlayersTextField = UITextField()
     let createButton = UIButton(type: .system)
     let statusLabel = UILabel()
+    let backButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,7 +51,11 @@ class CreateRoomViewController: UIViewController {
         statusLabel.textAlignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        view.addSubview(playerNameTextField)
+        backButton.setTitle("Back", for: .normal)
+        backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(backButton)
         view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(createButton)
@@ -73,7 +78,10 @@ class CreateRoomViewController: UIViewController {
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20)
         ])
     }
 
@@ -136,5 +144,8 @@ class CreateRoomViewController: UIViewController {
                 DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to create room." : message }
             }
         }.resume()
+    }
+    @objc func goBack() {
+        dismiss(animated: true, completion: nil)
     }
 }

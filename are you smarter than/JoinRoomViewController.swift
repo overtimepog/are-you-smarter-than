@@ -14,6 +14,7 @@ class JoinRoomViewController: UIViewController {
     let playerNameTextField = UITextField()
     let joinButton = UIButton(type: .system)
     let statusLabel = UILabel()
+    let backButton = UIButton(type: .system)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,7 +41,11 @@ class JoinRoomViewController: UIViewController {
         statusLabel.textColor = .red
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        view.addSubview(roomCodeTextField)
+        backButton.setTitle("Back", for: .normal)
+        backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(backButton)
         view.addSubview(playerNameTextField)
         view.addSubview(joinButton)
         view.addSubview(statusLabel)
@@ -56,7 +61,10 @@ class JoinRoomViewController: UIViewController {
             joinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             joinButton.topAnchor.constraint(equalTo: playerNameTextField.bottomAnchor, constant: 20),
 
-            statusLabel.topAnchor.constraint(equalTo: joinButton.bottomAnchor, constant: 20)
+            statusLabel.topAnchor.constraint(equalTo: joinButton.bottomAnchor, constant: 20),
+
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20)
         ])
     }
 
@@ -108,5 +116,8 @@ class JoinRoomViewController: UIViewController {
                 DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to join room." : message }
             }
         }.resume()
+    }
+    @objc func goBack() {
+        dismiss(animated: true, completion: nil)
     }
 }
