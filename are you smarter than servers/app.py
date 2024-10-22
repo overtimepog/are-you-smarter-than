@@ -182,8 +182,8 @@ def handle_join_game(data):
         join_room(room_code)
         session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
         current_players = room['players']
-            update_last_active(room_code)  # Update last active time
-            emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
+        update_last_active(room_code)  # Update last active time
+        emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
         else:
             # Player did not join via HTTP endpoint or player_id mismatch
             leave_room(room_code)
