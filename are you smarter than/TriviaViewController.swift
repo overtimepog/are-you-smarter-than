@@ -90,18 +90,21 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         
         // Add next button
         nextButton = UIButton(type: .system)
-        nextButton.setTitle("Next", for: .normal)
-        nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        nextButton.translatesAutoresizingMaskIntoConstraints = false
-        nextButton.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
-        view.addSubview(nextButton)
+        nextButton?.setTitle("Next", for: .normal)
+        nextButton?.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        nextButton?.translatesAutoresizingMaskIntoConstraints = false
+        nextButton?.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
+        if let nextButton = nextButton {
+            view.addSubview(nextButton)
+        }
         
-        NSLayoutConstraint.activate([
-            nextButton.topAnchor.constraint(equalTo: spinButton?.bottomAnchor ?? view.bottomAnchor, constant: 20),
-            nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-        
-        nextButton.isHidden = true // Initially hide the next button
+        if let nextButton = nextButton {
+            NSLayoutConstraint.activate([
+                nextButton.topAnchor.constraint(equalTo: spinButton?.bottomAnchor ?? view.bottomAnchor, constant: 20),
+                nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+            nextButton.isHidden = true // Initially hide the next button
+        }
         fetchCategories()
         questionLabel.isHidden = true
         scoreAndQuestionLabel.isHidden = false
@@ -268,16 +271,20 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
         // Add arrow indicator
         arrowView = UIImageView(image: UIImage(systemName: "arrowtriangle.down.fill"))
-        arrowView.tintColor = .red
-        arrowView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(arrowView)
+        arrowView?.tintColor = .red
+        arrowView?.translatesAutoresizingMaskIntoConstraints = false
+        if let arrowView = arrowView {
+            view.addSubview(arrowView)
+        }
 
-        NSLayoutConstraint.activate([
-            arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
-            arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
-            arrowView.widthAnchor.constraint(equalToConstant: 30),
-            arrowView.heightAnchor.constraint(equalToConstant: 30)
-        ])
+        if let arrowView = arrowView {
+            NSLayoutConstraint.activate([
+                arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
+                arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
+                arrowView.widthAnchor.constraint(equalToConstant: 30),
+                arrowView.heightAnchor.constraint(equalToConstant: 30)
+            ])
+        }
 
         // Add category name label with wrapping
         categoryNameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -310,7 +317,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     // Spin the wheel
     @objc func spinWheel() {
         // Disable the spin button during animation
-        spinButton.isEnabled = false
+        spinButton?.isEnabled = false
 
         let randomRotation = CGFloat(Double.random(in: 2 * Double.pi * 3...2 * Double.pi * 5)) // Rotate 3 to 5 times
         let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
@@ -518,7 +525,7 @@ button.titleLabel?.minimumScaleFactor = 0.5
 
         // After a delay, show the next button
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.nextButton.isHidden = false
+            self.nextButton?.isHidden = false
         }
     }
 
@@ -551,10 +558,10 @@ button.titleLabel?.minimumScaleFactor = 0.5
 
         // Show the wheel again
         self.wheelView.isHidden = false
-        self.spinButton.isHidden = false
-        self.arrowView.isHidden = false
+        self.spinButton?.isHidden = false
+        self.arrowView?.isHidden = false
         self.categoryNameLabel.isHidden = false
-        self.spinButton.isEnabled = true
+        self.spinButton?.isEnabled = true
     }
 }
 
