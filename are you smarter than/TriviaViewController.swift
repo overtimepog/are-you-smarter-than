@@ -151,7 +151,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             DispatchQueue.main.async {
                 self.setupWheel()
             }
+            scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         } else {
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
             // Fetch categories from the API
             let urlString = "https://opentdb.com/api_category.php"
             guard let url = URL(string: urlString) else {
@@ -454,8 +456,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             }
         }
 
-        // Update score label
+        // Update score and streak labels
         scoreLabel.text = "Score: \(score)"
+        if gameMode == .solo {
+            scoreAndQuestionLabel.text = "Streak: \(streak)"
+        } else {
+            scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
+        }
 
         // Animate the selected button
         UIView.animate(withDuration: 0.3) {
