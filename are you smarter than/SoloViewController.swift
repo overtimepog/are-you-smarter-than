@@ -370,7 +370,11 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
                 self.spinButton.isEnabled = true
             }
             // Show the wheel again
-            self.wheelView.isHidden = false
+            if let wheelView = self.wheelView {
+                wheelView.isHidden = false
+            } else {
+                print("[DEBUG] wheelView is nil")
+            }
             self.spinButton.isHidden = false
             self.arrowView.isHidden = false
             self.categoryNameLabel.isHidden = false
