@@ -14,6 +14,51 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     enum GameMode {
         case solo
         case multiplayer
+        
+        // Add next button
+        nextButton = UIButton(type: .system)
+        nextButton.setTitle("Next", for: .normal)
+        nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        nextButton.translatesAutoresizingMaskIntoConstraints = false
+        nextButton.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
+        view.addSubview(nextButton)
+        
+        NSLayoutConstraint.activate([
+            nextButton.topAnchor.constraint(equalTo: spinButton.bottomAnchor, constant: 20),
+            nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+        
+        nextButton.isHidden = true // Initially hide the next button
+    }
+
+    // Handle next button press
+    @objc func nextQuestion() {
+        // Reset button colors
+        self.optionButtons.forEach { button in
+            button.backgroundColor = UIColor.systemGray6
+            button.isEnabled = true // Re-enable buttons for next question
+            button.removeFromSuperview()
+        }
+        self.optionButtons.removeAll()
+        self.questionLabel.isHidden = true
+        self.currentQuestion = nil
+
+        if self.gameMode == .solo {
+            if !isCorrect {
+                // Return to main menu if the answer is incorrect
+                self.navigationController?.popToRootViewController(animated: true)
+                return
+            }
+            self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
+        }
+
+        // Show the wheel again
+        self.wheelView.isHidden = false
+        self.spinButton.isHidden = false
+        self.arrowView.isHidden = false
+        self.categoryNameLabel.isHidden = false
+        self.spinButton.isEnabled = true
+        self.nextButton.isHidden = true // Hide the next button
     }
 
     // Trivia question data
@@ -42,6 +87,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var optionButtons: [UIButton] = []
     let scoreAndQuestionLabel = UILabel()
     var wheelView: WheelView!
+    var nextButton: UIButton!
     var spinButton: UIButton!
     var arrowView: UIImageView!
     let categoryNameLabel = UILabel()
@@ -466,33 +512,9 @@ button.titleLabel?.minimumScaleFactor = 0.5
         // Disable all buttons to prevent multiple taps
         optionButtons.forEach { $0.isEnabled = false }
 
-        // After a delay, go back to wheel or show results
+        // After a delay, show the next button
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Reset button colors
-            self.optionButtons.forEach { button in
-                button.backgroundColor = UIColor.systemGray6
-                button.isEnabled = true // Re-enable buttons for next question
-                button.removeFromSuperview()
-            }
-            self.optionButtons.removeAll()
-            self.questionLabel.isHidden = true
-            self.currentQuestion = nil
-
-            if self.gameMode == .solo {
-                if !isCorrect {
-                    // Return to main menu if the answer is incorrect
-                    self.navigationController?.popToRootViewController(animated: true)
-                    return
-                }
-                self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
-            }
-
-            // Show the wheel again
-            self.wheelView.isHidden = false
-            self.spinButton.isHidden = false
-            self.arrowView.isHidden = false
-            self.categoryNameLabel.isHidden = false
-            self.spinButton.isEnabled = true
+            self.nextButton.isHidden = false
         }
     }
 
