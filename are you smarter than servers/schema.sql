@@ -9,3 +9,12 @@ CREATE TABLE IF NOT EXISTS rooms (
     last_active REAL,
     creation_time REAL
 );
+
+CREATE TABLE IF NOT EXISTS player_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_code TEXT,
+    player_name TEXT,
+    score INTEGER,
+    timestamp REAL,
+    FOREIGN KEY(room_code) REFERENCES rooms(room_code)
+);
