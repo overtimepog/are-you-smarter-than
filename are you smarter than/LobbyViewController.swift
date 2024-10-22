@@ -186,6 +186,7 @@ class LobbyViewController: UIViewController {
                 // Transition to the game view
                 let triviaVC = TriviaViewController()
                 triviaVC.modalPresentationStyle = .fullScreen
+                triviaVC.gameMode = .multiplayer
                 self.present(triviaVC, animated: true)
             }
         }.resume()
