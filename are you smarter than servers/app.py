@@ -68,7 +68,9 @@ def get_room_info(room_code):
             'question_goal': room['question_goal'],
             'max_players': room['max_players'],
             'game_started': room['game_started'],
-            'winners': room['winners']
+            'winners': room['winners'],
+            'difficulty': room['difficulty'],  # Include the correct difficulty field here
+            'last_active': room['last_active']  # Correctly display the last active timestamp
         }), 200
     print(f"[DEBUG] [get_room_info] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
@@ -131,6 +133,7 @@ def create_room():
     if difficulty not in ['easy', 'medium', 'hard']:
         print("[DEBUG] Invalid difficulty provided.")
         return jsonify({'success': False, 'message': 'Invalid difficulty. It must be one of: easy, medium, hard.'}), 400
+    if not isinstance(question_goal, int) or question_goal <= 0:
         print("[DEBUG] Invalid question goal provided.")
         return jsonify({'success': False, 'message': 'Invalid question goal. It must be a positive integer.'}), 400
     if not isinstance(max_players, int) or max_players <= 0:
