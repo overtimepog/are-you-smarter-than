@@ -90,8 +90,7 @@ class MainMenuViewController: UIViewController {
         
         // Add any additional code to handle solo mode, like transitioning to the solo gameplay screen
         // For example:
-        let soloGameViewController = TriviaViewController()
-        soloGameViewController.gameMode = .solo
+        let soloGameViewController = SoloViewController()
         navigationController?.pushViewController(soloGameViewController, animated: true)
     }
 
