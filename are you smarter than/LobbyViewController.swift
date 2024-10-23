@@ -183,6 +183,8 @@ class LobbyViewController: UIViewController {
 
             DispatchQueue.main.async {
                 self.gameStarted = true
+                self.refreshTimer?.invalidate()
+                self.refreshTimer = nil
                 self.startGameButton.isHidden = true
                 // Transition to the game view
                 let triviaVC = TriviaViewController()

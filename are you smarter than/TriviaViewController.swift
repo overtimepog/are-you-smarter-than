@@ -21,6 +21,12 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Handle next button press
     @objc func nextQuestion() {
+        // Stop fetching room data in LobbyViewController
+        if let lobbyVC = self.presentingViewController as? LobbyViewController {
+            lobbyVC.refreshTimer?.invalidate()
+            lobbyVC.refreshTimer = nil
+        }
+
         // Reset button colors
         self.optionButtons.forEach { button in
             button.backgroundColor = UIColor.systemGray6
