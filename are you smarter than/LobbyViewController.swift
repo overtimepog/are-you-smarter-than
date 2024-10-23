@@ -143,7 +143,7 @@ class LobbyViewController: UIViewController {
         self.players = roomInfo.players
         self.questionGoal = roomInfo.question_goal
         self.maxPlayers = roomInfo.max_players
-        self.gameStarted = roomInfo.game_started
+        self.gameStarted = (roomInfo.game_started == 1) // Update based on Int value
 
         roomCodeLabel.text = "Room Code: \(roomInfo.room_code)"
         playersTableView.reloadData()
@@ -171,9 +171,9 @@ class LobbyViewController: UIViewController {
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            guard let self = self else { 
+            guard let self = self else {
                 print("Self is nil, returning")
-                return 
+                return
             }
 
             if let error = error {
@@ -242,6 +242,6 @@ struct RoomInfo: Codable {
     let players: [String]
     let question_goal: Int
     let max_players: Int
-    let game_started: Bool
+    let game_started: Int // Changed to Int to match response
     let winners: [String]
 }
