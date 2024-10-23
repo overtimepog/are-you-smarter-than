@@ -37,7 +37,8 @@ def get_room(room_code):
                     'max_players': room[5],
                     'winners': eval(room[6]),
                     'last_active': room[7],
-                    'creation_time': room[8]
+                    'creation_time': room[8],
+                    'difficulty': room[9]  # Add difficulty to the returned room data
                 }
             return None
 
