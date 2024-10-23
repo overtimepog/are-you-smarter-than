@@ -11,12 +11,6 @@ let categoryEmojis: [Int: String] = [
 // TriviaViewController.swift
 class TriviaViewController: UIViewController, CAAnimationDelegate {
 
-    enum GameMode {
-        case solo
-        case multiplayer
-        
-    }
-
     var difficulty: String = "easy" // Default difficulty
 
     // Handle next button press
@@ -37,25 +31,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         self.questionLabel.isHidden = true
         self.currentQuestion = nil
 
-        if self.gameMode == .solo {
-            if !isCorrect {
-                // Return to main menu if the answer is incorrect
-                self.navigationController?.popToRootViewController(animated: true)
-                return
-            }
-            self.scoreAndQuestionLabel.text = "Streak: \(self.streak)"
-
-            // Update difficulty based on question index
-            if currentQuestionIndex >= 10 && currentQuestionIndex < 20 {
-                difficulty = "medium"
-            } else if currentQuestionIndex >= 20 {
-                difficulty = "hard"
-            }
-        } else if self.gameMode == .multiplayer {
-            if currentQuestionIndex >= questionGoal {
-                showWinViewController()
-                return
-            }
+        if currentQuestionIndex >= questionGoal {
+            showWinViewController(with: <#[[String : Any]]#>)
+            return
         }
 
         // Show the wheel again
@@ -71,22 +49,18 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var currentQuestion: TriviaQuestion?
     var currentQuestionIndex = 0
     var score = 0
-    var streak = 0 // For solo mode
 
     // Category data
     var allCategories: [TriviaCategory] = []
     var selectedCategories: [TriviaCategory] = []
 
-    // Accept the number of players and selected categories
+    // Multiplayer game data
     var numberOfPlayers: Int = 1 // Default to 1
     var roomCode: String = "" // Set this when transitioning to the trivia view
     var questionGoal: Int = 0 // Set this when transitioning to the trivia view
     var playerName: String = ""
     var playerId: String = ""
     var isCorrect: Bool = false
-
-    // Game mode
-    var gameMode: GameMode = .solo
 
     // UI Elements
     let questionLabel = UILabel()
@@ -102,7 +76,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        
+
         // Add next button
         nextButton = UIButton(type: .system)
         nextButton?.setTitle("Next", for: .normal)
@@ -112,7 +86,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         if let nextButton = nextButton {
             view.addSubview(nextButton)
         }
-        
+
         if let nextButton = nextButton {
             NSLayoutConstraint.activate([
                 nextButton.topAnchor.constraint(equalTo: spinButton?.bottomAnchor ?? view.bottomAnchor, constant: 20),
@@ -164,12 +138,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         self.present(winVC, animated: true)
     }
 
-    func showWinViewController() { // Overloaded method for solo mode
-        let winVC = WinViewController()
-        winVC.modalPresentationStyle = .fullScreen
-        self.present(winVC, animated: true)
-    }
-
     // Setup the UI
     func setupUI() {
         view.backgroundColor = UIColor.systemBackground
@@ -207,9 +175,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             DispatchQueue.main.async {
                 self.setupWheel()
             }
-            scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         } else {
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
             // Fetch categories from the API
             let urlString = "https://opentdb.com/api_category.php"
             guard let url = URL(string: urlString) else {
@@ -258,9 +224,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 "player_id": playerId,
                 "correct": isCorrect
             ]
-            if gameMode == .multiplayer {
-                sendResultToServer(parameters: parameters)
-            }
+            sendResultToServer(parameters: parameters)
         }
     }
 
@@ -450,31 +414,31 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton?.isHidden = true
         arrowView?.isHidden = true
         categoryNameLabel.isHidden = true
-        
+
         // Set up question UI
         currentQuestion = question
         currentQuestionIndex += 1 // Keep track of the number of times
         questionLabel.text = question.question
         questionLabel.isHidden = false
-        
+
         // Remove existing buttons
         optionButtons.forEach { $0.removeFromSuperview() }
         optionButtons.removeAll()
-        
+
         for (index, option) in question.options.enumerated() {
             let button = UIButton(type: .system)
             button.translatesAutoresizingMaskIntoConstraints = false
             button.tag = index // Assign index to button
             button.setTitle(option, for: .normal)
-button.titleLabel?.adjustsFontSizeToFitWidth = true
-button.titleLabel?.minimumScaleFactor = 0.5
+            button.titleLabel?.adjustsFontSizeToFitWidth = true
+            button.titleLabel?.minimumScaleFactor = 0.5
             button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
             button.backgroundColor = UIColor.systemGray6
             button.layer.cornerRadius = 10
             button.addTarget(self, action: #selector(optionSelected(_:)), for: .touchUpInside)
             view.addSubview(button)
             optionButtons.append(button)
-            
+
             NSLayoutConstraint.activate([
                 button.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: CGFloat(40 + index * 60)),
                 button.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -482,22 +446,9 @@ button.titleLabel?.minimumScaleFactor = 0.5
                 button.heightAnchor.constraint(equalToConstant: 50)
             ])
         }
-        
-        // Update score and check if game should end based on game mode
-        scoreAndQuestionLabel.text = "Streak: \(streak) | Score: \(score)/\(currentQuestionIndex)"
-        if gameMode == .multiplayer {
-            if currentQuestionIndex >= questionGoal {
-                showWinViewController()
-                return
-            }
-            let parameters: [String: Any] = [
-                "room_code": roomCode,
-                "player_name": playerName,
-                "player_id": playerId,
-                "correct": isCorrect
-            ]
-            sendResultToServer(parameters: parameters)
-        }
+
+        // Update score label
+        scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
         scoreAndQuestionLabel.isHidden = false
     }
 
@@ -510,21 +461,10 @@ button.titleLabel?.minimumScaleFactor = 0.5
 
         if isCorrect {
             score += 1 // Correct answer, increment score
-            if gameMode == .solo {
-                streak += 1
-            }
-        } else {
-            if gameMode == .solo {
-                streak = 0
-            }
         }
 
-        // Update score and streak labels
-        if gameMode == .solo {
-            scoreAndQuestionLabel.text = "Streak: \(streak)"
-        } else {
-            scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
-        }
+        // Update score label
+        scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
 
         // Animate the selected button
         UIView.animate(withDuration: 0.3) {
@@ -546,52 +486,22 @@ button.titleLabel?.minimumScaleFactor = 0.5
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.nextButton?.isHidden = false
             self?.nextButton?.removeTarget(nil, action: nil, for: .allEvents)
-            if self?.isCorrect == true {
-                self?.nextButton?.addTarget(self, action: #selector(self?.nextQuestion), for: .touchUpInside)
-            } else {
-                self?.nextButton?.addTarget(self, action: #selector(self?.returnToMainMenu), for: .touchUpInside)
-            }
+            self?.nextButton?.addTarget(self, action: #selector(self?.nextQuestion), for: .touchUpInside)
         }
+        //update this to handle the diffulty
+        // Send result to server
+        let parameters: [String: Any] = [
+            "room_code": roomCode,
+            "player_name": playerName,
+            "player_id": playerId,
+            "correct": isCorrect
+        ]
+        sendResultToServer(parameters: parameters)
     }
 
     // Return to main menu
     @objc func returnToMainMenu() {
         self.navigationController?.popToRootViewController(animated: true)
-    }
-
-    // Show retry button after 3 questions
-    func showRetryButton() {
-        let retryButton = UIButton(type: .system)
-        retryButton.setTitle("Retry", for: .normal)
-        retryButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        retryButton.translatesAutoresizingMaskIntoConstraints = false
-        retryButton.addTarget(self, action: #selector(resetGame), for: .touchUpInside)
-        view.addSubview(retryButton)
-
-        NSLayoutConstraint.activate([
-            retryButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            retryButton.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-    }
-
-    // Reset the game
-    @objc func resetGame() {
-        // Remove retry button
-        view.subviews.filter { $0 is UIButton && ($0 as! UIButton).title(for: .normal) == "Retry" }.forEach { $0.removeFromSuperview() }
-
-        score = 0
-        streak = 0
-        currentQuestionIndex = 0
-        questionLabel.isHidden = true
-        optionButtons.forEach { $0.removeFromSuperview() }
-        optionButtons.removeAll()
-
-        // Show the wheel again
-        self.wheelView.isHidden = false
-        self.spinButton?.isHidden = false
-        self.arrowView?.isHidden = false
-        self.categoryNameLabel.isHidden = false
-        self.spinButton?.isEnabled = true
     }
 }
 
