@@ -38,7 +38,7 @@ def get_room(room_code):
                     'winners': eval(room[6]),
                     'last_active': room[7],
                     'creation_time': room[8],
-                    'difficulty': room[9]  # Add difficulty to the returned room data
+                    'difficulty': room[9]
                 }
             return None
 
@@ -54,53 +54,44 @@ def update_room(room_code, players=None, game_started=None, winners=None, last_a
             if last_active is not None:
                 conn.execute('UPDATE rooms SET last_active = ? WHERE room_code = ?', (last_active, room_code))
 
-def add_player_score(room_code, player_name, score):
+def add_or_update_player(room_code, player_name):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            result = conn.execute('''
+                SELECT id FROM player_scores WHERE room_code = ? AND player_name = ?
+            ''', (room_code, player_name)).fetchone()
+
+            if result is None:
+                conn.execute('''
+                    INSERT INTO player_scores (room_code, player_name, score, wins, timestamp)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (room_code, player_name, 0, 0, time.time()))
+            else:
+                print(f"Player {player_name} rejoined the room.")
+
+def increment_player_win(room_code, player_name):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('''
-                INSERT INTO player_scores (room_code, player_name, score, timestamp)
-                VALUES (?, ?, ?, ?)
-            ''', (room_code, player_name, score, time.time()))
+                UPDATE player_scores
+                SET wins = wins + 1, timestamp = ?
+                WHERE room_code = ? AND player_name = ?
+            ''', (time.time(), room_code, player_name))
 
 def get_player_scores(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
-            scores = conn.execute('SELECT player_name, score FROM player_scores WHERE room_code = ?', (room_code,)).fetchall()
-            return [{'player_name': score[0], 'score': score[1]} for score in scores]
-
-def get_player_statistics(player_name):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            stats = conn.execute('SELECT room_code, score, timestamp FROM player_scores WHERE player_name = ?', (player_name,)).fetchall()
-            return [{'room_code': stat[0], 'score': stat[1], 'timestamp': stat[2]} for stat in stats]
-
-def get_game_history(room_code):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            history = conn.execute('SELECT player_name, score, timestamp FROM player_scores WHERE room_code = ?', (room_code,)).fetchall()
-            return [{'player_name': entry[0], 'score': entry[1], 'timestamp': entry[2]} for entry in history]
-
-def start_game(room_code):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            conn.execute('UPDATE rooms SET game_started = ?, last_active = ? WHERE room_code = ?', (True, time.time(), room_code))
-
-def end_game(room_code, winners):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            conn.execute('UPDATE rooms SET game_started = ?, winners = ?, last_active = ? WHERE room_code = ?', (False, str(winners), time.time(), room_code))
-
-def delete_room(room_code):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            conn.execute('DELETE FROM rooms WHERE room_code = ?', (room_code,))
-            conn.execute('DELETE FROM player_scores WHERE room_code = ?', (room_code,))
+            scores = conn.execute('''
+                SELECT player_name, score, wins FROM player_scores WHERE room_code = ?
+            ''', (room_code,)).fetchall()
+            return [{'player_name': score[0], 'score': score[1], 'wins': score[2]} for score in scores]
 
 def add_player_to_room(room_code, player_name):
     room = get_room(room_code)
     if room and len(room['players']) < room['max_players'] and not room['game_started']:
         room['players'].append(player_name)
         update_room(room_code, players=room['players'], last_active=time.time())
+        add_or_update_player(room_code, player_name)
         return True
     return False
 
@@ -111,3 +102,43 @@ def remove_player_from_room(room_code, player_name):
         update_room(room_code, players=room['players'], last_active=time.time())
         return True
     return False
+
+def end_game(room_code, winners):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            for winner in winners:
+                increment_player_win(room_code, winner)
+            conn.execute('''
+                UPDATE rooms SET game_started = ?, winners = ?, last_active = ?
+                WHERE room_code = ?
+            ''', (False, str(winners), time.time(), room_code))
+
+def delete_room(room_code):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            conn.execute('DELETE FROM rooms WHERE room_code = ?', (room_code,))
+            conn.execute('DELETE FROM player_scores WHERE room_code = ?', (room_code,))
+
+def get_game_history(room_code):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            history = conn.execute('''
+                SELECT player_name, score, wins, timestamp
+                FROM player_scores WHERE room_code = ?
+            ''', (room_code,)).fetchall()
+            return [{'player_name': entry[0], 'score': entry[1], 'wins': entry[2], 'timestamp': entry[3]} for entry in history]
+
+def start_game(room_code):
+    """Starts the game and ensures all players are added to player_scores."""
+    room = get_room(room_code)
+    if room:
+        # Add all players to the player_scores table if they don't exist already
+        for player_name in room['players']:
+            add_or_update_player(room_code, player_name)
+
+        with closing(sqlite3.connect(DATABASE)) as conn:
+            with conn:
+                conn.execute('''
+                    UPDATE rooms SET game_started = ?, last_active = ?
+                    WHERE room_code = ?
+                ''', (True, time.time(), room_code))

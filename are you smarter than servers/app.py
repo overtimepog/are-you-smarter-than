@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
-from room_db import init_db, add_room, get_room, update_room, delete_room, get_player_scores, add_player_score, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game
+from room_db import init_db, add_room, get_room, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win
 import time
 import string
 import uuid
@@ -154,6 +154,39 @@ def create_room():
     print(f"[DEBUG] Room created successfully with room code: {room_code}")
 
     return jsonify({'room_code': room_code, 'success': True}), 200
+
+@app.route('/start_game', methods=['POST'])
+def start_game_route():
+    # Handle starting the game
+    data = request.json
+    room_code = data['room_code']
+    print(f"[DEBUG] Attempting to start game for room {room_code}")
+    room = get_room(room_code)
+    if room:
+        if room['game_started']:
+            return jsonify({'success': False, 'message': 'Game has already started'}), 400
+        start_game(room_code)
+        print(f"[DEBUG] Game started for room {room_code}")
+        return jsonify({'success': True, 'message': 'Game started'}), 200
+    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
+
+@app.route('/end_game', methods=['POST'])
+def end_game_route():
+    # Handle ending the game
+    data = request.json
+    room_code = data['room_code']
+    winners = data.get('winners', [])
+    print(f"[DEBUG] Attempting to end game for room {room_code}")
+    room = get_room(room_code)
+    if room:
+        if not room['game_started']:
+            return jsonify({'success': False, 'message': 'Game has not started yet'}), 400
+        end_game(room_code, winners)
+        print(f"[DEBUG] Game ended for room {room_code}")
+        for winner in winners:
+            increment_player_win(room_code, winner)
+        return jsonify({'success': True, 'message': 'Game ended', 'winners': winners}), 200
+    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @socketio.on('join_game')
 def handle_join_game(data):
