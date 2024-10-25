@@ -32,9 +32,12 @@ def update_last_active(room_code):
 
 def cleanup_room(room_code):
     # Delete a room from the database to free up resources
-    delete_room(room_code)
-    used_room_codes.discard(room_code)  # Remove the room code from the set of used codes
-    print(f"[DEBUG] [cleanup_room] Room {room_code} deleted from database")
+    try:
+        delete_room(room_code)
+        used_room_codes.discard(room_code)  # Remove the room code from the set of used codes
+        print(f"[DEBUG] [cleanup_room] Room {room_code} deleted from database")
+    except Exception as e:
+        print(f"[ERROR] Failed to delete room {room_code}: {e}")
 
 @app.route('/')
 def index():
@@ -111,11 +114,15 @@ def join_room_route():
         print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
         return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
 
-    if add_player_to_room(room_code, player_name):
-        update_last_active(room_code)  # Update last active time
-        player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))  # Generate a shorter, human-readable player identifier
-        print(f"[DEBUG] Player {player_name} joined room {room_code}")
-        return jsonify({'success': True, 'player_id': player_id}), 200
+    try:
+        if add_player_to_room(room_code, player_name):
+            update_last_active(room_code)  # Update last active time
+            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))  # Generate a shorter, human-readable player identifier
+            print(f"[DEBUG] Player {player_name} joined room {room_code}")
+            return jsonify({'success': True, 'player_id': player_id}), 200
+    except Exception as e:
+        print(f"[ERROR] Failed to add player {player_name} to room {room_code}: {e}")
+        return jsonify({'success': False, 'message': f'Failed to add player {player_name} to room {room_code}'}), 500
 
 @app.route('/create_room', methods=['POST'])
 def create_room():
@@ -242,9 +249,11 @@ def handle_disconnect():
         room_code = player_info['room_code']
         player_name = player_info['player_name']
 
-        if remove_player_from_room(room_code, player_name):
-            del session_to_player[sid]  # Remove player from session mapping
-            emit('player_left', player_name, room=room_code)  # Notify other players in the room
+        room = get_room(room_code)
+        if room:
+            if remove_player_from_room(room_code, player_name):
+                del session_to_player[sid]  # Remove player from session mapping
+                emit('player_left', player_name, room=room_code)  # Notify other players in the room
 
 socketio.run(app, host='0.0.0.0', port=3000)
 print("[DEBUG] API is fully booted and ready to use.")
