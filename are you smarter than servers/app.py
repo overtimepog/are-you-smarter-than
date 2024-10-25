@@ -60,17 +60,17 @@ def get_room_info(room_code):
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = get_room(room_code)
     if room:
-        players = room['players']
+        players = room.get('players', [])
         print(f"[DEBUG] [get_room_info] Room found: {room}")
         return jsonify({
             'room_code': room_code,
             'players': players,
-            'question_goal': room['question_goal'],
-            'max_players': room['max_players'],
-            'game_started': room['game_started'],
-            'winners': room['winners'],
-            'difficulty': room['difficulty'],  # Include the correct difficulty field here
-            'last_active': room['last_active']  # Correctly display the last active timestamp
+            'question_goal': room.get('question_goal', 10),
+            'max_players': room.get('max_players', 8),
+            'game_started': room.get('game_started', False),
+            'winners': room.get('winners', []),
+            'difficulty': room.get('difficulty', 'easy'),  # Default to 'easy' if difficulty is missing
+            'last_active': room.get('last_active', time.time())  # Correctly display the last active timestamp
         }), 200
     print(f"[DEBUG] [get_room_info] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404

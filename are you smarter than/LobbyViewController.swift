@@ -1,8 +1,3 @@
-//
-//  LobbyViewController.swift
-//  Are You Smarter Than
-//
-
 import UIKit
 import SwiftyJSON
 
@@ -12,6 +7,7 @@ class LobbyViewController: UIViewController {
     var playerName: String = "" // Set this when transitioning to the lobby
     var isHost: Bool = false   // Indicates if the user is the host
     var players: [String] = []  // List to hold player names
+    var playerWins: [String: Int] = [:] // Dictionary to track player wins
     var questionGoal: Int = 0
     var maxPlayers: Int = 0
     var gameStarted: Bool = false
@@ -90,7 +86,7 @@ class LobbyViewController: UIViewController {
             startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             refreshButton.bottomAnchor.constraint(equalTo: leaveLobbyButton.topAnchor, constant: -20),
-            startGameButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             leaveLobbyButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             leaveLobbyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
@@ -141,6 +137,7 @@ class LobbyViewController: UIViewController {
     // Update the UI with fetched room data
     func updateUI(with roomInfo: RoomInfo) {
         self.players = roomInfo.players
+        self.playerWins = roomInfo.playerWins
         self.questionGoal = roomInfo.question_goal
         self.maxPlayers = roomInfo.max_players
         self.gameStarted = (roomInfo.game_started == 1) // Update based on Int value
@@ -154,6 +151,7 @@ class LobbyViewController: UIViewController {
             self.fetchRoomData()  // Refresh the room data when the button is pressed
         }
     }
+    
     @objc func startGame() {
         guard isHost else { return }
 
@@ -232,7 +230,9 @@ extension LobbyViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PlayerCell", for: indexPath)
-        cell.textLabel?.text = players[indexPath.row]
+        let playerName = players[indexPath.row]
+        let wins = playerWins[playerName] ?? 0
+        cell.textLabel?.text = "\(playerName) - Wins: \(wins)"
         return cell
     }
 }
@@ -241,6 +241,7 @@ extension LobbyViewController: UITableViewDataSource {
 struct RoomInfo: Codable {
     let room_code: String
     let players: [String]
+    let playerWins: [String: Int]
     let question_goal: Int
     let max_players: Int
     let game_started: Int // Changed to Int to match response
