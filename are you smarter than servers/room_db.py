@@ -86,6 +86,14 @@ def get_player_scores(room_code):
             ''', (room_code,)).fetchall()
             return [{'player_name': score[0], 'score': score[1], 'wins': score[2]} for score in scores]
 
+def get_player_statistics(player_name):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            stats = conn.execute('''
+                SELECT room_code, score, wins, timestamp FROM player_scores WHERE player_name = ?
+            ''', (player_name,)).fetchall()
+            return [{'room_code': stat[0], 'score': stat[1], 'wins': stat[2], 'timestamp': stat[3]} for stat in stats]
+
 def add_player_to_room(room_code, player_name):
     room = get_room(room_code)
     if room and len(room['players']) < room['max_players'] and not room['game_started']:
