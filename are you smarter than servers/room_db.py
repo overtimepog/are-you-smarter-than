@@ -78,6 +78,15 @@ def increment_player_win(room_code, player_name):
                 WHERE room_code = ? AND player_name = ?
             ''', (time.time(), room_code, player_name))
 
+def update_player_score(room_code, player_name, points_to_add):
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        with conn:
+            conn.execute('''
+                UPDATE player_scores 
+                SET score = score + ?, timestamp = ?
+                WHERE room_code = ? AND player_name = ?
+            ''', (points_to_add, time.time(), room_code, player_name))
+
 def get_player_scores(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:

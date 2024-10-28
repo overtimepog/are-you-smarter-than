@@ -233,6 +233,40 @@ def get_game_history_route(room_code):
     history = get_game_history(room_code)
     return jsonify({'room_code': room_code, 'history': history}), 200
 
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    # Handle submitting an answer and updating score
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    is_correct = data['is_correct']
+    
+    print(f"[DEBUG] Player {player_name} submitted answer in room {room_code}: {'correct' if is_correct else 'incorrect'}")
+    
+    room = get_room(room_code)
+    if not room:
+        return jsonify({'success': False, 'message': 'Room not found'}), 404
+    if not room['game_started']:
+        return jsonify({'success': False, 'message': 'Game has not started'}), 400
+        
+    try:
+        # Update player's score - add 1 point for correct answer
+        if is_correct:
+            update_player_score(room_code, player_name, 1)
+        
+        # Get updated scores to return
+        scores = get_player_scores(room_code)
+        update_last_active(room_code)
+        
+        return jsonify({
+            'success': True,
+            'scores': scores,
+            'message': 'Answer submitted successfully'
+        }), 200
+    except Exception as e:
+        print(f"[ERROR] Failed to submit answer: {e}")
+        return jsonify({'success': False, 'message': 'Failed to submit answer'}), 500
+
 @app.route('/get_player_scores/<room_code>', methods=['GET'])
 def get_player_scores_route(room_code):
     # Fetch the scores of all players in a specific room
