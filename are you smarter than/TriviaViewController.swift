@@ -64,7 +64,38 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ])
             nextButton.isHidden = true // Initially hide the next button
         }
-        fetchCategories()
+        
+        // Fetch room info to get categories
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
+            print("Invalid URL for room info")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching room info: \(error)")
+                return
+            }
+            
+            if let data = data {
+                do {
+                    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                    if let categoriesStr = json?["categories"] as? String,
+                       let categories = try? JSONSerialization.jsonObject(with: Data(categoriesStr.utf8)) as? [Int] {
+                        self.roomCategories = categories
+                    }
+                } catch {
+                    print("Error parsing room categories: \(error)")
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.fetchCategories()
+            }
+        }.resume()
+        
         questionLabel.isHidden = true
         scoreAndQuestionLabel.isHidden = false
     }
