@@ -21,6 +21,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     // Category data
     var allCategories: [TriviaCategory] = []
     var selectedCategories: [TriviaCategory] = []
+    var roomCategories: [Int] = [] // Store categories from room creation
 
     // Multiplayer game data
     var numberOfPlayers: Int = 1 // Default to 1
@@ -166,8 +167,15 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                     }
                 }
 
-                // Randomly select 5 categories
-                self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
+                // Filter categories based on room selection
+                self.selectedCategories = self.allCategories.filter { category in
+                    self.roomCategories.contains(category.id)
+                }
+                
+                // If no categories were found, fallback to all categories
+                if self.selectedCategories.isEmpty {
+                    self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
+                }
 
                 DispatchQueue.main.async {
                     self.setupWheel()
