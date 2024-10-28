@@ -90,10 +90,11 @@ class MainMenuViewController: UIViewController {
         // Code to handle the "Solo" button tap
         print("Solo game started")
         
-        // Add any additional code to handle solo mode, like transitioning to the solo gameplay screen
-        // For example:
+        // Present modally instead of pushing
         let soloGameViewController = SoloViewController()
-        navigationController?.pushViewController(soloGameViewController, animated: true)
+        soloGameViewController.modalPresentationStyle = .fullScreen
+        soloGameViewController.modalTransitionStyle = .crossDissolve
+        present(soloGameViewController, animated: true)
     }
 
 }
