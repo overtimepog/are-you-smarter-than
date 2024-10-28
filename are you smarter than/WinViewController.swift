@@ -15,6 +15,7 @@ class WinViewController: UIViewController {
         super.viewDidLoad()
         print("[DEBUG] WinViewController loaded with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
         setupUI()
+        fetchPlayerStatistics() // Fetch latest player statistics
         rankingsTableView.reloadData() // Ensure rankings are displayed
     }
     
@@ -64,6 +65,46 @@ class WinViewController: UIViewController {
             leaveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             leaveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
+    }
+    // Fetch latest player statistics
+    private func fetchPlayerStatistics() {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/get_player_statistics/\(playerName)") else {
+            print("Invalid URL for player statistics")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print("Error fetching player statistics: \(error)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data received for player statistics")
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let statistics = json["statistics"] as? [[String: Any]] {
+                    // Update the player's win count based on the latest statistics
+                    if let latestStats = statistics.first(where: { $0["room_code"] as? String == self.roomCode }),
+                       let wins = latestStats["wins"] as? Int {
+                        DispatchQueue.main.async {
+                            // Update the rankings with the latest win count
+                            if let playerIndex = self.rankings.firstIndex(where: { $0["player_name"] as? String == self.playerName }) {
+                                self.rankings[playerIndex]["wins"] = wins
+                                self.rankingsTableView.reloadData()
+                            }
+                        }
+                    }
+                }
+            } catch {
+                print("Failed to parse player statistics: \(error)")
+            }
+        }.resume()
     }
 }
 
