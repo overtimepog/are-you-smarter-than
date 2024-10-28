@@ -4,6 +4,7 @@ class LoadingViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("LoadingViewController: viewDidLoad")
         setupUI()
     }
 

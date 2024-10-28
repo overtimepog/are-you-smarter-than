@@ -4,6 +4,7 @@ class MainMenuViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("MainMenuViewController: viewDidLoad")
         setupUI()
     }
 
