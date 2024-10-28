@@ -91,7 +91,7 @@ def add_or_update_player(room_code, player_name):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             result = conn.execute('''
-                SELECT id FROM player_scores WHERE room_code = ? AND player_name = ?
+                SELECT id, wins FROM player_scores WHERE room_code = ? AND player_name = ?
             ''', (room_code, player_name)).fetchone()
 
             if result is None:
@@ -100,13 +100,14 @@ def add_or_update_player(room_code, player_name):
                     VALUES (?, ?, ?, ?, ?)
                 ''', (room_code, player_name, 0, 0, time.time()))
             else:
-                # Update existing player's timestamp
+                # Update existing player's timestamp and ensure wins are tracked
+                wins = result['wins']
                 conn.execute('''
                     UPDATE player_scores 
-                    SET timestamp = ?
+                    SET timestamp = ?, wins = ?
                     WHERE room_code = ? AND player_name = ?
-                ''', (time.time(), room_code, player_name))
-                print(f"Player {player_name} rejoined the room.")
+                ''', (time.time(), wins, room_code, player_name))
+                print(f"Player {player_name} rejoined the room with {wins} wins.")
 
 def increment_player_win(room_code, player_name):
     with closing(sqlite3.connect(DATABASE)) as conn:
@@ -171,7 +172,7 @@ def end_game(room_code, winners):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             for winner in winners:
-                increment_player_win(room_code, winner)
+                increment_player_win(room_code, winner)  # Increment wins for each winner
             winners_json = json.dumps(winners)
             conn.execute('''
                 UPDATE rooms SET game_started = ?, winners = ?, last_active = ?
