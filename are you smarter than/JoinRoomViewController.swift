@@ -125,7 +125,10 @@ class JoinRoomViewController: UIViewController {
                     lobbyVC.modalTransitionStyle = .crossDissolve
                     if let presentingVC = self.presentingViewController {
                         presentingVC.dismiss(animated: true) {
-                            UIApplication.shared.windows.first?.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let window = windowScene.windows.first {
+                                window.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+                            }
                         }
                     }
                 }
