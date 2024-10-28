@@ -1,7 +1,7 @@
 import UIKit
 import SwiftyJSON
 
-class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
+class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate {
 
     // UI Elements
     let playerNameTextField = UITextField()
