@@ -1,7 +1,7 @@
 import UIKit
 import SwiftyJSON
 
-class LobbyViewController: UIViewController {
+class LobbyViewController: UIViewController, UITableViewDataSource {
 
     var roomCode: String = ""  // Set this when transitioning to the lobby
     var playerName: String = "" // Set this when transitioning to the lobby
@@ -279,27 +279,6 @@ struct RoomInfo: Codable {
     let winners: [String]
     let categories: [String]  // NEW: Add categories field
 }
-import UIKit
-import SwiftyJSON
-
-class LobbyViewController: UIViewController {
-
-    var isHost: Bool = false
-    var playerName: String = ""
-    var roomCode: String = ""
-    var players: [String] = []
-    var timer: Timer?
-
-    let playersTableView = UITableView()
-    let startButton = UIButton(type: .system)
-    let statusLabel = UILabel()
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-        fetchRoomData()
-        startPolling()
-    }
 
     func setupUI() {
         view.backgroundColor = .systemBackground
