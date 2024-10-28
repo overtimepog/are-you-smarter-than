@@ -466,6 +466,18 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     print("Response from server: \(json)")
                     if let success = json["success"] as? Bool, success {
+                        if let scores = json["scores"] as? [[String: Any]] {
+                            // Find current player's score
+                            if let playerScore = scores.first(where: { ($0["player_name"] as? String) == self.playerName }) {
+                                if let newScore = playerScore["score"] as? Int {
+                                    DispatchQueue.main.async {
+                                        self.score = newScore
+                                        self.scoreAndQuestionLabel.text = "Score: \(self.score)/\(self.questionGoal)"
+                                    }
+                                }
+                            }
+                        }
+                        
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
                                 self.showWinViewController(with: rankings)
