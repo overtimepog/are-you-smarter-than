@@ -50,7 +50,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         super.viewDidLoad()
         print("[DEBUG] CreateRoomViewController loaded")
         setupUI()
+        print("[DEBUG] UI setup complete")
         setupGestureRecognizer()
+        print("[DEBUG] Gesture recognizers setup complete")
     }
 
     func addDoneButtonOnKeyboard() {
