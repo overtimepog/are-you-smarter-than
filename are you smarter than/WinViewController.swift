@@ -210,7 +210,10 @@ extension WinViewController: UITableViewDataSource {
                 mainMenuVC.modalTransitionStyle = .crossDissolve
                 if let presentingVC = self.presentingViewController {
                     presentingVC.dismiss(animated: true) {
-                        UIApplication.shared.windows.first?.rootViewController?.present(mainMenuVC, animated: true, completion: nil)
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let window = windowScene.windows.first {
+                            window.rootViewController?.present(mainMenuVC, animated: true, completion: nil)
+                        }
                     }
                 }
             }
