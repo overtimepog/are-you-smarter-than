@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import unittest
 from contextlib import closing
 
 DATABASE = 'trivia_game.db'
@@ -20,10 +21,15 @@ def add_room(room_code, host, question_goal, max_players, difficulty, categories
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('''
-                INSERT INTO rooms (room_code, host, players, game_started, question_goal, max_players, winners, last_active, creation_time, difficulty, categories)
+                INSERT INTO rooms (
+                    room_code, host, players, game_started, question_goal, max_players, winners,
+                    difficulty, categories, last_active, creation_time
+                )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (room_code, host, str(players), False, question_goal, max_players, '[]', time.time(), time.time(), difficulty, categories_str))
-
+            ''', (
+                room_code, host, str(players), False, question_goal, max_players, '[]',
+                difficulty, categories_str, time.time(), time.time()
+            ))
 def get_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
@@ -31,16 +37,16 @@ def get_room(room_code):
             if room:
                 return {
                     'room_code': room[0],
-                    'host': room[1],  # Ensure host is always included
-                    'players': eval(room[2]),
+                    'host': room[1],
+                    'players': eval(room[2]) if isinstance(room[2], str) else room[2],
                     'game_started': room[3],
                     'question_goal': room[4],
                     'max_players': room[5],
-                    'winners': eval(room[6]),
-                    'last_active': room[7],
-                    'creation_time': room[8],
-                    'difficulty': room[9],
-                    'categories': eval(room[10]) if room[10] else []
+                    'winners': eval(room[6]) if isinstance(room[6], str) else room[6],
+                    'difficulty': room[7],
+                    'categories': eval(room[8]) if isinstance(room[8], str) and room[8] else [],
+                    'last_active': room[9],
+                    'creation_time': room[10],
                 }
             return None
 
@@ -175,3 +181,53 @@ def start_game(room_code):
                     UPDATE rooms SET game_started = ?, last_active = ?
                     WHERE room_code = ?
                 ''', (True, time.time(), room_code))
+
+class TestTriviaGameDatabase(unittest.TestCase):
+    def setUp(self):
+        init_db()
+
+    def test_add_and_get_room(self):
+        add_room('room1', 'host1', 10, 4, 'easy')
+        room = get_room('room1')
+        self.assertIsNotNone(room)
+        self.assertEqual(room['room_code'], 'room1')
+        self.assertEqual(room['host'], 'host1')
+        self.assertEqual(room['question_goal'], 10)
+        self.assertEqual(room['max_players'], 4)
+        self.assertEqual(room['difficulty'], 'easy')
+
+    def test_add_player_to_room(self):
+        add_room('room2', 'host2', 15, 3, 'medium')
+        success = add_player_to_room('room2', 'player1')
+        self.assertTrue(success)
+        room = get_room('room2')
+        self.assertIn('player1', room['players'])
+
+    def test_remove_player_from_room(self):
+        add_room('room3', 'host3', 5, 2, 'hard')
+        add_player_to_room('room3', 'player2')
+        success = remove_player_from_room('room3', 'player2')
+        self.assertTrue(success)
+        room = get_room('room3')
+        self.assertNotIn('player2', room['players'])
+
+    def test_update_player_score(self):
+        add_room('room4', 'host4', 20, 5, 'easy')
+        add_player_to_room('room4', 'player3')
+        update_player_score('room4', 'player3', 10)
+        scores = get_player_scores('room4')
+        self.assertEqual(scores[0]['score'], 10)
+
+    def test_end_game(self):
+        add_room('room5', 'host5', 25, 4, 'medium')
+        add_player_to_room('room5', 'player4')
+        add_player_to_room('room5', 'player5')
+        end_game('room5', ['player4'])
+        room = get_room('room5')
+        self.assertFalse(room['game_started'])
+        scores = get_player_scores('room5')
+        player4 = next(player for player in scores if player['player_name'] == 'player4')
+        self.assertEqual(player4['wins'], 1)
+
+if __name__ == '__main__':
+    unittest.main()

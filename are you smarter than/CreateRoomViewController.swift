@@ -209,12 +209,6 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             "categories": selectedCategories
         ]
         print("[DEBUG] [createRoom] Parameters: \(parameters)")
-            "player_name": playerName,
-            "question_goal": questionGoal,
-            "max_players": maxPlayers,
-            "difficulty": selectedDifficulty.lowercased(),
-            "categories": selectedCategories
-        ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
             print("[DEBUG] Invalid API URL")
