@@ -289,6 +289,13 @@ def end_game_route():
     else:
         return jsonify({'success': False, 'message': message}), 400
 
+@socketio.on('host_view_change')
+def handle_host_view_change(data):
+    room_code = data['room_code']
+    new_view = data['new_view']
+    print(f"[DEBUG] [handle_host_view_change] Host changed view to {new_view} in room {room_code}")
+    emit('update_view', {'new_view': new_view}, room=room_code)
+
 @socketio.on('join_game')
 def handle_join_game(data):
     # Handle a player joining the game via SocketIO
