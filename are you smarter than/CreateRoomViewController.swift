@@ -14,7 +14,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
     let difficulties = ["Easy", "Medium", "Hard"]
     var selectedDifficulty: String = "Easy"
-    
+
     // Category selection
     let categoryButton = UIButton(type: .system)
     let categoryDropdown = UITableView()
@@ -53,11 +53,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         setupGestureRecognizer()
     }
 
-    // Setup UI
     func setupUI() {
         view.backgroundColor = .systemBackground
-        
-        // Configure text fields with better performance settings
+
         let textFields = [playerNameTextField, questionGoalTextField, maxPlayersTextField]
         textFields.forEach { field in
             field.borderStyle = .roundedRect
@@ -68,12 +66,11 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             field.smartQuotesType = .no
             field.autocapitalizationType = .none
         }
-        
-        // Configure specific text field behaviors
+
         playerNameTextField.keyboardType = .asciiCapable
         questionGoalTextField.keyboardType = .numberPad
         maxPlayersTextField.keyboardType = .numberPad
-        
+
         playerNameTextField.placeholder = "Enter Your Name"
         questionGoalTextField.placeholder = "Max Question (e.g., 10)"
         maxPlayersTextField.placeholder = "Enter Max Players (e.g., 8)"
@@ -96,7 +93,6 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Setup category selection button
         categoryButton.setTitle("Select Categories (0 selected)", for: .normal)
         categoryButton.backgroundColor = .systemBackground
         categoryButton.layer.borderWidth = 1
@@ -108,20 +104,16 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         categoryButton.configuration = config
         categoryButton.addTarget(self, action: #selector(toggleCategoryDropdown), for: .touchUpInside)
         categoryButton.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Setup category dropdown
+
         categoryDropdown.register(UITableViewCell.self, forCellReuseIdentifier: "CategoryCell")
         categoryDropdown.delegate = self
         categoryDropdown.dataSource = self
-        categoryDropdown.allowsMultipleSelection = true
-        categoryDropdown.isUserInteractionEnabled = true
         categoryDropdown.isHidden = true
+        view.insertSubview(createButton, belowSubview: categoryDropdown)
         categoryDropdown.layer.borderWidth = 1
         categoryDropdown.layer.borderColor = UIColor.systemGray4.cgColor
         categoryDropdown.layer.cornerRadius = 8
         categoryDropdown.translatesAutoresizingMaskIntoConstraints = false
-        categoryDropdown.isScrollEnabled = true
-        categoryDropdown.allowsSelection = true
 
         view.addSubview(backButton)
         view.addSubview(playerNameTextField)
@@ -153,14 +145,16 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             categoryButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryButton.heightAnchor.constraint(equalToConstant: 44),
-            
+
             categoryDropdown.topAnchor.constraint(equalTo: categoryButton.bottomAnchor, constant: 10),
             categoryDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryDropdown.heightAnchor.constraint(equalToConstant: 300),
-            
+
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 10),
+            createButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+            createButton.widthAnchor.constraint(equalToConstant: 200),
+            createButton.heightAnchor.constraint(equalToConstant: 50),
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -171,11 +165,18 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         ])
     }
 
-    // Setup Gesture Recognizer to Dismiss Keyboard
     func setupGestureRecognizer() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-        tapGesture.cancelsTouchesInView = false // Allow touches to pass through
+        tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
+
+        let swipeDownGesture = UISwipeGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        swipeDownGesture.direction = .down
+        view.addGestureRecognizer(swipeDownGesture)
+
+        playerNameTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
+        questionGoalTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
+        maxPlayersTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
     }
 
     @objc func dismissKeyboard() {
@@ -183,24 +184,31 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     }
 
     @objc func createRoom() {
-        print("[DEBUG] [createRoom] Create Room button tapped")
+        print("[DEBUG] [createRoom] Creating room with playerName: \(playerNameTextField.text ?? ""), questionGoal: \(questionGoalTextField.text ?? ""), maxPlayers: \(maxPlayersTextField.text ?? ""), difficulty: \(selectedDifficulty)")
+        print("[DEBUG] createRoom called")
         guard let playerName = playerNameTextField.text, !playerName.isEmpty,
               let questionGoalText = questionGoalTextField.text, let questionGoal = Int(questionGoalText),
               let maxPlayersText = maxPlayersTextField.text, let maxPlayers = Int(maxPlayersText) else {
-            print("[DEBUG] [createRoom] Invalid input: playerName: \(playerNameTextField.text ?? ""), questionGoal: \(questionGoalTextField.text ?? ""), maxPlayers: \(maxPlayersTextField.text ?? "")")
+            print("[DEBUG] Input validation failed")
             statusLabel.text = "Please enter valid numbers."
             return
         }
 
-        print("[DEBUG] [createRoom] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers), difficulty: \(selectedDifficulty)")
-        // Get selected categories
         let selectedCategories = categories.filter { $0.selected }.map { $0.id }
+        print("[DEBUG] Selected categories: \(selectedCategories)")
         if selectedCategories.count < 5 {
             statusLabel.text = "Please select at least 5 categories for the wheel."
             return
         }
-        
+
         let parameters: [String: Any] = [
+            "player_name": playerName,
+            "question_goal": questionGoal,
+            "max_players": maxPlayers,
+            "difficulty": selectedDifficulty.lowercased(),
+            "categories": selectedCategories
+        ]
+        print("[DEBUG] [createRoom] Parameters: \(parameters)")
             "player_name": playerName,
             "question_goal": questionGoal,
             "max_players": maxPlayers,
@@ -209,7 +217,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
-            print("[DEBUG] [createRoom] Invalid API URL.")
+            print("[DEBUG] Invalid API URL")
             statusLabel.text = "Invalid API URL."
             return
         }
@@ -219,46 +227,65 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
 
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+        print("[DEBUG] Sending request to create room with parameters: \(parameters)")
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            print("[DEBUG] Received response from create room request")
             guard let self = self else { return }
 
             if let error = error {
-                print("[DEBUG] [createRoom] Error creating room: \(error.localizedDescription)")
+                print("[DEBUG] Error occurred: \(error.localizedDescription)")
                 DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
                 return
             }
 
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("[DEBUG] HTTP status code: \(String(describing: (response as? HTTPURLResponse)?.statusCode))")
+                print("[DEBUG] Server error with response: \(response.debugDescription)")
+                DispatchQueue.main.async { self.statusLabel.text = "Server error. Please try again later." }
+                return
+            }
+
             guard let data = data else {
-                print("[DEBUG] [createRoom] No data received.")
+                print("[DEBUG] No data received from server")
                 DispatchQueue.main.async { self.statusLabel.text = "No data received." }
                 return
             }
 
-            let json = JSON(data)
-            if json["success"].boolValue, let roomCode = json["room_code"].string {
-                print("[DEBUG] [createRoom] Room created successfully with code: \(roomCode)")
-                DispatchQueue.main.async {
-                    print("[DEBUG] Room created with code: \(roomCode)")
-                    self.statusLabel.text = "Room created with code: \(roomCode)"
-                    
-                    let lobbyVC = LobbyViewController()
-                    lobbyVC.isHost = true
-                    lobbyVC.playerName = playerName
-                    lobbyVC.roomCode = roomCode
-                    lobbyVC.modalPresentationStyle = .fullScreen
-                    lobbyVC.modalTransitionStyle = .crossDissolve
-                    self.present(lobbyVC, animated: true) {
-                        // Cleanup after successful presentation
-                        self.playerNameTextField.text = ""
-                        self.questionGoalTextField.text = ""
-                        self.maxPlayersTextField.text = ""
-                        self.statusLabel.text = ""
+            do {
+                print("[DEBUG] Received response data: \(String(data: data, encoding: .utf8) ?? "")")
+                let json = try JSON(data: data)
+                if json["success"].boolValue, let roomCode = json["room_code"].string {
+                    print("[DEBUG] Room created successfully with code: \(roomCode)")
+                    print("[DEBUG] Room creation successful with code: \(roomCode)")
+                    DispatchQueue.main.async {
+                        self.statusLabel.text = "Room created with code: \(roomCode)"
+                        let lobbyVC = LobbyViewController()
+                        lobbyVC.isHost = true
+                        lobbyVC.playerName = playerName
+                        lobbyVC.roomCode = roomCode
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            print("[DEBUG] Fetching room data for room code: \(roomCode)")
+                            lobbyVC.fetchRoomData() // Ensure room is created before fetching data
+                        }
+                        lobbyVC.modalPresentationStyle = .fullScreen
+                        lobbyVC.modalTransitionStyle = .crossDissolve
+                        self.present(lobbyVC, animated: true) {
+                            self.clearFields()
+                        }
                     }
+                } else {
+                    let message = json["message"].stringValue
+                    print("[DEBUG] Room creation failed with message: \(message)")
+                    DispatchQueue.main.async {
+                        self.statusLabel.text = message.isEmpty ? "Failed to create room." : message
+                    }
+                    return
                 }
-            } else {
-                let message = json["message"].stringValue
-                print("[DEBUG] [createRoom] Room creation failed with message: \(message)")
-                DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to create room." : message }
+            } catch {
+                print("[DEBUG] Failed to parse server response")
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "Failed to parse server response."
+                }
             }
         }.resume()
     }
@@ -267,7 +294,13 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         dismiss(animated: true, completion: nil)
     }
 
-    // MARK: - UIPickerView Delegate & DataSource
+    func clearFields() {
+        playerNameTextField.text = ""
+        questionGoalTextField.text = ""
+        maxPlayersTextField.text = ""
+        statusLabel.text = ""
+    }
+
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
     }
@@ -286,41 +319,41 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
     @objc func toggleCategoryDropdown() {
         isDropdownVisible.toggle()
-        
+
         if isDropdownVisible {
             view.bringSubviewToFront(categoryDropdown)
-            categoryDropdown.alpha = 0.0
             categoryDropdown.isHidden = false
             UIView.animate(withDuration: 0.3) {
                 self.categoryDropdown.alpha = 1.0
             }
         } else {
-            UIView.animate(withDuration: 0.3, animations: {
+            UIView.animate(withDuration: 0.3) {
                 self.categoryDropdown.alpha = 0.0
-            }) { _ in
+            } completion: { _ in
                 self.categoryDropdown.isHidden = true
             }
         }
-        
+
+        // Removed bringSubviewToFront for createButton to ensure it stays behind the dropdown
+
         let selectedCount = categories.filter { $0.selected }.count
         categoryButton.setTitle("Select Categories (\(selectedCount)) selected", for: .normal)
     }
 }
 
-// MARK: - UITableViewDelegate & UITableViewDataSource
 extension CreateRoomViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return categories.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         let category = categories[indexPath.row]
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = category.name.replacingOccurrences(of: "Entertainment: ", with: "").replacingOccurrences(of: "Science: ", with: "")
         cell.accessoryType = category.selected ? .checkmark : .none
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         categories[indexPath.row].selected.toggle()
         tableView.reloadRows(at: [indexPath], with: .automatic)
