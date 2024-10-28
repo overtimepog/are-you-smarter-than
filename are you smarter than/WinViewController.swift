@@ -154,17 +154,12 @@ extension WinViewController: UITableViewDataSource {
                             lobbyVC.roomCode = self.roomCode
                             lobbyVC.modalPresentationStyle = .fullScreen
                             lobbyVC.modalTransitionStyle = .crossDissolve
-                            // Dismiss all presented view controllers and present the lobby
+                            // Present the lobby view controller
                             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                               let window = windowScene.windows.first,
-                               let rootVC = window.rootViewController {
-                                // Dismiss all presented view controllers
-                                var currentVC = rootVC
-                                while let presentedVC = currentVC.presentedViewController {
-                                    currentVC = presentedVC
-                                }
-                                currentVC.dismiss(animated: true) {
-                                    rootVC.present(lobbyVC, animated: true)
+                               let window = windowScene.windows.first {
+                                // Dismiss all presented view controllers first
+                                window.rootViewController?.dismiss(animated: true) {
+                                    window.rootViewController?.present(lobbyVC, animated: true)
                                 }
                             }
                         }
