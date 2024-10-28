@@ -233,33 +233,39 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
         print("[DEBUG] Sending request to create room with parameters: \(parameters)")
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            // Add error handling for network requests
-            if let error = error {
-                print("[DEBUG] Network error: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    self?.statusLabel.text = "Network error: \(error.localizedDescription)"
-                }
-                return
-            }
-            print("[DEBUG] Received response from create room request")
             guard let self = self else { return }
 
             if let error = error {
-                print("[DEBUG] Error occurred: \(error.localizedDescription)")
-                DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
+                print("[DEBUG] Network error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "Network error: \(error.localizedDescription)"
+                }
                 return
             }
 
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                print("[DEBUG] HTTP status code: \(String(describing: (response as? HTTPURLResponse)?.statusCode))")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("[DEBUG] No HTTP response received")
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "No HTTP response received."
+                }
+                return
+            }
+
+            print("[DEBUG] HTTP status code: \(httpResponse.statusCode)")
+
+            guard httpResponse.statusCode == 200 else {
                 print("[DEBUG] Server error with response: \(response.debugDescription)")
-                DispatchQueue.main.async { self.statusLabel.text = "Server error. Please try again later." }
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "Server error. Please try again later."
+                }
                 return
             }
 
             guard let data = data else {
                 print("[DEBUG] No data received from server")
-                DispatchQueue.main.async { self.statusLabel.text = "No data received." }
+                DispatchQueue.main.async {
+                    self.statusLabel.text = "No data received."
+                }
                 return
             }
 
@@ -268,7 +274,6 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                 let json = try JSON(data: data)
                 if json["success"].boolValue, let roomCode = json["room_code"].string {
                     print("[DEBUG] Room created successfully with code: \(roomCode)")
-                    print("[DEBUG] Room creation successful with code: \(roomCode)")
                     DispatchQueue.main.async {
                         self.statusLabel.text = "Room created with code: \(roomCode)"
                         let lobbyVC = LobbyViewController()
@@ -291,10 +296,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     DispatchQueue.main.async {
                         self.statusLabel.text = message.isEmpty ? "Failed to create room." : message
                     }
-                    return
                 }
             } catch {
-                print("[DEBUG] Failed to parse server response")
+                print("[DEBUG] Failed to parse server response: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     self.statusLabel.text = "Failed to parse server response."
                 }
