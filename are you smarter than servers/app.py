@@ -162,9 +162,9 @@ def create_room():
         attempts += 1
 
     first_player_name = data.get('player_name')
-    add_room(room_code, first_player_name, question_goal, max_players, difficulty)  # Add room to the database
+    add_room(room_code, first_player_name, question_goal, max_players, difficulty)  # Add room to the database with first player as host
     used_room_codes.add(room_code)  # Add the new room code to the set of used codes
-    print(f"[DEBUG] Room created successfully with room code: {room_code}")
+    print(f"[DEBUG] Room created successfully with room code: {room_code}, host: {first_player_name}")
 
     return jsonify({'room_code': room_code, 'success': True}), 200
 
