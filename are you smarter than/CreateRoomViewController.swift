@@ -16,7 +16,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     var selectedDifficulty: String = "Easy"
     
     // Category selection
-    let categoryTableView = UITableView()
+    let categoryButton = UIButton(type: .system)
+    let categoryDropdown = UITableView()
+    var isDropdownVisible = false
     var categories: [(id: Int, name: String, selected: Bool)] = [
         (9, "General Knowledge", false),
         (10, "Entertainment: Books", false),
@@ -101,19 +103,34 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Setup category table view
-        categoryTableView.register(UITableViewCell.self, forCellReuseIdentifier: "CategoryCell")
-        categoryTableView.delegate = self
-        categoryTableView.dataSource = self
-        categoryTableView.allowsMultipleSelection = true
-        categoryTableView.translatesAutoresizingMaskIntoConstraints = false
+        // Setup category selection
+        categoryButton.setTitle("Select Categories (0 selected)", for: .normal)
+        categoryButton.backgroundColor = .systemBackground
+        categoryButton.layer.borderWidth = 1
+        categoryButton.layer.borderColor = UIColor.systemGray4.cgColor
+        categoryButton.layer.cornerRadius = 8
+        categoryButton.contentHorizontalAlignment = .left
+        categoryButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+        categoryButton.addTarget(self, action: #selector(toggleCategoryDropdown), for: .touchUpInside)
+        categoryButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        categoryDropdown.register(UITableViewCell.self, forCellReuseIdentifier: "CategoryCell")
+        categoryDropdown.delegate = self
+        categoryDropdown.dataSource = self
+        categoryDropdown.allowsMultipleSelection = true
+        categoryDropdown.isHidden = true
+        categoryDropdown.layer.borderWidth = 1
+        categoryDropdown.layer.borderColor = UIColor.systemGray4.cgColor
+        categoryDropdown.layer.cornerRadius = 8
+        categoryDropdown.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(backButton)
         view.addSubview(playerNameTextField)
         view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(difficultyPicker)
-        view.addSubview(categoryTableView)
+        view.addSubview(categoryButton)
+        view.addSubview(categoryDropdown)
         view.addSubview(createButton)
         view.addSubview(statusLabel)
 
@@ -133,10 +150,15 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             difficultyPicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             difficultyPicker.topAnchor.constraint(equalTo: maxPlayersTextField.bottomAnchor, constant: 20),
 
-            categoryTableView.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 20),
-            categoryTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            categoryTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            categoryTableView.heightAnchor.constraint(equalToConstant: 200),
+            categoryButton.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 20),
+            categoryButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoryButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            categoryButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            categoryDropdown.topAnchor.constraint(equalTo: categoryButton.bottomAnchor),
+            categoryDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoryDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            categoryDropdown.heightAnchor.constraint(equalToConstant: 200),
             
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             createButton.topAnchor.constraint(equalTo: categoryTableView.bottomAnchor, constant: 20),
@@ -173,8 +195,8 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         print("[DEBUG] [createRoom] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers), difficulty: \(selectedDifficulty)")
         // Get selected categories
         let selectedCategories = categories.filter { $0.selected }.map { $0.id }
-        if selectedCategories.isEmpty {
-            statusLabel.text = "Please select at least one category."
+        if selectedCategories.count < 5 {
+            statusLabel.text = "Please select at least 5 categories for the wheel."
             return
         }
         
@@ -278,8 +300,19 @@ extension CreateRoomViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
+    @objc func toggleCategoryDropdown() {
+        isDropdownVisible.toggle()
+        categoryDropdown.isHidden = !isDropdownVisible
+        
+        let selectedCount = categories.filter { $0.selected }.count
+        categoryButton.setTitle("Select Categories (\(selectedCount) selected)", for: .normal)
+    }
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         categories[indexPath.row].selected.toggle()
         tableView.reloadRows(at: [indexPath], with: .automatic)
+        
+        let selectedCount = categories.filter { $0.selected }.count
+        categoryButton.setTitle("Select Categories (\(selectedCount) selected)", for: .normal)
     }
 }
