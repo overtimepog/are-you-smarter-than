@@ -530,6 +530,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
+                                // Update player's win count on the server
+                                self.updatePlayerWinCount()
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
                                 if let winner = rankings.first(where: { $0["player_name"] as? String == self.playerName }) {
                                     if let wins = winner["wins"] as? Int {
@@ -558,6 +560,43 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         print("[DEBUG] Showing WinViewController with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
         winVC.modalTransitionStyle = .crossDissolve
         self.present(winVC, animated: true, completion: nil)
+    }
+    // Function to update player's win count on the server
+    func updatePlayerWinCount() {
+        let parameters: [String: Any] = [
+            "room_code": roomCode,
+            "player_name": playerName
+        ]
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/increment_win") else {
+            print("Invalid URL for incrementing win")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error incrementing win: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data received from server")
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    print("Response from server: \(json)")
+                }
+            } catch {
+                print("Failed to parse server response: \(error)")
+            }
+        }.resume()
     }
 }
 
