@@ -67,6 +67,7 @@ def get_room_info(room_code):
         print(f"[DEBUG] [get_room_info] Room found: {room}")
         return jsonify({
             'room_code': room_code,
+            'host': room.get('host'),  # Include host in response
             'players': players,
             'question_goal': room.get('question_goal', 10),
             'max_players': room.get('max_players', 8),

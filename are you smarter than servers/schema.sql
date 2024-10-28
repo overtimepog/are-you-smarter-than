@@ -2,7 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS rooms (
     room_code TEXT PRIMARY KEY,
-    host TEXT,
+    host TEXT NOT NULL,  -- Make host field required
     players TEXT,
     game_started BOOLEAN,
     question_goal INTEGER,

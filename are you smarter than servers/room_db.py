@@ -30,7 +30,7 @@ def get_room(room_code):
             if room:
                 return {
                     'room_code': room[0],
-                    'host': room[1],
+                    'host': room[1],  # Ensure host is always included
                     'players': eval(room[2]),
                     'game_started': room[3],
                     'question_goal': room[4],
