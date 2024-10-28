@@ -11,13 +11,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         window = UIWindow(frame: UIScreen.main.bounds)
 
-        // Initialize the Main Menu as the starting view controller
-        DispatchQueue.main.async {
+        // Initialize the Loading Screen as the starting view controller
+        let loadingVC = LoadingViewController()
+        window?.rootViewController = loadingVC
+        window?.makeKeyAndVisible()
+
+        // Simulate loading process and transition to Main Menu
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             let mainMenuVC = MainMenuViewController()
             let navigationController = UINavigationController(rootViewController: mainMenuVC)
-
             self.window?.rootViewController = navigationController
-            self.window?.makeKeyAndVisible()
         }
 
         return true
