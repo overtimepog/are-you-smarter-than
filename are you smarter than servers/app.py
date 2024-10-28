@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
-from room_db import init_db, add_room, get_room, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win
+from room_db import init_db, add_room, get_room, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win, update_player_score
 import time
 import string
 import uuid
