@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS rooms (
     max_players INTEGER,
     winners TEXT,
     difficulty TEXT CHECK(difficulty IN ('easy', 'medium', 'hard')),
+    categories TEXT,  -- Store selected category IDs as JSON array
     last_active REAL,
     creation_time REAL
 );

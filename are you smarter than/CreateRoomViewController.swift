@@ -14,6 +14,35 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
     let difficulties = ["Easy", "Medium", "Hard"]
     var selectedDifficulty: String = "Easy"
+    
+    // Category selection
+    let categoryTableView = UITableView()
+    var categories: [(id: Int, name: String, selected: Bool)] = [
+        (9, "General Knowledge", false),
+        (10, "Entertainment: Books", false),
+        (11, "Entertainment: Film", false),
+        (12, "Entertainment: Music", false),
+        (13, "Entertainment: Musicals & Theatres", false),
+        (14, "Entertainment: Television", false),
+        (15, "Entertainment: Video Games", false),
+        (16, "Entertainment: Board Games", false),
+        (17, "Science & Nature", false),
+        (18, "Science: Computers", false),
+        (19, "Science: Mathematics", false),
+        (20, "Mythology", false),
+        (21, "Sports", false),
+        (22, "Geography", false),
+        (23, "History", false),
+        (24, "Politics", false),
+        (25, "Art", false),
+        (26, "Celebrities", false),
+        (27, "Animals", false),
+        (28, "Vehicles", false),
+        (29, "Entertainment: Comics", false),
+        (30, "Science: Gadgets", false),
+        (31, "Entertainment: Japanese Anime & Manga", false),
+        (32, "Entertainment: Cartoon & Animations", false)
+    ]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -72,11 +101,19 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
+        // Setup category table view
+        categoryTableView.register(UITableViewCell.self, forCellReuseIdentifier: "CategoryCell")
+        categoryTableView.delegate = self
+        categoryTableView.dataSource = self
+        categoryTableView.allowsMultipleSelection = true
+        categoryTableView.translatesAutoresizingMaskIntoConstraints = false
+        
         view.addSubview(backButton)
         view.addSubview(playerNameTextField)
         view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(difficultyPicker)
+        view.addSubview(categoryTableView)
         view.addSubview(createButton)
         view.addSubview(statusLabel)
 
@@ -96,8 +133,13 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             difficultyPicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             difficultyPicker.topAnchor.constraint(equalTo: maxPlayersTextField.bottomAnchor, constant: 20),
 
+            categoryTableView.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 20),
+            categoryTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoryTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            categoryTableView.heightAnchor.constraint(equalToConstant: 200),
+            
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createButton.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 20),
+            createButton.topAnchor.constraint(equalTo: categoryTableView.bottomAnchor, constant: 20),
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -129,11 +171,19 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         }
 
         print("[DEBUG] [createRoom] Creating room with playerName: \(playerName), questionGoal: \(questionGoal), maxPlayers: \(maxPlayers), difficulty: \(selectedDifficulty)")
+        // Get selected categories
+        let selectedCategories = categories.filter { $0.selected }.map { $0.id }
+        if selectedCategories.isEmpty {
+            statusLabel.text = "Please select at least one category."
+            return
+        }
+        
         let parameters: [String: Any] = [
             "player_name": playerName,
             "question_goal": questionGoal,
             "max_players": maxPlayers,
-            "difficulty": selectedDifficulty.lowercased()
+            "difficulty": selectedDifficulty.lowercased(),
+            "categories": selectedCategories
         ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/create_room") else {
@@ -211,5 +261,25 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         selectedDifficulty = difficulties[row]
+    }
+}
+
+// MARK: - UITableViewDelegate & UITableViewDataSource
+extension CreateRoomViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return categories.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let category = categories[indexPath.row]
+        cell.textLabel?.text = category.name
+        cell.accessoryType = category.selected ? .checkmark : .none
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        categories[indexPath.row].selected.toggle()
+        tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 }
