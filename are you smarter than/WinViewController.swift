@@ -13,8 +13,9 @@ class WinViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("[DEBUG] WinViewController loaded with roomCode: \(roomCode), playerName: \(playerName)")
+        print("[DEBUG] WinViewController loaded with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
         setupUI()
+        rankingsTableView.reloadData() // Ensure rankings are displayed
     }
 }
 
@@ -90,9 +91,14 @@ extension WinViewController: UITableViewDataSource {
         // Logic to replay the game by returning to the lobby
         print("[DEBUG] Attempting to replay game with roomCode: \(roomCode), playerName: \(playerName)")
         
+        guard !roomCode.isEmpty, !playerName.isEmpty else {
+            print("[ERROR] Cannot replay - missing roomCode or playerName")
+            return
+        }
+        
         // First, get room info to check if we're the host
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
-            print("Invalid API URL.")
+            print("[ERROR] Invalid API URL.")
             return
         }
         

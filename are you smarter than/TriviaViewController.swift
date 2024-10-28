@@ -480,7 +480,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                         
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
-                                self.showWinViewController(with: rankings)
+                                self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
                             }
                         }
                     } else {
@@ -493,10 +493,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }.resume()
     }
 
-    func showWinViewController(with rankings: [[String: Any]]) {
+    func showWinViewController(with rankings: [[String: Any]], roomCode: String, playerName: String) {
         let winVC = WinViewController()
         winVC.modalPresentationStyle = .fullScreen
-        winVC.rankings = rankings // Pass rankings to the win view controller
+        winVC.rankings = rankings
+        winVC.roomCode = roomCode
+        winVC.playerName = playerName
+        print("[DEBUG] Showing WinViewController with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
         self.present(winVC, animated: true)
     }
 }
