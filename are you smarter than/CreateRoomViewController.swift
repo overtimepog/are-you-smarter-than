@@ -175,8 +175,12 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
                     lobbyVC.modalTransitionStyle = .crossDissolve
-                    self.view.window?.rootViewController?.dismiss(animated: true) {
-                        self.present(lobbyVC, animated: true)
+                    self.present(lobbyVC, animated: true) {
+                        // Cleanup after successful presentation
+                        self.playerNameTextField.text = ""
+                        self.questionGoalTextField.text = ""
+                        self.maxPlayersTextField.text = ""
+                        self.statusLabel.text = ""
                     }
                 }
             } else {
