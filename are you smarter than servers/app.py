@@ -312,7 +312,7 @@ def handle_join_game(data):
             current_players = room['players']
             update_last_active(room_code)  # Update last active time
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
-            emit('player_joined', player_name, room=room_code)
+            emit('update_view', {'new_view': 'LobbyView'}, room=room_code)
         except Exception as e:
             print(f"[ERROR] [handle_join_game] Failed to join room {room_code}: {e}")
             emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
