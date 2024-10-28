@@ -174,6 +174,11 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         swipeDownGesture.direction = .down
         view.addGestureRecognizer(swipeDownGesture)
 
+        // Ensure text fields resign first responder on return
+        playerNameTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
+        questionGoalTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
+        maxPlayersTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
+
         playerNameTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
         questionGoalTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
         maxPlayersTextField.addTarget(self, action: #selector(dismissKeyboard), for: .editingDidEndOnExit)
