@@ -81,9 +81,7 @@ class MainMenuViewController: UIViewController {
     @objc func joinRoom() {
         let joinRoomVC = JoinRoomViewController()
         joinRoomVC.modalPresentationStyle = .fullScreen
-        present(joinRoomVC, animated: true) { [weak self] in
-            self?.dismiss(animated: false, completion: nil)
-        }
+        present(joinRoomVC, animated: true)
     }
     
     @objc func startSolo() {
