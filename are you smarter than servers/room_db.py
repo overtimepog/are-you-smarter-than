@@ -100,13 +100,12 @@ def add_or_update_player(room_code, player_name):
                     VALUES (?, ?, ?, ?, ?)
                 ''', (room_code, player_name, 0, 0, time.time()))
             else:
-                # Update existing player's timestamp and ensure wins are tracked
-                wins = result['wins']
+                # Update existing player's timestamp without resetting wins
                 conn.execute('''
                     UPDATE player_scores 
-                    SET timestamp = ?, wins = ?
+                    SET timestamp = ?
                     WHERE room_code = ? AND player_name = ?
-                ''', (time.time(), wins, room_code, player_name))
+                ''', (time.time(), room_code, player_name))
                 print(f"Player {player_name} rejoined the room with {wins} wins.")
 
 def increment_player_win(room_code, player_name):
