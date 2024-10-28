@@ -374,6 +374,14 @@ def submit_answer():
         print(f"[ERROR] [submit_answer] Exception occurred: {e}")
         return jsonify({'success': False, 'message': f'Failed to submit answer: {str(e)}'}), 500
 
+@app.route('/get_player_scores/<room_code>', methods=['GET'])
+def get_player_scores_route(room_code):
+    # Fetch the scores of all players in a specific room
+    print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
+    scores = get_player_scores(room_code)
+    print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
+    return jsonify({'room_code': room_code, 'scores': scores}), 200
+
 @app.route('/lobby_wins/<room_code>', methods=['GET', 'POST'])
 def lobby_wins(room_code):
     if request.method == 'GET':
