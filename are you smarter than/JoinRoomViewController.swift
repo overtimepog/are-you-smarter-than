@@ -22,6 +22,10 @@ class JoinRoomViewController: UIViewController {
         setupUI()
     }
 
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
+
     func addDoneButtonOnKeyboard() {
         let doneToolbar: UIToolbar = UIToolbar()
         doneToolbar.barStyle = .default
