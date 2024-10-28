@@ -243,8 +243,11 @@ def start_game_route():
 def end_game_route():
     # Handle ending the game
     data = request.json
-    room_code = data['room_code']
+    room_code = data.get('room_code')
     winners = data.get('winners', [])
+    if not room_code:
+        return jsonify({'success': False, 'message': 'Missing room_code'}), 400
+
     print(f"[DEBUG] [end_game_route] Attempting to end game for room {room_code}")
     room = get_room(room_code)
     if room:
@@ -369,8 +372,11 @@ def get_player_scores_route(room_code):
 def increment_win():
     # Handle incrementing a player's win count
     data = request.json
-    room_code = data['room_code']
-    player_name = data['player_name']
+    room_code = data.get('room_code')
+    player_name = data.get('player_name')
+    if not room_code or not player_name:
+        return jsonify({'success': False, 'message': 'Missing room_code or player_name'}), 400
+
     print(f"[DEBUG] [increment_win] Incrementing win for player {player_name} in room {room_code}")
 
     try:
