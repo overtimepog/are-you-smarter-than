@@ -38,7 +38,7 @@ class LobbyViewController: UIViewController {
         // Listen for player join and leave events
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
-            if let playerName = data[0] as? String {
+            if let playerName = data.first as? String {
                 print("[DEBUG] Player joined: \(playerName)")
                 self.players.append(playerName)
                 DispatchQueue.main.async {
@@ -49,7 +49,7 @@ class LobbyViewController: UIViewController {
 
         SocketIOManager.shared.socket.on("player_left") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
-            if let playerName = data[0] as? String {
+            if let playerName = data.first as? String {
                 print("[DEBUG] Player left: \(playerName)")
                 self.players.removeAll { $0 == playerName }
                 DispatchQueue.main.async {

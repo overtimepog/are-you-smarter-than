@@ -314,7 +314,7 @@ def handle_join_game(data):
             current_players = room['players']
             update_last_active(room_code)  # Update last active time
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
-            emit('player_joined', {'player_name': player_name, 'player_id': player_id, 'current_players': current_players}, room=room_code)
+            emit('player_joined', player_name, room=room_code)
         except Exception as e:
             print(f"[ERROR] [handle_join_game] Failed to join room {room_code}: {e}")
             emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
@@ -456,7 +456,8 @@ def handle_disconnect():
         if room:
             if remove_player_from_room(room_code, player_name):
                 del session_to_player[sid]  # Remove player from session mapping
-                emit('player_left', player_name, room=room_code)  # Notify other players in the room
+                emit('player_left', player_name, room=room_code)
+                emit('player_count_changed', room=room_code)
                 print(f"[DEBUG] [handle_disconnect] Player {player_name} removed from room {room_code}")
 
 if __name__ == '__main__':
