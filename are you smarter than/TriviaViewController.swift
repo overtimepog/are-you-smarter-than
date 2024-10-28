@@ -534,7 +534,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                                 self.endGame()
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
                                 if let winner = rankings.first(where: { $0["player_name"] as? String == self.playerName }) {
-                                    if let wins = winner["wins"] as? Int {
+                                    if let playerIndex = self.rankings.firstIndex(where: { $0["player_name"] as? String == self.playerName }),
+                                       let wins = self.rankings[playerIndex]["wins"] as? Int {
                                         print("Congratulations \(self.playerName)! You have \(wins) wins.")
                                     }
                                 }
