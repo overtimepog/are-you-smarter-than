@@ -207,6 +207,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
         let swipeDownGesture = UISwipeGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         swipeDownGesture.direction = .down
+        swipeDownGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(swipeDownGesture)
     }
 
