@@ -8,7 +8,7 @@ class LoadingViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
 
         // Create an activity indicator
         let activityIndicator = UIActivityIndicatorView(style: .large)
