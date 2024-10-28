@@ -120,7 +120,8 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         categoryDropdown.delegate = self
         categoryDropdown.dataSource = self
         categoryDropdown.allowsMultipleSelection = true
-        categoryDropdown.isHidden = true
+        categoryDropdown.isUserInteractionEnabled = true
+        categoryDropdown.isHidden = !isDropdownVisible
         categoryDropdown.layer.borderWidth = 1
         categoryDropdown.layer.borderColor = UIColor.systemGray4.cgColor
         categoryDropdown.layer.cornerRadius = 8
