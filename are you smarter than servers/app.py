@@ -325,40 +325,38 @@ def submit_answer():
     
     print(f"[DEBUG] [submit_answer] Player {player_name} submitted answer in room {room_code}: {'correct' if is_correct else 'incorrect'}")
     
-    room = get_room(room_code)
-    if not room:
-        print(f"[DEBUG] [submit_answer] Room not found for room code: {room_code}")
-        return jsonify({'success': False, 'message': 'Room not found'}), 404
-    if not room['game_started']:
-        print(f"[DEBUG] [submit_answer] Game has not started for room {room_code}")
-        return jsonify({'success': False, 'message': 'Game has not started'}), 400
-        
     try:
+        room = get_room(room_code)
+        if not room:
+            print(f"[DEBUG] [submit_answer] Room not found for room code: {room_code}")
+            return jsonify({'success': False, 'message': 'Room not found'}), 404
+        if not room['game_started']:
+            print(f"[DEBUG] [submit_answer] Game has not started for room {room_code}")
+            return jsonify({'success': False, 'message': 'Game has not started'}), 400
+
         # Update player's score - add 1 point for correct answer
         if is_correct:
             update_player_score(room_code, player_name, 1, 0)
             print(f"[DEBUG] [submit_answer] Updated score for player {player_name} in room {room_code}")
-        
+
         # Get updated scores to return
         scores = get_player_scores(room_code)
         update_last_active(room_code)
-        
+
         # Check if player has reached the question goal
-        room = get_room(room_code)
-        if room:
-            player_score = next((score for score in scores if score['player_name'] == player_name), None)
-            if player_score and player_score['score'] >= room['question_goal']:
-                # End the game with this player as winner
-                print(f"[DEBUG] [submit_answer] Player {player_name} reached the question goal in room {room_code}")
-                end_game(room_code, [player_name])
-                return jsonify({
-                    'success': True,
-                    'scores': scores,
-                    'message': 'Answer submitted successfully',
-                    'game_ended': True,
-                    'rankings': scores
-                }), 200
-        
+        player_score = next((score for score in scores if score['player_name'] == player_name), None)
+        if player_score and player_score['score'] >= room['question_goal']:
+            # End the game with this player as winner
+            print(f"[DEBUG] [submit_answer] Player {player_name} reached the question goal in room {room_code}")
+            end_game(room_code, [player_name])
+            return jsonify({
+                'success': True,
+                'scores': scores,
+                'message': 'Answer submitted successfully',
+                'game_ended': True,
+                'rankings': scores
+            }), 200
+
         return jsonify({
             'success': True,
             'scores': scores,
@@ -366,8 +364,8 @@ def submit_answer():
             'game_ended': False
         }), 200
     except Exception as e:
-        print(f"[ERROR] [submit_answer] Failed to submit answer: {e}")
-        return jsonify({'success': False, 'message': 'Failed to submit answer'}), 500
+        print(f"[ERROR] [submit_answer] Exception occurred: {e}")
+        return jsonify({'success': False, 'message': f'Failed to submit answer: {str(e)}'}), 500
 
 @app.route('/get_player_scores/<room_code>', methods=['GET'])
 def get_player_scores_route(room_code):
