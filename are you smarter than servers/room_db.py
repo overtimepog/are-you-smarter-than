@@ -101,6 +101,7 @@ def add_or_update_player(room_code, player_name):
                 ''', (room_code, player_name, 0, 0, time.time()))
             else:
                 # Update existing player's timestamp without resetting wins
+                wins = result['wins']
                 conn.execute('''
                     UPDATE player_scores 
                     SET timestamp = ?
