@@ -35,7 +35,28 @@ class LobbyViewController: UIViewController {
         startGameButton.isHidden = gameStarted || !isHost
         // Set up a timer to refresh room data every 60 seconds
         refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
-        // Listen for view updates from the host
+        // Listen for player join and leave events
+        SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            guard let self = self else { return }
+            if let playerName = data[0] as? String {
+                print("[DEBUG] Player joined: \(playerName)")
+                self.players.append(playerName)
+                DispatchQueue.main.async {
+                    self.playersTableView.reloadData()
+                }
+            }
+        }
+
+        SocketIOManager.shared.socket.on("player_left") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            guard let self = self else { return }
+            if let playerName = data[0] as? String {
+                print("[DEBUG] Player left: \(playerName)")
+                self.players.removeAll { $0 == playerName }
+                DispatchQueue.main.async {
+                    self.playersTableView.reloadData()
+                }
+            }
+        }
         SocketIOManager.shared.socket.on("update_view") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let newView = data[0] as? [String: Any], let viewName = newView["new_view"] as? String {
