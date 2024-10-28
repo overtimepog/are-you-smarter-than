@@ -32,6 +32,8 @@ def add_room(room_code, host, question_goal, max_players, difficulty, categories
                 room_code, host, players_json, False, question_goal, max_players, '[]',
                 difficulty, categories_json, time.time(), time.time()
             ))
+    # Add the host to player_scores immediately after room creation
+    add_or_update_player(room_code, host)
 
 def get_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
@@ -224,6 +226,16 @@ class TestTriviaGameDatabase(unittest.TestCase):
         self.assertEqual(room['max_players'], 4)
         self.assertEqual(room['difficulty'], 'easy')
         self.assertEqual(room['categories'], [9, 10, 11])
+
+    def test_add_room_includes_host_in_player_scores(self):
+        add_room('room_host_test', 'host_test', 10, 4, 'easy', categories=[1, 2, 3])
+        # Fetch player scores for the room
+        player_scores = get_player_scores('room_host_test')
+        # Verify that the host is present in player_scores
+        host_score = next((player for player in player_scores if player['player_name'] == 'host_test'), None)
+        self.assertIsNotNone(host_score, "Host should be present in player_scores after room creation.")
+        self.assertEqual(host_score['score'], 0, "Initial score for host should be 0.")
+        self.assertEqual(host_score['wins'], 0, "Initial wins for host should be 0.")
 
     def test_get_all_rooms(self):
         add_room('room1', 'host1', 10, 4, 'easy', categories=[9, 10])
