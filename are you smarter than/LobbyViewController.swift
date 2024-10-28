@@ -3,7 +3,7 @@ import SwiftyJSON
 import SocketIO
 
 
-class LobbyViewController: UIViewController, UITableViewDataSource {
+class LobbyViewController: UIViewController {
 
     var roomCode: String = ""  // Set this when transitioning to the lobby
     var playerName: String = "" // Set this when transitioning to the lobby
@@ -77,7 +77,7 @@ class LobbyViewController: UIViewController, UITableViewDataSource {
     }
 
 
-    @objc func handleViewChange(viewName: String) {
+    func handleViewChange(viewName: String) {
         print("[DEBUG] [handleViewChange] Changing view to: \(viewName)")
         // Implement logic to transition to the specified view
         // For example, if viewName is "TriviaView", present the TriviaViewController
