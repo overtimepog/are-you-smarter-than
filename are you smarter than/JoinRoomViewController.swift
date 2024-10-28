@@ -122,9 +122,7 @@ class JoinRoomViewController: UIViewController {
                     lobbyVC.playerName = playerName
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
-                    self.present(lobbyVC, animated: true) { [weak self] in
-                        self?.dismiss(animated: false, completion: nil)
-                    }
+                    self.present(lobbyVC, animated: true)
                 }
             } else {
                 let message = json["message"].stringValue
