@@ -240,7 +240,7 @@ def start_game_route():
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @app.route('/end_game', methods=['POST'])
-def end_game(room_code, winners):
+def end_game_route():
     # Handle ending the game and updating player wins
     data = request.json
     room_code = data.get('room_code')
@@ -348,7 +348,7 @@ def submit_answer():
         if player_score and player_score['score'] >= room['question_goal']:
             # End the game with this player as winner
             print(f"[DEBUG] [submit_answer] Player {player_name} reached the question goal in room {room_code}")
-            end_game(room_code, [player_name])
+            end_game_route()
             return jsonify({
                 'success': True,
                 'scores': scores,
