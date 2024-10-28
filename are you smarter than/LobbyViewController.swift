@@ -70,20 +70,6 @@ class LobbyViewController: UIViewController {
         }
     }
 
-    func handleViewChange(viewName: String) {
-        print("[DEBUG] [handleViewChange] Changing view to: \(viewName)")
-        // Implement logic to transition to the specified view
-        // For example, if viewName is "TriviaView", present the TriviaViewController
-        if viewName == "TriviaView" {
-            let triviaVC = TriviaViewController()
-            triviaVC.modalPresentationStyle = .fullScreen
-            triviaVC.roomCode = self.roomCode
-            triviaVC.playerName = self.playerName
-            triviaVC.questionGoal = self.questionGoal
-            triviaVC.categories = self.categories
-            self.present(triviaVC, animated: true)
-        }
-    }
 
     func handleViewChange(viewName: String) {
         print("[DEBUG] [handleViewChange] Changing view to: \(viewName)")
