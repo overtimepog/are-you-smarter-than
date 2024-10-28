@@ -68,7 +68,6 @@ class LobbyViewController: UIViewController {
                 self.handleViewChange(viewName: viewName)
             }
         }
-        }
     }
 
     func handleViewChange(viewName: String) {
