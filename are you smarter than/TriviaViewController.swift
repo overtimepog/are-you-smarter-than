@@ -3,8 +3,8 @@ import UIKit
 // Make categoryEmojis accessible from other classes
 let categoryEmojis: [Int: String] = [
     9: "🤔", 10: "📚", 11: "🎭", 12: "🎵", 13: "🎭", 14: "📺",
-    15: "🎮", 16: "🎲", 17: "🍿", 18: "💻", 19: "➕", 20: "🧚",
-    21: "⚽", 22: "🌍", 23: "📝", 24: "🗳️", 25: "🌟", 26: "🌟",
+    15: "🎮", 16: "🎲", 17: "🍿", 18: "💻", 19: "➕", 20: "🧪",
+    21: "⚽", 22: "🌍", 23: "📝", 24: "🗳", 25: "🌟", 26: "🌟",
     27: "🐾", 28: "🚗", 29: "📚", 30: "📱", 31: "🔵", 32: "🐭"
 ]
 
@@ -12,38 +12,6 @@ let categoryEmojis: [Int: String] = [
 class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     var difficulty: String = "easy" // Default difficulty
-
-    // Handle next button press
-    @objc func nextQuestion() {
-        // Stop fetching room data in LobbyViewController
-        if let lobbyVC = self.presentingViewController as? LobbyViewController {
-            lobbyVC.refreshTimer?.invalidate()
-            lobbyVC.refreshTimer = nil
-        }
-
-        // Reset button colors
-        self.optionButtons.forEach { button in
-            button.backgroundColor = UIColor.systemGray6
-            button.isEnabled = true // Re-enable buttons for next question
-            button.removeFromSuperview()
-        }
-        self.optionButtons.removeAll()
-        self.questionLabel.isHidden = true
-        self.currentQuestion = nil
-
-        if currentQuestionIndex >= questionGoal {
-            showWinViewController(with: <#[[String : Any]]#>)
-            return
-        }
-
-        // Show the wheel again
-        self.wheelView.isHidden = false
-        self.spinButton?.isHidden = false
-        self.arrowView?.isHidden = false
-        self.categoryNameLabel.isHidden = false
-        self.spinButton?.isEnabled = true
-        self.nextButton?.isHidden = true // Hide the next button
-    }
 
     // Trivia question data
     var currentQuestion: TriviaQuestion?
@@ -99,43 +67,31 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         scoreAndQuestionLabel.isHidden = false
     }
 
-    func sendResultToServer(parameters: [String: Any]) {
-        guard let url = URL(string: "https://api.areyousmarterthan.xyz/submit_answer") else {
-            print("Invalid URL for submitting answer")
-            return
+    // Handle next button press
+    @objc func nextQuestion() {
+        // Stop fetching room data in LobbyViewController
+        if let lobbyVC = self.presentingViewController as? LobbyViewController {
+            lobbyVC.refreshTimer?.invalidate()
+            lobbyVC.refreshTimer = nil
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            if let error = error {
-                print("Error submitting answer: \(error.localizedDescription)")
-                return
-            }
-
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let gameEnded = json["game_ended"] as? Bool else {
-                print("Failed to submit answer")
-                return
-            }
-
-            if gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
-                DispatchQueue.main.async {
-                    self.showWinViewController(with: rankings)
-                }
-            }
-        }.resume()
-    }
-
-    func showWinViewController(with rankings: [[String: Any]]) {
-        let winVC = WinViewController()
-        winVC.modalPresentationStyle = .fullScreen
-        winVC.rankings = rankings // Pass rankings to the win view controller
-        self.present(winVC, animated: true)
+        // Reset button colors
+        self.optionButtons.forEach { button in
+            button.backgroundColor = UIColor.systemGray6
+            button.isEnabled = true // Re-enable buttons for next question
+            button.removeFromSuperview()
+        }
+        self.optionButtons.removeAll()
+        self.questionLabel.isHidden = true
+        self.currentQuestion = nil
+        
+        // Show the wheel again
+        self.wheelView.isHidden = false
+        self.spinButton?.isHidden = false
+        self.arrowView?.isHidden = false
+        self.categoryNameLabel.isHidden = false
+        self.spinButton?.isEnabled = true
+        self.nextButton?.isHidden = true // Hide the next button
     }
 
     // Setup the UI
@@ -169,63 +125,46 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Fetch categories
     func fetchCategories() {
-        if !selectedCategories.isEmpty {
-            // Use the selected categories
-            self.allCategories = selectedCategories
-            DispatchQueue.main.async {
-                self.setupWheel()
-            }
-        } else {
-            // Fetch categories from the API
-            let urlString = "https://opentdb.com/api_category.php"
-            guard let url = URL(string: urlString) else {
-                print("Invalid URL for categories")
+        let urlString = "https://opentdb.com/api_category.php"
+        guard let url = URL(string: urlString) else {
+            print("Invalid URL for categories")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Failed to fetch categories: \(error)")
                 return
             }
 
-            URLSession.shared.dataTask(with: url) { data, response, error in
-                if let error = error {
-                    print("Failed to fetch categories: \(error)")
-                    return
-                }
+            guard let data = data else {
+                print("No data returned for categories")
+                return
+            }
 
-                guard let data = data else {
-                    print("No data returned for categories")
-                    return
-                }
+            do {
+                let decoder = JSONDecoder()
+                let categoryResponse = try decoder.decode(CategoryListResponse.self, from: data)
 
-                do {
-                    let decoder = JSONDecoder()
-                    let categoryResponse = try decoder.decode(CategoryListResponse.self, from: data)
-
-                    // Map the categories to emojis
-                    self.allCategories = categoryResponse.triviaCategories.compactMap { apiCategory in
-                        if let emoji = categoryEmojis[apiCategory.id] {
-                            return TriviaCategory(id: apiCategory.id, name: apiCategory.name, emoji: emoji)
-                        } else {
-                            return nil // Exclude categories without an emoji
-                        }
+                // Map the categories to emojis
+                self.allCategories = categoryResponse.triviaCategories.compactMap { apiCategory in
+                    if let emoji = categoryEmojis[apiCategory.id] {
+                        return TriviaCategory(id: apiCategory.id, name: apiCategory.name, emoji: emoji)
+                    } else {
+                        return nil // Exclude categories without an emoji
                     }
-
-                    // Randomly select 5 categories
-                    self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
-
-                    DispatchQueue.main.async {
-                        self.setupWheel()
-                    }
-                } catch {
-                    print("Failed to decode categories: \(error)")
                 }
-            }.resume()
-            // Send result to server
-            let parameters: [String: Any] = [
-                "room_code": roomCode,
-                "player_name": playerName,
-                "player_id": playerId,
-                "correct": isCorrect
-            ]
-            sendResultToServer(parameters: parameters)
-        }
+
+                // Randomly select 5 categories
+                self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
+
+                DispatchQueue.main.async {
+                    self.setupWheel()
+                }
+            } catch {
+                print("Failed to decode categories: \(error)")
+            }
+        }.resume()
     }
 
     // Setup the wheel UI
@@ -448,7 +387,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }
 
         // Update score label
-        scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
+        scoreAndQuestionLabel.text = "Score: \(score)/\(questionGoal)"
         scoreAndQuestionLabel.isHidden = false
     }
 
@@ -461,10 +400,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
         if isCorrect {
             score += 1 // Correct answer, increment score
+            sendResultToServer(correct: true)
         }
-
-        // Update score label
-        scoreAndQuestionLabel.text = "Score: \(score)/\(currentQuestionIndex)"
 
         // Animate the selected button
         UIView.animate(withDuration: 0.3) {
@@ -482,26 +419,74 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         // Disable all buttons to prevent multiple taps
         optionButtons.forEach { $0.isEnabled = false }
 
-        // After a delay, show the next button
+        // After a delay, proceed to the next question by spinning the wheel again
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.nextButton?.isHidden = false
-            self?.nextButton?.removeTarget(nil, action: nil, for: .allEvents)
-            self?.nextButton?.addTarget(self, action: #selector(self?.nextQuestion), for: .touchUpInside)
+            self?.nextQuestion()
         }
-        //update this to handle the diffulty
-        // Send result to server
+    }
+
+    func sendResultToServer(correct: Bool) {
         let parameters: [String: Any] = [
             "room_code": roomCode,
             "player_name": playerName,
             "player_id": playerId,
-            "correct": isCorrect
+            "correct": correct
         ]
-        sendResultToServer(parameters: parameters)
+
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/submit_answer") else {
+            print("Invalid URL for submitting answer")
+            return
+        }
+
+        print("Sending answer to server with parameters: \(parameters)")
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error submitting answer: \(error.localizedDescription)")
+                return
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("Failed to get HTTP response")
+                return
+            }
+
+            print("Response status code: \(httpResponse.statusCode)")
+
+            guard let data = data else {
+                print("No data received from server")
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    print("Response from server: \(json)")
+                    if let success = json["success"] as? Bool, success {
+                        if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
+                            DispatchQueue.main.async {
+                                self.showWinViewController(with: rankings)
+                            }
+                        }
+                    } else {
+                        print("Failed to submit answer: \(json["message"] as? String ?? "Unknown error")")
+                    }
+                }
+            } catch {
+                print("Failed to parse server response: \(error)")
+            }
+        }.resume()
     }
 
-    // Return to main menu
-    @objc func returnToMainMenu() {
-        self.navigationController?.popToRootViewController(animated: true)
+    func showWinViewController(with rankings: [[String: Any]]) {
+        let winVC = WinViewController()
+        winVC.modalPresentationStyle = .fullScreen
+        winVC.rankings = rankings // Pass rankings to the win view controller
+        self.present(winVC, animated: true)
     }
 }
 
