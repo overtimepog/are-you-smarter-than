@@ -29,13 +29,18 @@ class LobbyViewController: UIViewController {
         super.viewDidLoad()
         print("[DEBUG] LobbyViewController loaded with roomCode: \(roomCode), playerName: \(playerName), isHost: \(isHost)")
         setupUI()
-        SocketIOManager.shared.socket.connect()
+        SocketIOManager.shared.establishConnection()
         playersTableView.dataSource = self
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
         // Set up a timer to refresh room data every 60 seconds
         refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.refreshRoomData), userInfo: nil, repeats: true)
-        // Listen for player join and leave events
+        // Ensure socket is connected before setting up listeners
+        SocketIOManager.shared.socket.on(clientEvent: .connect) { [weak self] data, ack in
+            guard let self = self else { return }
+            print("[DEBUG] Socket connected, setting up event listeners")
+            self.setupSocketListeners()
+        }
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let playerName = data.first as? String {
