@@ -141,13 +141,10 @@ def join_room_route():
         print(f"[DEBUG] [join_room_route] Room not found for room code: {room_code}")
         return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
     try:
-        # Check if the player is rejoining
+        # Check if the player name is already taken by another player
         if player_name in room['players']:
-            update_last_active(room_code)
-            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            print(f"[DEBUG] [join_room_route] Player {player_name} rejoined room {room_code}")
-            add_or_update_player(room_code, player_name)  # Update player record
-            return jsonify({'success': True, 'player_id': player_id}), 200
+            print(f"[DEBUG] [join_room_route] Player name {player_name} is already taken in room {room_code}")
+            return jsonify({'success': False, 'message': f'Player name {player_name} is already taken in room {room_code}'}), 400
 
         # Check if the player name is already taken by another player
         if player_name in room['players']:
@@ -160,6 +157,7 @@ def join_room_route():
             add_player_to_room(room_code, player_name)
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            emit('player_joined', player_name, room=room_code)
             return jsonify({'success': True, 'player_id': player_id}), 200
 
         if add_player_to_room(room_code, player_name):
