@@ -17,6 +17,54 @@ class WinViewController: UIViewController {
         setupUI()
         rankingsTableView.reloadData() // Ensure rankings are displayed
     }
+    
+    // Setup UI
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+
+        // Title Label
+        titleLabel.text = "Final Scores"
+        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleLabel)
+
+        // Rankings Table View
+        rankingsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "RankingCell")
+        rankingsTableView.dataSource = self
+        rankingsTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(rankingsTableView)
+
+        // Replay Button
+        replayButton.setTitle("Replay", for: .normal)
+        replayButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        replayButton.addTarget(self, action: #selector(replayGame), for: .touchUpInside)
+        replayButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(replayButton)
+
+        // Leave Button
+        leaveButton.setTitle("Leave", for: .normal)
+        leaveButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        leaveButton.addTarget(self, action: #selector(leaveGame), for: .touchUpInside)
+        leaveButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(leaveButton)
+
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            rankingsTableView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            rankingsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            rankingsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            rankingsTableView.bottomAnchor.constraint(equalTo: replayButton.topAnchor, constant: -20),
+
+            replayButton.bottomAnchor.constraint(equalTo: leaveButton.topAnchor, constant: -20),
+            replayButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+            leaveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            leaveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+    }
 }
 
 // MARK: - UITableViewDataSource
@@ -38,54 +86,6 @@ extension WinViewController: UITableViewDataSource {
         return cell
     }
 
-    // Setup UI
-    func setupUI() {
-        view.backgroundColor = .systemBackground
-
-        // Title Label
-        titleLabel.text = "Final Scores"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(titleLabel)
-
-        // Rankings Table View
-        rankingsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "RankingCell")
-        rankingsTableView.dataSource = self
-        rankingsTableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(rankingsTableView)
-
-        // Replay Button
-        replayButton.setTitle("Replay", for: .normal)
-        replayButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        replayButton.addTarget(self, action: #selector(replayGame), for: .touchUpInside)
-        replayButton.translatesAutoresizingMaskIntoConstraints = false
-
-        // Leave Button
-        leaveButton.setTitle("Leave", for: .normal)
-        leaveButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        leaveButton.addTarget(self, action: #selector(leaveGame), for: .touchUpInside)
-        leaveButton.translatesAutoresizingMaskIntoConstraints = false
-
-        view.addSubview(replayButton)
-        view.addSubview(leaveButton)
-
-        NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            rankingsTableView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            rankingsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            rankingsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            rankingsTableView.bottomAnchor.constraint(equalTo: replayButton.topAnchor, constant: -20),
-
-            replayButton.topAnchor.constraint(equalTo: rankingsTableView.bottomAnchor, constant: 20),
-            replayButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-            leaveButton.topAnchor.constraint(equalTo: replayButton.bottomAnchor, constant: 20),
-            leaveButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-    }
 
     @objc func replayGame() {
         // Logic to replay the game by returning to the lobby
