@@ -23,6 +23,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var selectedCategories: [TriviaCategory] = []
     var roomCategories: [Int] = [] // Store categories from room creation
 
+    // Added 'categories' property to store category names
+    var categories: [String] = []  // <-- Added this line
+
     // Multiplayer game data
     var numberOfPlayers: Int = 1 // Default to 1
     var roomCode: String = "" // Set this when transitioning to the trivia view
@@ -76,6 +79,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                         print("No categories found in room data")
                         self.roomCategories = [] // Empty array as fallback
                     }
+
+                    // Map category IDs to names and store in 'categories' property
+                    self.mapCategoryIDsToNames()
                 } catch {
                     print("Error parsing room categories: \(error)")
                 }
@@ -85,6 +91,20 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 self.fetchCategories()
             }
         }.resume()
+    }
+
+    // Map category IDs to names using the allCategories list
+    func mapCategoryIDsToNames() {
+        // Ensure allCategories is populated
+        if allCategories.isEmpty {
+            // Fetch categories first
+            fetchCategories()
+        } else {
+            // Map IDs to names
+            self.categories = self.roomCategories.compactMap { id in
+                allCategories.first(where: { $0.id == id })?.name
+            }
+        }
     }
 
     // Fetch all categories from Open Trivia DB
@@ -130,6 +150,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 if self.selectedCategories.isEmpty {
                     self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
                 }
+
+                // Map category IDs to names after fetching all categories
+                self.mapCategoryIDsToNames()
 
                 DispatchQueue.main.async {
                     self.setupWheel()
@@ -637,4 +660,3 @@ struct TriviaCategoryAPI: Codable {
     let id: Int
     let name: String
 }
-
