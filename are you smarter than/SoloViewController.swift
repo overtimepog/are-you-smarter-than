@@ -41,6 +41,19 @@ class SoloViewController: UIViewController, CAAnimationDelegate {
         self.categoryNameLabel.isHidden = false
         self.spinButton?.isEnabled = true
         self.nextButton?.isHidden = true // Hide the next button
+        
+        // Add back button
+        let backButton = UIButton(type: .system)
+        backButton.setTitle("Back", for: .normal)
+        backButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        backButton.addTarget(self, action: #selector(returnToMainMenu), for: .touchUpInside)
+        view.addSubview(backButton)
+        
+        NSLayoutConstraint.activate([
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20)
+        ])
     }
 
     // Trivia question data
