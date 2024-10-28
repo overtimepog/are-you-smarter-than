@@ -154,6 +154,14 @@ def join_room_route():
             print(f"[DEBUG] [join_room_route] Player name {player_name} is already taken in room {room_code}")
             return jsonify({'success': False, 'message': f'Player name {player_name} is already taken in room {room_code}'}), 400
 
+        # Allow joining if the game has ended
+        if room['game_started'] and room['winners']:
+            print(f"[DEBUG] [join_room_route] Game has ended, allowing player {player_name} to join room {room_code}")
+            add_player_to_room(room_code, player_name)
+            update_last_active(room_code)
+            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            return jsonify({'success': True, 'player_id': player_id}), 200
+
         if add_player_to_room(room_code, player_name):
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))

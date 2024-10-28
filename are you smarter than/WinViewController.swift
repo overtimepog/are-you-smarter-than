@@ -206,11 +206,12 @@ extension WinViewController: UITableViewDataSource {
                             }
                         }
                     } else {
-                        print("Failed to join room: \(joinJson["message"].stringValue)")
+                        let message = joinJson["message"].stringValue
+                        print("Failed to join room: \(message)")
                         DispatchQueue.main.async {
                             let alert = UIAlertController(
                                 title: "Error",
-                                message: joinJson["message"].stringValue,
+                                message: message.isEmpty ? "Failed to join room." : message,
                                 preferredStyle: .alert
                             )
                             alert.addAction(UIAlertAction(title: "OK", style: .default))
