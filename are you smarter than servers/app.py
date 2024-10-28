@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+from room_db import update_player_score  # Ensure this import is present
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
@@ -373,8 +374,31 @@ def submit_answer():
         print(f"[ERROR] [submit_answer] Exception occurred: {e}")
         return jsonify({'success': False, 'message': f'Failed to submit answer: {str(e)}'}), 500
 
-@app.route('/get_player_scores/<room_code>', methods=['GET'])
-def get_player_scores_route(room_code):
+@app.route('/lobby_wins/<room_code>', methods=['GET', 'POST'])
+def lobby_wins(room_code):
+    if request.method == 'GET':
+        # Fetch player wins for the given room code
+        print(f"[DEBUG] [lobby_wins] Fetching player wins for room code: {room_code}")
+        scores = get_player_scores(room_code)
+        player_wins = {score['player_name']: score['wins'] for score in scores}
+        return jsonify({'room_code': room_code, 'player_wins': player_wins}), 200
+
+    elif request.method == 'POST':
+        # Update player wins for the given room code
+        data = request.json
+        player_name = data.get('player_name')
+        wins = data.get('wins')
+
+        if not player_name or wins is None:
+            return jsonify({'success': False, 'message': 'Missing player_name or wins'}), 400
+
+        try:
+            update_player_score(room_code, player_name, 0, wins)  # Update wins without changing score
+            print(f"[DEBUG] [lobby_wins] Updated wins for player {player_name} in room {room_code} to {wins}")
+            return jsonify({'success': True, 'message': 'Player wins updated'}), 200
+        except Exception as e:
+            print(f"[ERROR] [lobby_wins] Failed to update wins for player {player_name} in room {room_code}: {e}")
+            return jsonify({'success': False, 'message': f'Failed to update wins for player {player_name}'}), 500
     # Fetch the scores of all players in a specific room
     print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
     scores = get_player_scores(room_code)
