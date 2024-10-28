@@ -1,7 +1,7 @@
 import UIKit
 import SwiftyJSON
 
-class LobbyViewController: UIViewController, UITableViewDataSource {
+class LobbyViewController: UIViewController {
 
     var roomCode: String = ""  // Set this when transitioning to the lobby
     var playerName: String = "" // Set this when transitioning to the lobby
