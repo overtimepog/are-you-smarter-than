@@ -11,9 +11,11 @@ class LobbyViewController: UIViewController {
     var questionGoal: Int = 0
     var maxPlayers: Int = 0
     var gameStarted: Bool = false
+    var categories: [String] = []  // NEW: List to hold categories
 
     // UI Elements
     let roomCodeLabel = UILabel()
+    let categoriesLabel = UILabel()  // NEW: Label to display categories
     let playersTableView = UITableView()
     let refreshButton = UIButton(type: .system)
     let startGameButton = UIButton(type: .system)
@@ -46,6 +48,12 @@ class LobbyViewController: UIViewController {
         roomCodeLabel.textAlignment = .center
         roomCodeLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // Categories Label
+        categoriesLabel.font = UIFont.systemFont(ofSize: 16)
+        categoriesLabel.textAlignment = .center
+        categoriesLabel.numberOfLines = 0  // Allow label to wrap text
+        categoriesLabel.translatesAutoresizingMaskIntoConstraints = false
+
         // Players Table View
         playersTableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlayerCell")
         playersTableView.translatesAutoresizingMaskIntoConstraints = false
@@ -65,7 +73,10 @@ class LobbyViewController: UIViewController {
         leaveLobbyButton.setTitle("Leave Lobby", for: .normal)
         leaveLobbyButton.addTarget(self, action: #selector(leaveLobby), for: .touchUpInside)
         leaveLobbyButton.translatesAutoresizingMaskIntoConstraints = false
+
+        // Add subviews
         view.addSubview(roomCodeLabel)
+        view.addSubview(categoriesLabel)  // NEW: Add categories label to view
         view.addSubview(playersTableView)
         view.addSubview(refreshButton)
         view.addSubview(startGameButton)
@@ -76,7 +87,11 @@ class LobbyViewController: UIViewController {
             roomCodeLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             roomCodeLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            playersTableView.topAnchor.constraint(equalTo: roomCodeLabel.bottomAnchor, constant: 20),
+            categoriesLabel.topAnchor.constraint(equalTo: roomCodeLabel.bottomAnchor, constant: 10),  // NEW: Position below room code
+            categoriesLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            categoriesLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+
+            playersTableView.topAnchor.constraint(equalTo: categoriesLabel.bottomAnchor, constant: 20),
             playersTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             playersTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             playersTableView.bottomAnchor.constraint(equalTo: refreshButton.topAnchor, constant: -20),
@@ -125,7 +140,8 @@ class LobbyViewController: UIViewController {
                     question_goal: json["question_goal"].intValue,
                     max_players: json["max_players"].intValue,
                     game_started: json["game_started"].intValue,
-                    winners: json["winners"].arrayValue.map { $0.stringValue }
+                    winners: json["winners"].arrayValue.map { $0.stringValue },
+                    categories: json["categories"].arrayValue.map { $0.stringValue }  // NEW: Parse categories
                 )
                 print("[DEBUG] [fetchRoomData] Room data decoded successfully: \(roomInfo)")
                 DispatchQueue.main.async {
@@ -148,8 +164,10 @@ class LobbyViewController: UIViewController {
         self.questionGoal = roomInfo.question_goal
         self.maxPlayers = roomInfo.max_players
         self.gameStarted = (roomInfo.game_started == 1) // Update based on Int value
+        self.categories = roomInfo.categories  // NEW: Update categories
 
         roomCodeLabel.text = "Room Code: \(roomInfo.room_code)"
+        categoriesLabel.text = "Categories: \(categories.joined(separator: ", "))"  // NEW: Display categories
         playersTableView.reloadData()
     }
 
@@ -197,6 +215,7 @@ class LobbyViewController: UIViewController {
                 triviaVC.roomCode = self.roomCode
                 triviaVC.playerName = self.playerName
                 triviaVC.questionGoal = self.questionGoal
+                triviaVC.categories = self.categories  // NEW: Pass categories to the trivia view
                 self.present(triviaVC, animated: true)
             }
         }.resume()
@@ -239,6 +258,7 @@ extension LobbyViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
         let cell = tableView.dequeueReusableCell(withIdentifier: "PlayerCell", for: indexPath)
         let playerName = players[indexPath.row]
         let wins = playerWins[playerName] ?? 0
@@ -256,4 +276,5 @@ struct RoomInfo: Codable {
     let max_players: Int
     let game_started: Int // Changed to Int to match response
     let winners: [String]
+    let categories: [String]  // NEW: Add categories field
 }

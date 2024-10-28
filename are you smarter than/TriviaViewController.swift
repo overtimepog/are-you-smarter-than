@@ -44,44 +44,32 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground // Set background color first
+        view.backgroundColor = .systemBackground
         setupUI()
+        fetchRoomCategories() // Fetch room categories first
+        questionLabel.isHidden = true
+        scoreAndQuestionLabel.isHidden = false
+    }
 
-        // Add next button
-        nextButton = UIButton(type: .system)
-        nextButton?.setTitle("Next", for: .normal)
-        nextButton?.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        nextButton?.translatesAutoresizingMaskIntoConstraints = false
-        nextButton?.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
-        if let nextButton = nextButton {
-            view.addSubview(nextButton)
-        }
-
-        if let nextButton = nextButton {
-            NSLayoutConstraint.activate([
-                nextButton.topAnchor.constraint(equalTo: spinButton?.bottomAnchor ?? view.bottomAnchor, constant: 20),
-                nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-            ])
-            nextButton.isHidden = true // Initially hide the next button
-        }
-        
-        // Fetch room info to get categories
+    // Fetch categories from the room data
+    func fetchRoomCategories() {
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
             print("Invalid URL for room info")
             return
         }
-        
+
         URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             guard let self = self else { return }
-            
+
             if let error = error {
                 print("Error fetching room info: \(error)")
                 return
             }
-            
+
             if let data = data {
                 do {
-                    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                    // Parse the JSON data
+                    let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                     if let categories = json?["categories"] as? [Int] {
                         self.roomCategories = categories
                     } else {
@@ -92,83 +80,14 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                     print("Error parsing room categories: \(error)")
                 }
             }
-            
+
             DispatchQueue.main.async {
                 self.fetchCategories()
             }
         }.resume()
-        
-        questionLabel.isHidden = true
-        scoreAndQuestionLabel.isHidden = false
     }
 
-    // Handle next button press
-    @objc func nextQuestion() {
-        // Stop fetching room data in LobbyViewController
-        if let lobbyVC = self.presentingViewController as? LobbyViewController {
-            lobbyVC.refreshTimer?.invalidate()
-            lobbyVC.refreshTimer = nil
-        }
-
-        // Reset button colors
-        self.optionButtons.forEach { button in
-            button.backgroundColor = UIColor.systemGray6
-            button.isEnabled = true // Re-enable buttons for next question
-            button.removeFromSuperview()
-        }
-        self.optionButtons.removeAll()
-        self.questionLabel.isHidden = true
-        self.currentQuestion = nil
-        
-        // Show the wheel again
-        self.wheelView.isHidden = false
-        self.spinButton?.isHidden = false
-        self.arrowView?.isHidden = false
-        self.categoryNameLabel.isHidden = false
-        self.spinButton?.isEnabled = true
-        self.nextButton?.isHidden = true // Hide the next button
-    }
-
-    // Setup the UI
-    func setupUI() {
-        // Set initial frames for UI elements to avoid NaN values
-        let screenBounds = UIScreen.main.bounds
-        let safeAreaInsets = view.safeAreaInsets
-        
-        // Question label with initial frame
-        questionLabel.frame = CGRect(x: 20, 
-                                   y: safeAreaInsets.top + 80,
-                                   width: screenBounds.width - 40,
-                                   height: 100)
-        questionLabel.translatesAutoresizingMaskIntoConstraints = false
-        questionLabel.textAlignment = .center
-        questionLabel.numberOfLines = 0
-        questionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        questionLabel.isHidden = true
-        view.addSubview(questionLabel)
-        NSLayoutConstraint.activate([
-            questionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
-            questionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            questionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
-        ])
-
-        // Score and Question label
-        scoreAndQuestionLabel.frame = CGRect(x: 0,
-                                           y: safeAreaInsets.top + 10,
-                                           width: screenBounds.width,
-                                           height: 40)
-        scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
-        scoreAndQuestionLabel.textAlignment = .center
-        scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        scoreAndQuestionLabel.isHidden = false
-        view.addSubview(scoreAndQuestionLabel)
-        NSLayoutConstraint.activate([
-            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-        ])
-    }
-
-    // Fetch categories
+    // Fetch all categories from Open Trivia DB
     func fetchCategories() {
         let urlString = "https://opentdb.com/api_category.php"
         guard let url = URL(string: urlString) else {
@@ -176,7 +95,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             return
         }
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let self = self else { return }
+
             if let error = error {
                 print("Failed to fetch categories: \(error)")
                 return
@@ -204,8 +125,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                 self.selectedCategories = self.allCategories.filter { category in
                     self.roomCategories.contains(category.id)
                 }
-                
-                // If no categories were found, fallback to all categories
+
+                // If no categories were found, fallback to a default set
                 if self.selectedCategories.isEmpty {
                     self.selectedCategories = self.allCategories.shuffled().prefix(5).map { $0 }
                 }
@@ -219,7 +140,70 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }.resume()
     }
 
-    // Setup the wheel UI
+    // Setup UI elements
+    func setupUI() {
+        // Set up question label
+        questionLabel.translatesAutoresizingMaskIntoConstraints = false
+        questionLabel.textAlignment = .center
+        questionLabel.numberOfLines = 0
+        questionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        questionLabel.isHidden = true
+        view.addSubview(questionLabel)
+        NSLayoutConstraint.activate([
+            questionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            questionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            questionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+        ])
+
+        // Set up score and question label
+        scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
+        scoreAndQuestionLabel.textAlignment = .center
+        scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        scoreAndQuestionLabel.isHidden = false
+        view.addSubview(scoreAndQuestionLabel)
+        NSLayoutConstraint.activate([
+            scoreAndQuestionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            scoreAndQuestionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
+
+        // Add next button
+        nextButton = UIButton(type: .system)
+        nextButton?.setTitle("Next", for: .normal)
+        nextButton?.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        nextButton?.translatesAutoresizingMaskIntoConstraints = false
+        nextButton?.addTarget(self, action: #selector(nextQuestion), for: .touchUpInside)
+        if let nextButton = nextButton {
+            view.addSubview(nextButton)
+            NSLayoutConstraint.activate([
+                nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+                nextButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            ])
+            nextButton.isHidden = true // Initially hide the next button
+        }
+    }
+
+    // Handle next question
+    @objc func nextQuestion() {
+        // Reset button states
+        self.optionButtons.forEach { button in
+            button.backgroundColor = UIColor.systemGray6
+            button.isEnabled = true
+            button.removeFromSuperview()
+        }
+        self.optionButtons.removeAll()
+        self.questionLabel.isHidden = true
+        self.currentQuestion = nil
+
+        // Show the wheel again
+        self.wheelView.isHidden = false
+        self.spinButton?.isHidden = false
+        self.arrowView?.isHidden = false
+        self.categoryNameLabel.isHidden = false
+        self.spinButton?.isEnabled = true
+        self.nextButton?.isHidden = true
+    }
+
+    // Setup the wheel with categories
     func setupWheel() {
         // Remove existing wheel if any
         wheelView?.removeFromSuperview()
@@ -227,11 +211,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         arrowView?.removeFromSuperview()
         categoryNameLabel.removeFromSuperview()
 
-        // Create a wheel view
+        // Create the wheel view
         wheelView = WheelView(categories: selectedCategories)
         wheelView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(wheelView)
-
         NSLayoutConstraint.activate([
             wheelView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             wheelView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -245,9 +228,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         arrowView?.translatesAutoresizingMaskIntoConstraints = false
         if let arrowView = arrowView {
             view.addSubview(arrowView)
-        }
-
-        if let arrowView = arrowView {
             NSLayoutConstraint.activate([
                 arrowView.bottomAnchor.constraint(equalTo: wheelView.topAnchor, constant: 10),
                 arrowView.centerXAnchor.constraint(equalTo: wheelView.centerXAnchor),
@@ -256,17 +236,17 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             ])
         }
 
-        // Add category name label with wrapping
+        // Add category name label
         categoryNameLabel.translatesAutoresizingMaskIntoConstraints = false
         categoryNameLabel.textAlignment = .center
         categoryNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         categoryNameLabel.textColor = .label
-        categoryNameLabel.numberOfLines = 0 // Allow multiple lines for wrapping
+        categoryNameLabel.numberOfLines = 0
         categoryNameLabel.lineBreakMode = .byWordWrapping
         view.addSubview(categoryNameLabel)
         NSLayoutConstraint.activate([
             categoryNameLabel.bottomAnchor.constraint(equalTo: arrowView?.topAnchor ?? view.topAnchor, constant: -10),
-            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20), // Allow wrapping
+            categoryNameLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryNameLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
         ])
 
@@ -278,9 +258,6 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         spinButton?.addTarget(self, action: #selector(spinWheel), for: .touchUpInside)
         if let spinButton = spinButton {
             view.addSubview(spinButton)
-        }
-
-        if let spinButton = spinButton {
             NSLayoutConstraint.activate([
                 spinButton.topAnchor.constraint(equalTo: wheelView.bottomAnchor, constant: 20),
                 spinButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
@@ -360,7 +337,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             return
         }
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let self = self else { return }
+
             if let error = error {
                 print("Failed to fetch question: \(error)")
                 return
@@ -408,7 +387,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
         // Set up question UI
         currentQuestion = question
-        currentQuestionIndex += 1 // Keep track of the number of times
+        currentQuestionIndex += 1
         questionLabel.text = question.question
         questionLabel.isHidden = false
 
@@ -443,7 +422,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         scoreAndQuestionLabel.isHidden = false
     }
 
-    // Handle option selection with animation
+    // Handle option selection
     @objc func optionSelected(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else { return }
 
@@ -451,8 +430,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         isCorrect = selectedIndex == currentQuestion.correctAnswer
 
         if isCorrect {
-            score += 1 // Correct answer, increment score
+            score += 1
             sendResultToServer(correct: true)
+        } else {
+            sendResultToServer(correct: false)
         }
 
         // Animate the selected button
@@ -471,12 +452,11 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         // Disable all buttons to prevent multiple taps
         optionButtons.forEach { $0.isEnabled = false }
 
-        // After a delay, proceed to the next question by spinning the wheel again
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.nextQuestion()
-        }
+        // Show next button
+        nextButton?.isHidden = false
     }
 
+    // Send the result to the server
     func sendResultToServer(correct: Bool) {
         let parameters: [String: Any] = [
             "room_code": roomCode,
@@ -496,18 +476,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
 
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+
             if let error = error {
                 print("Error submitting answer: \(error.localizedDescription)")
                 return
             }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("Failed to get HTTP response")
-                return
-            }
-
-            print("Response status code: \(httpResponse.statusCode)")
 
             guard let data = data else {
                 print("No data received from server")
@@ -529,7 +504,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                                 }
                             }
                         }
-                        
+
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
@@ -545,6 +520,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         }.resume()
     }
 
+    // Show the win view controller
     func showWinViewController(with rankings: [[String: Any]], roomCode: String, playerName: String) {
         let winVC = WinViewController()
         winVC.modalPresentationStyle = .fullScreen
@@ -661,3 +637,4 @@ struct TriviaCategoryAPI: Codable {
     let id: Int
     let name: String
 }
+

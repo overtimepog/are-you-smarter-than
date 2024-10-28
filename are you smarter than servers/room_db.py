@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import json
 import unittest
 from contextlib import closing
 
@@ -17,7 +18,8 @@ def init_db():
 
 def add_room(room_code, host, question_goal, max_players, difficulty, categories=None):
     players = [host]
-    categories_str = str(categories if categories is not None else [])
+    categories_json = json.dumps(categories if categories is not None else [])
+    players_json = json.dumps(players)
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             conn.execute('''
@@ -27,38 +29,61 @@ def add_room(room_code, host, question_goal, max_players, difficulty, categories
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                room_code, host, str(players), False, question_goal, max_players, '[]',
-                difficulty, categories_str, time.time(), time.time()
+                room_code, host, players_json, False, question_goal, max_players, '[]',
+                difficulty, categories_json, time.time(), time.time()
             ))
+
 def get_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
+        conn.row_factory = sqlite3.Row
         with conn:
             room = conn.execute('SELECT * FROM rooms WHERE room_code = ?', (room_code,)).fetchone()
             if room:
                 return {
-                    'room_code': room[0],
-                    'host': room[1],
-                    'players': eval(room[2]) if isinstance(room[2], str) else room[2],
-                    'game_started': room[3],
-                    'question_goal': room[4],
-                    'max_players': room[5],
-                    'winners': eval(room[6]) if isinstance(room[6], str) else room[6],
-                    'difficulty': room[7],
-                    'categories': eval(room[8]) if isinstance(room[8], str) and room[8] else [],
-                    'last_active': room[9],
-                    'creation_time': room[10],
+                    'room_code': room['room_code'],
+                    'host': room['host'],
+                    'players': json.loads(room['players']) if room['players'] else [],
+                    'game_started': bool(room['game_started']),
+                    'question_goal': room['question_goal'],
+                    'max_players': room['max_players'],
+                    'winners': json.loads(room['winners']) if room['winners'] else [],
+                    'difficulty': room['difficulty'],
+                    'categories': json.loads(room['categories']) if room['categories'] else [],
+                    'last_active': room['last_active'],
+                    'creation_time': room['creation_time'],
                 }
             return None
+
+def get_all_rooms():
+    with closing(sqlite3.connect(DATABASE)) as conn:
+        conn.row_factory = sqlite3.Row
+        with conn:
+            rooms = conn.execute('SELECT * FROM rooms').fetchall()
+            return [{
+                'room_code': room['room_code'],
+                'host': room['host'],
+                'players': json.loads(room['players']) if room['players'] else [],
+                'game_started': bool(room['game_started']),
+                'question_goal': room['question_goal'],
+                'max_players': room['max_players'],
+                'winners': json.loads(room['winners']) if room['winners'] else [],
+                'difficulty': room['difficulty'],
+                'categories': json.loads(room['categories']) if room['categories'] else [],
+                'last_active': room['last_active'],
+                'creation_time': room['creation_time'],
+            } for room in rooms]
 
 def update_room(room_code, players=None, game_started=None, winners=None, last_active=None):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
             if players is not None:
-                conn.execute('UPDATE rooms SET players = ? WHERE room_code = ?', (str(players), room_code))
+                players_json = json.dumps(players)
+                conn.execute('UPDATE rooms SET players = ? WHERE room_code = ?', (players_json, room_code))
             if game_started is not None:
                 conn.execute('UPDATE rooms SET game_started = ? WHERE room_code = ?', (game_started, room_code))
             if winners is not None:
-                conn.execute('UPDATE rooms SET winners = ? WHERE room_code = ?', (str(winners), room_code))
+                winners_json = json.dumps(winners)
+                conn.execute('UPDATE rooms SET winners = ? WHERE room_code = ?', (winners_json, room_code))
             if last_active is not None:
                 conn.execute('UPDATE rooms SET last_active = ? WHERE room_code = ?', (last_active, room_code))
 
@@ -125,7 +150,7 @@ def add_player_to_room(room_code, player_name):
             update_room(room_code, last_active=time.time())
             add_or_update_player(room_code, player_name)
             return True
-            
+
         # Add new player if room isn't full and game hasn't started
         if len(room['players']) < room['max_players'] and not room['game_started']:
             room['players'].append(player_name)
@@ -147,10 +172,11 @@ def end_game(room_code, winners):
         with conn:
             for winner in winners:
                 increment_player_win(room_code, winner)
+            winners_json = json.dumps(winners)
             conn.execute('''
                 UPDATE rooms SET game_started = ?, winners = ?, last_active = ?
                 WHERE room_code = ?
-            ''', (False, str(winners), time.time(), room_code))
+            ''', (False, winners_json, time.time(), room_code))
 
 def delete_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
@@ -182,12 +208,13 @@ def start_game(room_code):
                     WHERE room_code = ?
                 ''', (True, time.time(), room_code))
 
+# Unit tests
 class TestTriviaGameDatabase(unittest.TestCase):
     def setUp(self):
         init_db()
 
     def test_add_and_get_room(self):
-        add_room('room1', 'host1', 10, 4, 'easy')
+        add_room('room1', 'host1', 10, 4, 'easy', categories=[9, 10, 11])
         room = get_room('room1')
         self.assertIsNotNone(room)
         self.assertEqual(room['room_code'], 'room1')
@@ -195,6 +222,16 @@ class TestTriviaGameDatabase(unittest.TestCase):
         self.assertEqual(room['question_goal'], 10)
         self.assertEqual(room['max_players'], 4)
         self.assertEqual(room['difficulty'], 'easy')
+        self.assertEqual(room['categories'], [9, 10, 11])
+
+    def test_get_all_rooms(self):
+        add_room('room1', 'host1', 10, 4, 'easy', categories=[9, 10])
+        add_room('room2', 'host2', 15, 5, 'medium', categories=[11, 12])
+        rooms = get_all_rooms()
+        self.assertEqual(len(rooms), 2)
+        room_codes = [room['room_code'] for room in rooms]
+        self.assertIn('room1', room_codes)
+        self.assertIn('room2', room_codes)
 
     def test_add_player_to_room(self):
         add_room('room2', 'host2', 15, 3, 'medium')
@@ -225,6 +262,7 @@ class TestTriviaGameDatabase(unittest.TestCase):
         end_game('room5', ['player4'])
         room = get_room('room5')
         self.assertFalse(room['game_started'])
+        self.assertEqual(room['winners'], ['player4'])
         scores = get_player_scores('room5')
         player4 = next(player for player in scores if player['player_name'] == 'player4')
         self.assertEqual(player4['wins'], 1)

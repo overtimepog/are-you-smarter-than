@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
-from room_db import init_db, add_room, get_room, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win, update_player_score
+from room_db import init_db, add_room, get_room, get_all_rooms, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win, update_player_score
 import time
 import string
 import uuid
@@ -20,6 +20,7 @@ session_to_player = {}
 
 MAX_ROOMS = 100  # Define a maximum number of rooms allowed at a time
 used_room_codes = set()  # Track used room codes to avoid collisions
+INACTIVITY_THRESHOLD = 600  # 10 minutes inactivity threshold in seconds
 
 def generate_room_code():
     # Generate a unique room code consisting of 6 uppercase letters or digits
@@ -40,6 +41,28 @@ def cleanup_room(room_code):
         print(f"[DEBUG] [cleanup_room] Room {room_code} deleted from database")
     except Exception as e:
         print(f"[ERROR] [cleanup_room] Failed to delete room {room_code}: {e}")
+
+def cleanup_dead_rooms():
+    # Clean up rooms that are considered dead (inactive or empty)
+    print("[DEBUG] [cleanup_dead_rooms] Starting cleanup of dead rooms.")
+    all_rooms = get_all_rooms()
+    current_time = time.time()
+    rooms_deleted = 0
+
+    for room in all_rooms:
+        room_code = room['room_code']
+        last_active = room.get('last_active', 0)
+        players = room.get('players', [])
+        time_since_last_active = current_time - last_active
+
+        # Check if room is inactive or has no players
+        if time_since_last_active > INACTIVITY_THRESHOLD or not players:
+            print(f"[DEBUG] [cleanup_dead_rooms] Room {room_code} is inactive or empty. Deleting...")
+            cleanup_room(room_code)
+            rooms_deleted += 1
+
+    print(f"[DEBUG] [cleanup_dead_rooms] Cleanup complete. {rooms_deleted} rooms deleted.")
+    return rooms_deleted
 
 @app.route('/')
 def index():
@@ -76,6 +99,7 @@ def get_room_info(room_code):
             'game_started': room.get('game_started', False),
             'winners': room.get('winners', []),
             'difficulty': room.get('difficulty', 'easy'),  # Default to 'easy' if difficulty is missing
+            'categories': room.get('categories', []),  # Include categories in the response
             'last_active': room.get('last_active', time.time())  # Correctly display the last active timestamp
         }), 200
     print(f"[DEBUG] [get_room_info] Room not found for room code: {room_code}")
@@ -123,7 +147,7 @@ def join_room_route():
             print(f"[DEBUG] [join_room_route] Player {player_name} rejoined room {room_code}")
             add_or_update_player(room_code, player_name)  # Update player record
             return jsonify({'success': True, 'player_id': player_id}), 200
-        
+
         if add_player_to_room(room_code, player_name):
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
@@ -138,6 +162,18 @@ def create_room():
     # Handle creating a new room
     data = request.json
     print("[DEBUG] [create_room] Attempting to create a new room.")
+
+    # First, check if the maximum number of rooms has been reached
+    all_rooms = get_all_rooms()
+    if len(all_rooms) >= MAX_ROOMS:
+        print("[DEBUG] [create_room] Maximum number of rooms reached. Triggering cleanup.")
+        rooms_deleted = cleanup_dead_rooms()
+        print(f"[DEBUG] [create_room] Cleanup complete. Deleted {rooms_deleted} rooms.")
+        all_rooms = get_all_rooms()  # Refresh the room list after cleanup
+        if len(all_rooms) >= MAX_ROOMS:
+            print("[ERROR] [create_room] Maximum number of rooms still reached after cleanup.")
+            return jsonify({'success': False, 'message': 'Maximum number of rooms reached. Please try again later.'}), 503  # Service Unavailable
+
     max_attempts = 10
     attempts = 0
     room_code = generate_room_code()
@@ -175,7 +211,7 @@ def create_room():
     if not all(isinstance(cat_id, int) and cat_id in valid_category_ids for cat_id in categories):
         print("[DEBUG] [create_room] Invalid category IDs provided.")
         return jsonify({'success': False, 'message': 'Invalid category IDs'}), 400
-    
+
     add_room(room_code, first_player_name, question_goal, max_players, difficulty, categories)  # Add room to the database with first player as host
     used_room_codes.add(room_code)  # Add the new room code to the set of used codes
     print(f"[DEBUG] [create_room] Room created successfully with room code: {room_code}, host: {first_player_name}")
@@ -343,5 +379,6 @@ def handle_disconnect():
                 emit('player_left', player_name, room=room_code)  # Notify other players in the room
                 print(f"[DEBUG] [handle_disconnect] Player {player_name} removed from room {room_code}")
 
-socketio.run(app, host='0.0.0.0', port=3000)
-print("[DEBUG] API is fully booted and ready to use.")
+if __name__ == '__main__':
+    print("[DEBUG] API is fully booted and ready to use.")
+    socketio.run(app, host='0.0.0.0', port=3000)
