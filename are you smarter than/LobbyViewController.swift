@@ -277,5 +277,3 @@ struct RoomInfo {
     let winners: [String]
     let categories: [String]
 }
-
-// MARK: - UITableViewDataSource
