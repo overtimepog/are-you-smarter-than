@@ -34,7 +34,12 @@ class JoinRoomViewController: UIViewController {
             field.spellCheckingType = .no
             field.smartDashesType = .no
             field.smartQuotesType = .no
+            field.autocapitalizationType = .none
         }
+        
+        // Configure specific text field behaviors
+        roomCodeTextField.keyboardType = .asciiCapable
+        playerNameTextField.keyboardType = .asciiCapable
         
         roomCodeTextField.placeholder = "Enter Room Code"
         roomCodeTextField.autocapitalizationType = .allCharacters

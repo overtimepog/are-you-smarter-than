@@ -35,7 +35,13 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             field.spellCheckingType = .no
             field.smartDashesType = .no
             field.smartQuotesType = .no
+            field.autocapitalizationType = .none
         }
+        
+        // Configure specific text field behaviors
+        playerNameTextField.keyboardType = .asciiCapable
+        questionGoalTextField.keyboardType = .numberPad
+        maxPlayersTextField.keyboardType = .numberPad
         
         playerNameTextField.placeholder = "Enter Your Name"
         questionGoalTextField.placeholder = "Max Question (e.g., 10)"
