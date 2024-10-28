@@ -44,6 +44,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     var arrowView: UIImageView?
     let categoryNameLabel = UILabel()
     var displayLink: CADisplayLink?
+    var rankings: [[String: Any]] = [] // Add this property to hold rankings
 
     override func viewDidLoad() {
         super.viewDidLoad()
