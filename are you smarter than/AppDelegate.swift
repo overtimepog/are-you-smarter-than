@@ -17,10 +17,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window?.makeKeyAndVisible()
 
         // Simulate loading process and transition to Main Menu
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self = self else { return }
             let mainMenuVC = MainMenuViewController()
             let navigationController = UINavigationController(rootViewController: mainMenuVC)
             self.window?.rootViewController = navigationController
+            self.window?.makeKeyAndVisible()
         }
 
         return true
