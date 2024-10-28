@@ -197,9 +197,7 @@ class LobbyViewController: UIViewController {
                 triviaVC.roomCode = self.roomCode
                 triviaVC.playerName = self.playerName
                 triviaVC.questionGoal = self.questionGoal
-                self.present(triviaVC, animated: true) { [weak self] in
-                    self?.dismiss(animated: false, completion: nil)
-                }
+                self.present(triviaVC, animated: true)
             }
         }.resume()
     }
