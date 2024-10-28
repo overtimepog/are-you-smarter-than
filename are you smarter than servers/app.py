@@ -234,6 +234,7 @@ def start_game_route():
             print(f"[DEBUG] [start_game_route] Game already started for room {room_code}")
             return jsonify({'success': False, 'message': 'Game has already started'}), 400
         start_game(room_code)
+        update_room(room_code, game_started=True)  # Ensure the game is marked as started
         print(f"[DEBUG] [start_game_route] Game started for room {room_code}")
         return jsonify({'success': True, 'message': 'Game started'}), 200
     print(f"[DEBUG] [start_game_route] Room not found for room code: {room_code}")
