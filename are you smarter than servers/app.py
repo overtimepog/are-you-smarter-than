@@ -379,6 +379,9 @@ def increment_win():
     except Exception as e:
         print(f"[ERROR] [increment_win] Failed to increment win for player {player_name} in room {room_code}: {e}")
         return jsonify({'success': False, 'message': 'Failed to increment win'}), 500
+    
+@socketio.on('disconnect')
+def handle_disconnect():
     # Handle a player disconnecting from the server
     sid = request.sid
     if sid in session_to_player:
