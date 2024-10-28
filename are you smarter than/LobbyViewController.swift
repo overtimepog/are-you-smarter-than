@@ -39,7 +39,7 @@ class LobbyViewController: UIViewController {
             self.setupSocketListeners()
         }
     }
-    @objc func setupSocketListeners() {
+    func setupSocketListeners() {
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let playerName = data.first as? String {
