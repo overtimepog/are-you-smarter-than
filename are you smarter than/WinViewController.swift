@@ -89,43 +89,73 @@ extension WinViewController: UITableViewDataSource {
     @objc func replayGame() {
         // Logic to replay the game by returning to the lobby
         print("[DEBUG] Attempting to replay game with roomCode: \(roomCode), playerName: \(playerName)")
-        let parameters: [String: Any] = ["room_code": roomCode, "player_name": playerName]
-
-        guard let url = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
+        
+        // First, get room info to check if we're the host
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
             print("Invalid API URL.")
             return
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: parameters)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             guard let self = self else { return }
-
+            
             if let error = error {
-                print("Error joining lobby: \(error.localizedDescription)")
+                print("Error getting room info: \(error.localizedDescription)")
                 return
             }
-
+            
             guard let data = data else {
                 print("No data received")
                 return
             }
-
-            let json = JSON(data)
-            if json["success"].boolValue {
-                DispatchQueue.main.async {
-                    let lobbyVC = LobbyViewController()
-                    lobbyVC.isHost = false
-                    lobbyVC.playerName = self.playerName
-                    lobbyVC.roomCode = self.roomCode
-                    lobbyVC.modalPresentationStyle = .fullScreen
-                    self.present(lobbyVC, animated: true)
+            
+            do {
+                let json = try JSON(data: data)
+                let host = json["host"].stringValue
+                let isHost = (host == self.playerName)
+                
+                // Now join the room
+                let joinParameters: [String: Any] = ["room_code": self.roomCode, "player_name": self.playerName]
+                guard let joinUrl = URL(string: "https://api.areyousmarterthan.xyz/join_room") else {
+                    print("Invalid join URL.")
+                    return
                 }
-            } else {
-                print("Failed to join room")
+                
+                var joinRequest = URLRequest(url: joinUrl)
+                joinRequest.httpMethod = "POST"
+                joinRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                joinRequest.httpBody = try? JSONSerialization.data(withJSONObject: joinParameters)
+                
+                URLSession.shared.dataTask(with: joinRequest) { [weak self] joinData, _, joinError in
+                    guard let self = self else { return }
+                    
+                    if let joinError = joinError {
+                        print("Error joining lobby: \(joinError.localizedDescription)")
+                        return
+                    }
+                    
+                    guard let joinData = joinData else {
+                        print("No data received from join request")
+                        return
+                    }
+                    
+                    let joinJson = JSON(joinData)
+                    if joinJson["success"].boolValue {
+                        DispatchQueue.main.async {
+                            let lobbyVC = LobbyViewController()
+                            lobbyVC.isHost = isHost
+                            lobbyVC.playerName = self.playerName
+                            lobbyVC.roomCode = self.roomCode
+                            lobbyVC.modalPresentationStyle = .fullScreen
+                            self.present(lobbyVC, animated: true)
+                        }
+                    } else {
+                        print("Failed to join room")
+                    }
+                }.resume()
+                
+            } catch {
+                print("Error parsing room info: \(error)")
             }
         }.resume()
     }
