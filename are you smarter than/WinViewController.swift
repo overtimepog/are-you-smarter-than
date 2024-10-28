@@ -205,8 +205,10 @@ extension WinViewController: UITableViewDataSource {
                 let mainMenuVC = MainMenuViewController()
                 mainMenuVC.modalPresentationStyle = .fullScreen
                 mainMenuVC.modalTransitionStyle = .crossDissolve
-                self.view.window?.rootViewController?.dismiss(animated: true) {
-                    self.present(mainMenuVC, animated: true)
+                if let presentingVC = self.presentingViewController {
+                    presentingVC.dismiss(animated: true) {
+                        UIApplication.shared.windows.first?.rootViewController?.present(mainMenuVC, animated: true, completion: nil)
+                    }
                 }
             }
         }.resume()

@@ -512,9 +512,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         winVC.playerName = playerName
         print("[DEBUG] Showing WinViewController with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
         winVC.modalTransitionStyle = .crossDissolve
-        self.view.window?.rootViewController?.dismiss(animated: true) {
-            self.present(winVC, animated: true)
-        }
+        self.present(winVC, animated: true, completion: nil)
     }
 }
 

@@ -123,8 +123,10 @@ class JoinRoomViewController: UIViewController {
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
                     lobbyVC.modalTransitionStyle = .crossDissolve
-                    self.view.window?.rootViewController?.dismiss(animated: true) {
-                        self.present(lobbyVC, animated: true)
+                    if let presentingVC = self.presentingViewController {
+                        presentingVC.dismiss(animated: true) {
+                            UIApplication.shared.windows.first?.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+                        }
                     }
                 }
             } else {
