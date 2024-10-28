@@ -8,6 +8,11 @@ class MainMenuViewController: UIViewController {
         setupUI()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        print("MainMenuViewController: viewDidAppear")
+    }
+
     // Setup the main menu UI
     private func setupUI() {
         view.backgroundColor = UIColor.systemBackground
