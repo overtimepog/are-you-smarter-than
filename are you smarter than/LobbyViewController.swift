@@ -117,14 +117,22 @@ class LobbyViewController: UIViewController {
                 return
             }
 
-            _ = JSON(data)
-            let decoder = JSONDecoder()
-            if let roomInfo = try? decoder.decode(RoomInfo.self, from: data) {
+            do {
+                let json = try JSON(data: data)
+                let roomInfo = RoomInfo(
+                    room_code: json["room_code"].stringValue,
+                    players: json["players"].arrayValue.map { $0.stringValue },
+                    playerWins: json["playerWins"].dictionaryValue.mapValues { $0.intValue },
+                    question_goal: json["question_goal"].intValue,
+                    max_players: json["max_players"].intValue,
+                    game_started: json["game_started"].intValue,
+                    winners: json["winners"].arrayValue.map { $0.stringValue }
+                )
                 print("[DEBUG] [fetchRoomData] Room data decoded successfully: \(roomInfo)")
                 DispatchQueue.main.async {
                     self.updateUI(with: roomInfo)
                 }
-            } else {
+            } catch {
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("[DEBUG] [fetchRoomData] Failed to decode room data. Response: \(jsonString)")
                 } else {
@@ -187,6 +195,9 @@ class LobbyViewController: UIViewController {
                 // Transition to the game view
                 let triviaVC = TriviaViewController()
                 triviaVC.modalPresentationStyle = .fullScreen
+                triviaVC.roomCode = self.roomCode
+                triviaVC.playerName = self.playerName
+                triviaVC.questionGoal = self.questionGoal
                 self.present(triviaVC, animated: true)
             }
         }.resume()
