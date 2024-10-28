@@ -256,9 +256,6 @@ def end_game_route():
             return jsonify({'success': False, 'message': 'Game has not started yet'}), 400
         end_game(room_code, winners)
         print(f"[DEBUG] [end_game_route] Game ended for room {room_code}")
-        for winner in winners:
-            increment_player_win(room_code, winner)
-            print(f"[DEBUG] [end_game_route] Incremented win count for player {winner}")
         return jsonify({'success': True, 'message': 'Game ended', 'winners': winners}), 200
     print(f"[DEBUG] [end_game_route] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
