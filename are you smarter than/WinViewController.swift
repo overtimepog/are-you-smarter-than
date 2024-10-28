@@ -6,7 +6,8 @@ class WinViewController: UIViewController {
     var roomCode: String = ""  // Set this when transitioning to the win view
     var playerName: String = "" // Set this when transitioning to the win view
     var rankings: [[String: Any]] = [] // Add this property to hold rankings
-    let podiumView = UIView()
+    let rankingsTableView = UITableView()
+    let titleLabel = UILabel()
     let replayButton = UIButton(type: .system)
     let leaveButton = UIButton(type: .system)
 
@@ -15,19 +16,43 @@ class WinViewController: UIViewController {
         print("[DEBUG] WinViewController loaded with roomCode: \(roomCode), playerName: \(playerName)")
         setupUI()
     }
+}
+
+// MARK: - UITableViewDataSource
+extension WinViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return rankings.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "RankingCell", for: indexPath)
+        
+        let playerData = rankings[indexPath.row]
+        if let playerName = playerData["player_name"] as? String,
+           let score = playerData["score"] as? Int {
+            cell.textLabel?.text = "\(indexPath.row + 1). \(playerName) - Score: \(score)"
+            cell.textLabel?.font = UIFont.systemFont(ofSize: 18)
+        }
+        
+        return cell
+    }
 
     // Setup UI
     func setupUI() {
         view.backgroundColor = .systemBackground
 
-        // Debug: Check for NaN values in UI setup
-        if podiumView.frame.width.isNaN || podiumView.frame.height.isNaN {
-            print("[DEBUG] NaN detected in podiumView dimensions")
-        }
+        // Title Label
+        titleLabel.text = "Final Scores"
+        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(titleLabel)
 
-        // Podium View
-        podiumView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(podiumView)
+        // Rankings Table View
+        rankingsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "RankingCell")
+        rankingsTableView.dataSource = self
+        rankingsTableView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(rankingsTableView)
 
         // Replay Button
         replayButton.setTitle("Replay", for: .normal)
@@ -45,12 +70,15 @@ class WinViewController: UIViewController {
         view.addSubview(leaveButton)
 
         NSLayoutConstraint.activate([
-            podiumView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            podiumView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            podiumView.widthAnchor.constraint(equalToConstant: 300),
-            podiumView.heightAnchor.constraint(equalToConstant: 200),
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            rankingsTableView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            rankingsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            rankingsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            rankingsTableView.bottomAnchor.constraint(equalTo: replayButton.topAnchor, constant: -20),
 
-            replayButton.topAnchor.constraint(equalTo: podiumView.bottomAnchor, constant: 20),
+            replayButton.topAnchor.constraint(equalTo: rankingsTableView.bottomAnchor, constant: 20),
             replayButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
             leaveButton.topAnchor.constraint(equalTo: replayButton.bottomAnchor, constant: 20),
