@@ -565,7 +565,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
     func endGame() {
         let parameters: [String: Any] = [
             "room_code": roomCode,
-            "player_name": playerName
+            "winners": [playerName]  // Send winners as a list
         ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/end_game") else {
