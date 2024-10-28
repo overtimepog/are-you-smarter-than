@@ -240,8 +240,8 @@ def start_game_route():
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
 @app.route('/end_game', methods=['POST'])
-def end_game_route():
-    # Handle ending the game
+def end_game():
+    # Handle ending the game and updating player wins
     data = request.json
     room_code = data.get('room_code')
     winners = data.get('winners', [])
@@ -254,9 +254,21 @@ def end_game_route():
         if not room['game_started']:
             print(f"[DEBUG] [end_game_route] Game has not started yet for room {room_code}")
             return jsonify({'success': False, 'message': 'Game has not started yet'}), 400
+        
         end_game(room_code, winners)
+        
+        # Increment win count for each winner
+        for winner in winners:
+            try:
+                increment_player_win(room_code, winner)
+                print(f"[DEBUG] [end_game_route] Incremented win for player {winner} in room {room_code}")
+            except Exception as e:
+                print(f"[ERROR] [end_game_route] Failed to increment win for player {winner} in room {room_code}: {e}")
+                return jsonify({'success': False, 'message': f'Failed to increment win for player {winner}'}), 500
+        
         print(f"[DEBUG] [end_game_route] Game ended for room {room_code}")
         return jsonify({'success': True, 'message': 'Game ended', 'winners': winners}), 200
+    
     print(f"[DEBUG] [end_game_route] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
@@ -365,24 +377,13 @@ def get_player_scores_route(room_code):
     print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
     return jsonify({'room_code': room_code, 'scores': scores}), 200
 
-@app.route('/increment_win', methods=['POST'])
-def increment_win():
-    # Handle incrementing a player's win count
-    data = request.json
-    room_code = data.get('room_code')
-    player_name = data.get('player_name')
-    if not room_code or not player_name:
-        return jsonify({'success': False, 'message': 'Missing room_code or player_name'}), 400
+@app.route('/get_all_rooms', methods=['GET'])
+def get_all_rooms_route():
+    # Fetch information about all active rooms
+    all_rooms = get_all_rooms()
+    print(f"[DEBUG] [get_all_rooms_route] Fetching information for all rooms: {all_rooms}")
+    return jsonify({'rooms': all_rooms}), 200
 
-    print(f"[DEBUG] [increment_win] Incrementing win for player {player_name} in room {room_code}")
-
-    try:
-        increment_player_win(room_code, player_name)
-        return jsonify({'success': True, 'message': f'Win incremented for player {player_name}'}), 200
-    except Exception as e:
-        print(f"[ERROR] [increment_win] Failed to increment win for player {player_name} in room {room_code}: {e}")
-        return jsonify({'success': False, 'message': 'Failed to increment win'}), 500
-    
 @socketio.on('disconnect')
 def handle_disconnect():
     # Handle a player disconnecting from the server
