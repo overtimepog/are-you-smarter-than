@@ -76,14 +76,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         playerNameTextField.placeholder = "Enter Your Name"
         questionGoalTextField.placeholder = "Max Question (e.g., 10)"
-        questionGoalTextField.borderStyle = .roundedRect
-        questionGoalTextField.keyboardType = .numberPad
-        questionGoalTextField.translatesAutoresizingMaskIntoConstraints = false
-
         maxPlayersTextField.placeholder = "Enter Max Players (e.g., 8)"
-        maxPlayersTextField.borderStyle = .roundedRect
-        maxPlayersTextField.keyboardType = .numberPad
-        maxPlayersTextField.translatesAutoresizingMaskIntoConstraints = false
 
         difficultyPicker.delegate = self
         difficultyPicker.dataSource = self
@@ -103,7 +96,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         backButton.translatesAutoresizingMaskIntoConstraints = false
 
-        // Setup category selection
+        // Setup category selection button
         categoryButton.setTitle("Select Categories (0 selected)", for: .normal)
         categoryButton.backgroundColor = .systemBackground
         categoryButton.layer.borderWidth = 1
@@ -116,27 +109,29 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         categoryButton.addTarget(self, action: #selector(toggleCategoryDropdown), for: .touchUpInside)
         categoryButton.translatesAutoresizingMaskIntoConstraints = false
         
+        // Setup category dropdown
         categoryDropdown.register(UITableViewCell.self, forCellReuseIdentifier: "CategoryCell")
         categoryDropdown.delegate = self
         categoryDropdown.dataSource = self
         categoryDropdown.allowsMultipleSelection = true
         categoryDropdown.isUserInteractionEnabled = true
-        categoryDropdown.isHidden = !isDropdownVisible
+        categoryDropdown.isHidden = true
         categoryDropdown.layer.borderWidth = 1
         categoryDropdown.layer.borderColor = UIColor.systemGray4.cgColor
         categoryDropdown.layer.cornerRadius = 8
         categoryDropdown.translatesAutoresizingMaskIntoConstraints = false
         categoryDropdown.isScrollEnabled = true
-        
+        categoryDropdown.allowsSelection = true
+
         view.addSubview(backButton)
         view.addSubview(playerNameTextField)
         view.addSubview(questionGoalTextField)
         view.addSubview(maxPlayersTextField)
         view.addSubview(difficultyPicker)
-        view.addSubview(categoryButton)
-        view.addSubview(categoryDropdown)
         view.addSubview(createButton)
         view.addSubview(statusLabel)
+        view.addSubview(categoryButton)
+        view.addSubview(categoryDropdown)
 
         NSLayoutConstraint.activate([
             playerNameTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -144,28 +139,28 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             playerNameTextField.widthAnchor.constraint(equalToConstant: 300),
 
             questionGoalTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            questionGoalTextField.topAnchor.constraint(equalTo: playerNameTextField.bottomAnchor, constant: 20),
+            questionGoalTextField.topAnchor.constraint(equalTo: playerNameTextField.bottomAnchor, constant: 30),
             questionGoalTextField.widthAnchor.constraint(equalTo: playerNameTextField.widthAnchor),
 
             maxPlayersTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            maxPlayersTextField.topAnchor.constraint(equalTo: questionGoalTextField.bottomAnchor, constant: 20),
+            maxPlayersTextField.topAnchor.constraint(equalTo: questionGoalTextField.bottomAnchor, constant: 30),
             maxPlayersTextField.widthAnchor.constraint(equalTo: questionGoalTextField.widthAnchor),
 
             difficultyPicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            difficultyPicker.topAnchor.constraint(equalTo: maxPlayersTextField.bottomAnchor, constant: 20),
+            difficultyPicker.topAnchor.constraint(equalTo: maxPlayersTextField.bottomAnchor, constant: 30),
 
-            categoryButton.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 20),
+            categoryButton.topAnchor.constraint(equalTo: difficultyPicker.bottomAnchor, constant: 30),
             categoryButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             categoryButton.heightAnchor.constraint(equalToConstant: 44),
             
-            categoryDropdown.topAnchor.constraint(equalTo: categoryButton.bottomAnchor),
+            categoryDropdown.topAnchor.constraint(equalTo: categoryButton.bottomAnchor, constant: 10),
             categoryDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             categoryDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            categoryDropdown.heightAnchor.constraint(equalToConstant: 200),
+            categoryDropdown.heightAnchor.constraint(equalToConstant: 300),
             
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 20),
+            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 30),
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
@@ -179,6 +174,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     // Setup Gesture Recognizer to Dismiss Keyboard
     func setupGestureRecognizer() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false // Allow touches to pass through
         view.addGestureRecognizer(tapGesture)
     }
 
@@ -251,7 +247,6 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
                     lobbyVC.modalTransitionStyle = .crossDissolve
-                    lobbyVC.modalPresentationStyle = .fullScreen
                     self.present(lobbyVC, animated: true) {
                         // Cleanup after successful presentation
                         self.playerNameTextField.text = ""
@@ -288,6 +283,28 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         selectedDifficulty = difficulties[row]
     }
+
+    @objc func toggleCategoryDropdown() {
+        isDropdownVisible.toggle()
+        
+        if isDropdownVisible {
+            view.bringSubviewToFront(categoryDropdown)
+            categoryDropdown.alpha = 0.0
+            categoryDropdown.isHidden = false
+            UIView.animate(withDuration: 0.3) {
+                self.categoryDropdown.alpha = 1.0
+            }
+        } else {
+            UIView.animate(withDuration: 0.3, animations: {
+                self.categoryDropdown.alpha = 0.0
+            }) { _ in
+                self.categoryDropdown.isHidden = true
+            }
+        }
+        
+        let selectedCount = categories.filter { $0.selected }.count
+        categoryButton.setTitle("Select Categories (\(selectedCount)) selected", for: .normal)
+    }
 }
 
 // MARK: - UITableViewDelegate & UITableViewDataSource
@@ -304,19 +321,11 @@ extension CreateRoomViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
-    @objc func toggleCategoryDropdown() {
-        isDropdownVisible.toggle()
-        categoryDropdown.isHidden = !isDropdownVisible
-        
-        let selectedCount = categories.filter { $0.selected }.count
-        categoryButton.setTitle("Select Categories (\(selectedCount) selected)", for: .normal)
-    }
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         categories[indexPath.row].selected.toggle()
         tableView.reloadRows(at: [indexPath], with: .automatic)
 
         let selectedCount = categories.filter { $0.selected }.count
-        categoryButton.setTitle("Select Categories (\(selectedCount) selected)", for: .normal)
+        categoryButton.setTitle("Select Categories (\(selectedCount)) selected", for: .normal)
     }
 }
