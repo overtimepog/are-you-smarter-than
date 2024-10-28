@@ -313,7 +313,6 @@ extension CreateRoomViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
         categories[indexPath.row].selected.toggle()
         tableView.reloadRows(at: [indexPath], with: .automatic)
 
