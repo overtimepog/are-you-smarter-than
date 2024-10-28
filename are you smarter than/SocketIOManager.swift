@@ -26,6 +26,7 @@ class SocketIOManager {
             print("[DEBUG] Attempting to reconnect socket")
             socket.connect()
         }
+    }
 
     func establishConnection() {
         socket.connect()
