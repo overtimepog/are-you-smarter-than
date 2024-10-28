@@ -29,7 +29,7 @@ class LobbyViewController: UIViewController {
         super.viewDidLoad()
         print("[DEBUG] LobbyViewController loaded with roomCode: \(roomCode), playerName: \(playerName), isHost: \(isHost)")
         setupUI()
-        self.fetchRoomData()  // Fetch room data when the view loads
+        SocketIOManager.shared.socket.connect()
         playersTableView.dataSource = self
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
@@ -240,7 +240,7 @@ class LobbyViewController: UIViewController {
 
     @objc func refreshRoomData() {
         DispatchQueue.main.async {
-            self.fetchRoomData()  // Refresh the room data when the button is pressed
+            SocketIOManager.shared.socket.disconnect()
         }
     }
     
