@@ -160,7 +160,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             categoryDropdown.heightAnchor.constraint(equalToConstant: 300),
             
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 30),
+            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 10),
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
