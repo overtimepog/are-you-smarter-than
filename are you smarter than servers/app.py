@@ -117,6 +117,7 @@ def join_room_route():
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print(f"[DEBUG] Player {player_name} rejoined room {room_code}")
+            add_or_update_player(room_code, player_name)  # Update player record
             return jsonify({'success': True, 'player_id': player_id}), 200
             
         if add_player_to_room(room_code, player_name):

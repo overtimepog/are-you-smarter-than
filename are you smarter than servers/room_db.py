@@ -67,6 +67,12 @@ def add_or_update_player(room_code, player_name):
                     VALUES (?, ?, ?, ?, ?)
                 ''', (room_code, player_name, 0, 0, time.time()))
             else:
+                # Update existing player's timestamp
+                conn.execute('''
+                    UPDATE player_scores 
+                    SET timestamp = ?
+                    WHERE room_code = ? AND player_name = ?
+                ''', (time.time(), room_code, player_name))
                 print(f"Player {player_name} rejoined the room.")
 
 def increment_player_win(room_code, player_name):
