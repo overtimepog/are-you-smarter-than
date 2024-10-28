@@ -90,10 +90,14 @@ def get_room_info(room_code):
     if room:
         players = room.get('players', [])
         print(f"[DEBUG] [get_room_info] Room found: {room}")
+        player_scores = get_player_scores(room_code)
+        player_wins = {score['player_name']: score['wins'] for score in player_scores}
+
         return jsonify({
             'room_code': room_code,
             'host': room.get('host'),  # Include host in response
             'players': players,
+            'player_wins': player_wins,  # Include player wins in the response
             'question_goal': room.get('question_goal', 10),
             'max_players': room.get('max_players', 8),
             'game_started': room.get('game_started', False),

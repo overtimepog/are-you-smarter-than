@@ -133,10 +133,11 @@ class LobbyViewController: UIViewController {
 
             do {
                 let json = try JSON(data: data)
+                let playerWins = json["player_wins"].dictionaryValue.mapValues { $0.intValue }
                 let roomInfo = RoomInfo(
                     room_code: json["room_code"].stringValue,
                     players: json["players"].arrayValue.map { $0.stringValue },
-                    playerWins: json["playerWins"].dictionaryValue.mapValues { $0.intValue },
+                    playerWins: playerWins,  // Use the updated playerWins
                     question_goal: json["question_goal"].intValue,
                     max_players: json["max_players"].intValue,
                     game_started: json["game_started"].intValue,
