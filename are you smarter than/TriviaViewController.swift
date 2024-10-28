@@ -531,7 +531,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
                                 // Update player's win count on the server
-                                self.updatePlayerWinCount()
+                                self.endGame()
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
                                 if let winner = rankings.first(where: { $0["player_name"] as? String == self.playerName }) {
                                     if let wins = winner["wins"] as? Int {
@@ -562,7 +562,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         self.present(winVC, animated: true, completion: nil)
     }
     // Function to update player's win count on the server
-    func updatePlayerWinCount() {
+    func endGame() {
         let parameters: [String: Any] = [
             "room_code": roomCode,
             "player_name": playerName
