@@ -12,11 +12,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
 
         // Initialize the Main Menu as the starting view controller
-        let mainMenuVC = MainMenuViewController()
-        let navigationController = UINavigationController(rootViewController: mainMenuVC)
+        DispatchQueue.main.async {
+            let mainMenuVC = MainMenuViewController()
+            let navigationController = UINavigationController(rootViewController: mainMenuVC)
 
-        window?.rootViewController = navigationController
-        window?.makeKeyAndVisible()
+            self.window?.rootViewController = navigationController
+            self.window?.makeKeyAndVisible()
+        }
 
         return true
     }

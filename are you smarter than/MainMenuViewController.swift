@@ -11,7 +11,9 @@ class MainMenuViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        DispatchQueue.main.async {
+            self.setupUI()
+        }
     }
 
     // Setup the main menu UI
@@ -19,35 +21,19 @@ class MainMenuViewController: UIViewController {
         view.backgroundColor = UIColor.systemBackground
 
         // Title label
-        let titleLabel = UILabel()
-        titleLabel.text = "Are You Smarter Than"
-        titleLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.textAlignment = .center
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        let titleLabel = createLabel(text: "Are You Smarter Than", fontSize: 32)
         view.addSubview(titleLabel)
 
         // Create Room button
-        let createRoomButton = UIButton(type: .system)
-        createRoomButton.setTitle("Create Room", for: .normal)
-        createRoomButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        createRoomButton.translatesAutoresizingMaskIntoConstraints = false
-        createRoomButton.addTarget(self, action: #selector(createRoom), for: .touchUpInside)
+        let createRoomButton = createButton(title: "Create Room", action: #selector(createRoom))
         view.addSubview(createRoomButton)
 
         // Join Room button
-        let joinRoomButton = UIButton(type: .system)
-        joinRoomButton.setTitle("Join Room", for: .normal)
-        joinRoomButton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        joinRoomButton.translatesAutoresizingMaskIntoConstraints = false
-        joinRoomButton.addTarget(self, action: #selector(joinRoom), for: .touchUpInside)
+        let joinRoomButton = createButton(title: "Join Room", action: #selector(joinRoom))
         view.addSubview(joinRoomButton)
-        
+
         let highestStreak = UserDefaults.standard.integer(forKey: "HighestStreak")
-        let solobutton = UIButton(type: .system)
-        solobutton.setTitle("Solo (Highest Streak: \(highestStreak))", for: .normal)
-        solobutton.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        solobutton.translatesAutoresizingMaskIntoConstraints = false
-        solobutton.addTarget(self, action: #selector(startSolo), for: .touchUpInside)
+        let solobutton = createButton(title: "Solo (Highest Streak: \(highestStreak))", action: #selector(startSolo))
         view.addSubview(solobutton)
 
         // Layout constraints
@@ -68,6 +54,24 @@ class MainMenuViewController: UIViewController {
             solobutton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             solobutton.topAnchor.constraint(equalTo: joinRoomButton.bottomAnchor, constant: 20)
         ])
+    }
+
+    private func createLabel(text: String, fontSize: CGFloat) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }
+
+    private func createButton(title: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: action, for: .touchUpInside)
+        return button
     }
 
     // Transition to Create Room view
