@@ -218,7 +218,7 @@ class LobbyViewController: UIViewController {
     }
 
     // Update the UI with fetched room data
-    @objc func updateUI(with roomInfo: RoomInfo) {
+    func updateUI(with roomInfo: RoomInfo) {
         self.players = roomInfo.players
         self.playerWins = roomInfo.playerWins
         self.questionGoal = roomInfo.question_goal
