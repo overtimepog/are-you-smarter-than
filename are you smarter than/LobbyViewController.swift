@@ -29,7 +29,9 @@ class LobbyViewController: UIViewController {
         super.viewDidLoad()
         print("[DEBUG] LobbyViewController loaded with roomCode: \(roomCode), playerName: \(playerName), isHost: \(isHost)")
         setupUI()
-        SocketIOManager.shared.establishConnection()
+        if SocketIOManager.shared.socket.status != .connected {
+            SocketIOManager.shared.establishConnection()
+        }
         playersTableView.dataSource = self
         startGameButton.isHidden = gameStarted || !isHost
         refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
