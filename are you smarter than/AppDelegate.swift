@@ -10,11 +10,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         window = UIWindow(frame: UIScreen.main.bounds)
-
-        // Initialize the Main Menu as the starting view controller
-        let mainMenuVC = MainMenuViewController()
-        let navigationController = UINavigationController(rootViewController: mainMenuVC)
-        window?.rootViewController = navigationController
+        window?.rootViewController = UINavigationController(rootViewController: MainMenuViewController())
         window?.makeKeyAndVisible()
 
         return true
