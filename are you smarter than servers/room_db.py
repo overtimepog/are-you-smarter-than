@@ -105,11 +105,19 @@ def get_player_statistics(player_name):
 
 def add_player_to_room(room_code, player_name):
     room = get_room(room_code)
-    if room and len(room['players']) < room['max_players'] and not room['game_started']:
-        room['players'].append(player_name)
-        update_room(room_code, players=room['players'], last_active=time.time())
-        add_or_update_player(room_code, player_name)
-        return True
+    if room:
+        # Allow rejoining if player was already in the room
+        if player_name in room['players']:
+            update_room(room_code, last_active=time.time())
+            add_or_update_player(room_code, player_name)
+            return True
+            
+        # Add new player if room isn't full and game hasn't started
+        if len(room['players']) < room['max_players'] and not room['game_started']:
+            room['players'].append(player_name)
+            update_room(room_code, players=room['players'], last_active=time.time())
+            add_or_update_player(room_code, player_name)
+            return True
     return False
 
 def remove_player_from_room(room_code, player_name):

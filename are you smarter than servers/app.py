@@ -107,17 +107,21 @@ def join_room_route():
     if not room:
         print(f"[DEBUG] Room not found for room code: {room_code}")
         return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
-    if len(room['players']) >= room['max_players']:
+    if len(room['players']) >= room['max_players'] and player_name not in room['players']:
         print(f"[DEBUG] Room {room_code} is full")
         return jsonify({'success': False, 'message': f'Room {room_code} is full'}), 403
-    if player_name in room['players']:
-        print(f"[DEBUG] Username {player_name} already taken in room {room_code}")
-        return jsonify({'success': False, 'message': f'Username {player_name} already taken in room {room_code}'}), 403
 
     try:
+        # Allow rejoining if player was already in the room
+        if player_name in room['players']:
+            update_last_active(room_code)
+            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            print(f"[DEBUG] Player {player_name} rejoined room {room_code}")
+            return jsonify({'success': True, 'player_id': player_id}), 200
+            
         if add_player_to_room(room_code, player_name):
-            update_last_active(room_code)  # Update last active time
-            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))  # Generate a shorter, human-readable player identifier
+            update_last_active(room_code)
+            player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print(f"[DEBUG] Player {player_name} joined room {room_code}")
             return jsonify({'success': True, 'player_id': player_id}), 200
     except Exception as e:

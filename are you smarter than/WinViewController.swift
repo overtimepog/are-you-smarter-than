@@ -156,7 +156,16 @@ extension WinViewController: UITableViewDataSource {
                             self.present(lobbyVC, animated: true)
                         }
                     } else {
-                        print("Failed to join room")
+                        print("Failed to join room: \(joinJson["message"].stringValue)")
+                        DispatchQueue.main.async {
+                            let alert = UIAlertController(
+                                title: "Error",
+                                message: joinJson["message"].stringValue,
+                                preferredStyle: .alert
+                            )
+                            alert.addAction(UIAlertAction(title: "OK", style: .default))
+                            self.present(alert, animated: true)
+                        }
                     }
                 }.resume()
                 
