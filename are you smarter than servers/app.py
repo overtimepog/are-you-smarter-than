@@ -324,7 +324,7 @@ def submit_answer():
     try:
         # Update player's score - add 1 point for correct answer
         if is_correct:
-            update_player_score(room_code, player_name, 1)
+            update_player_score(room_code, player_name, 1, 0)
             print(f"[DEBUG] [submit_answer] Updated score for player {player_name} in room {room_code}")
         
         # Get updated scores to return
