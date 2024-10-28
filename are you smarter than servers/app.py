@@ -348,7 +348,12 @@ def submit_answer():
         if player_score and player_score['score'] >= room['question_goal']:
             # End the game with this player as winner
             print(f"[DEBUG] [submit_answer] Player {player_name} reached the question goal in room {room_code}")
-            end_game(room_code, [player_name])
+            # Call the end_game_route to handle ending the game
+            response = end_game_route()
+            if response[1] == 200:
+                print(f"[DEBUG] [submit_answer] Game ended successfully for room {room_code}")
+            else:
+                print(f"[ERROR] [submit_answer] Failed to end game for room {room_code}: {response[0].get_json()}")
             return jsonify({
                 'success': True,
                 'scores': scores,
