@@ -110,7 +110,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         categoryButton.layer.borderColor = UIColor.systemGray4.cgColor
         categoryButton.layer.cornerRadius = 8
         categoryButton.contentHorizontalAlignment = .left
-        categoryButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 15)
+        var config = UIButton.Configuration.plain()
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 15, bottom: 0, trailing: 15)
+        categoryButton.configuration = config
         categoryButton.addTarget(self, action: #selector(toggleCategoryDropdown), for: .touchUpInside)
         categoryButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -161,7 +163,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             categoryDropdown.heightAnchor.constraint(equalToConstant: 200),
             
             createButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            createButton.topAnchor.constraint(equalTo: categoryTableView.bottomAnchor, constant: 20),
+            createButton.topAnchor.constraint(equalTo: categoryDropdown.bottomAnchor, constant: 20),
 
             statusLabel.topAnchor.constraint(equalTo: createButton.bottomAnchor, constant: 20),
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
