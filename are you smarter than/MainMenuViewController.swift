@@ -74,6 +74,7 @@ class MainMenuViewController: UIViewController {
     @objc func createRoom() {
         let createRoomVC = CreateRoomViewController()
         createRoomVC.modalPresentationStyle = .fullScreen
+        createRoomVC.modalTransitionStyle = .crossDissolve
         present(createRoomVC, animated: true)
     }
 
@@ -81,6 +82,7 @@ class MainMenuViewController: UIViewController {
     @objc func joinRoom() {
         let joinRoomVC = JoinRoomViewController()
         joinRoomVC.modalPresentationStyle = .fullScreen
+        joinRoomVC.modalTransitionStyle = .crossDissolve
         present(joinRoomVC, animated: true)
     }
     

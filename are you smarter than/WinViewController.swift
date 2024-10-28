@@ -153,7 +153,10 @@ extension WinViewController: UITableViewDataSource {
                             lobbyVC.playerName = self.playerName
                             lobbyVC.roomCode = self.roomCode
                             lobbyVC.modalPresentationStyle = .fullScreen
-                            self.present(lobbyVC, animated: true)
+                            lobbyVC.modalTransitionStyle = .crossDissolve
+                            self.view.window?.rootViewController?.dismiss(animated: true) {
+                                self.present(lobbyVC, animated: true)
+                            }
                         }
                     } else {
                         print("Failed to join room: \(joinJson["message"].stringValue)")
@@ -201,7 +204,10 @@ extension WinViewController: UITableViewDataSource {
                 // Present the main menu
                 let mainMenuVC = MainMenuViewController()
                 mainMenuVC.modalPresentationStyle = .fullScreen
-                self.present(mainMenuVC, animated: true)
+                mainMenuVC.modalTransitionStyle = .crossDissolve
+                self.view.window?.rootViewController?.dismiss(animated: true) {
+                    self.present(mainMenuVC, animated: true)
+                }
             }
         }.resume()
     }

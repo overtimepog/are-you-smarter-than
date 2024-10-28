@@ -174,7 +174,10 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     lobbyVC.playerName = playerName
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
-                    self.present(lobbyVC, animated: true)
+                    lobbyVC.modalTransitionStyle = .crossDissolve
+                    self.view.window?.rootViewController?.dismiss(animated: true) {
+                        self.present(lobbyVC, animated: true)
+                    }
                 }
             } else {
                 let message = json["message"].stringValue
