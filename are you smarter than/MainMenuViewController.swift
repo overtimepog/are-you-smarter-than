@@ -74,9 +74,7 @@ class MainMenuViewController: UIViewController {
     @objc func createRoom() {
         let createRoomVC = CreateRoomViewController()
         createRoomVC.modalPresentationStyle = .fullScreen
-        present(createRoomVC, animated: true) { [weak self] in
-            self?.dismiss(animated: false, completion: nil)
-        }
+        present(createRoomVC, animated: true)
     }
 
     // Transition to Join Room view
