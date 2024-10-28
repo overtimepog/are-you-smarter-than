@@ -29,8 +29,8 @@ class LobbyViewController: UIViewController {
         playersTableView.dataSource = self
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
-        // Set up a timer to refresh room data every 5 seconds
-        refreshTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
+        // Set up a timer to refresh room data every 60 seconds
+        refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
     }
 
     // Setup UI with Auto Layout
