@@ -36,11 +36,10 @@ class LobbyViewController: UIViewController {
     // Setup UI with Auto Layout
     func setupUI() {
         view.backgroundColor = .systemBackground
-
-        // Debug: Check for NaN values in UI setup
-        if playersTableView.frame.width.isNaN || playersTableView.frame.height.isNaN {
-            print("[DEBUG] NaN detected in playersTableView dimensions")
-        }
+        
+        // Optimize table view performance
+        playersTableView.estimatedRowHeight = 44
+        playersTableView.rowHeight = UITableView.automaticDimension
 
         // Room Code Label
         roomCodeLabel.font = UIFont.systemFont(ofSize: 24)

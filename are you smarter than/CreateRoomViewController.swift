@@ -25,10 +25,19 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     // Setup UI
     func setupUI() {
         view.backgroundColor = .systemBackground
-
+        
+        // Configure text fields with better performance settings
+        let textFields = [playerNameTextField, questionGoalTextField, maxPlayersTextField]
+        textFields.forEach { field in
+            field.borderStyle = .roundedRect
+            field.translatesAutoresizingMaskIntoConstraints = false
+            field.autocorrectionType = .no
+            field.spellCheckingType = .no
+            field.smartDashesType = .no
+            field.smartQuotesType = .no
+        }
+        
         playerNameTextField.placeholder = "Enter Your Name"
-        playerNameTextField.borderStyle = .roundedRect
-        playerNameTextField.translatesAutoresizingMaskIntoConstraints = false
         questionGoalTextField.placeholder = "Max Question (e.g., 10)"
         questionGoalTextField.borderStyle = .roundedRect
         questionGoalTextField.keyboardType = .numberPad

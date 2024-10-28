@@ -529,11 +529,13 @@ class WheelView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     override func draw(_ rect: CGRect) {
-        // Draw the wheel
-        guard let context = UIGraphicsGetCurrentContext() else { return }
+        // Draw the wheel with validation
+        guard let context = UIGraphicsGetCurrentContext(),
+              rect.width > 0,
+              rect.height > 0 else { return }
 
         let centerPoint = CGPoint(x: rect.midX, y: rect.midY)
-        let radius = rect.width / 2
+        let radius = min(rect.width, rect.height) / 2
 
         let anglePerSegment = (2 * CGFloat.pi) / CGFloat(categories.count)
 

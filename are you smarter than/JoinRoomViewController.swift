@@ -25,14 +25,21 @@ class JoinRoomViewController: UIViewController {
     func setupUI() {
         view.backgroundColor = .systemBackground
 
+        // Optimize text field configuration
+        let textFields = [roomCodeTextField, playerNameTextField]
+        textFields.forEach { field in
+            field.borderStyle = .roundedRect
+            field.translatesAutoresizingMaskIntoConstraints = false
+            field.autocorrectionType = .no
+            field.spellCheckingType = .no
+            field.smartDashesType = .no
+            field.smartQuotesType = .no
+        }
+        
         roomCodeTextField.placeholder = "Enter Room Code"
-        roomCodeTextField.borderStyle = .roundedRect
         roomCodeTextField.autocapitalizationType = .allCharacters
-        roomCodeTextField.translatesAutoresizingMaskIntoConstraints = false
-
+        
         playerNameTextField.placeholder = "Enter Your Name"
-        playerNameTextField.borderStyle = .roundedRect
-        playerNameTextField.translatesAutoresizingMaskIntoConstraints = false
 
         joinButton.setTitle("Join Room", for: .normal)
         joinButton.addTarget(self, action: #selector(joinRoom), for: .touchUpInside)
