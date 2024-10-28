@@ -22,6 +22,19 @@ class JoinRoomViewController: UIViewController {
         setupUI()
     }
 
+    func addDoneButtonOnKeyboard() {
+        let doneToolbar: UIToolbar = UIToolbar()
+        doneToolbar.barStyle = .default
+        doneToolbar.items = [
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dismissKeyboard))
+        ]
+        doneToolbar.sizeToFit()
+
+        roomCodeTextField.inputAccessoryView = doneToolbar
+        playerNameTextField.inputAccessoryView = doneToolbar
+    }
+
     func setupUI() {
         view.backgroundColor = .systemBackground
 
@@ -38,6 +51,7 @@ class JoinRoomViewController: UIViewController {
         }
         
         // Configure specific text field behaviors
+        addDoneButtonOnKeyboard()
         roomCodeTextField.keyboardType = .asciiCapable
         playerNameTextField.keyboardType = .asciiCapable
         

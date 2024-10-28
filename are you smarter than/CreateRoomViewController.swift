@@ -53,6 +53,20 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         setupGestureRecognizer()
     }
 
+    func addDoneButtonOnKeyboard() {
+        let doneToolbar: UIToolbar = UIToolbar()
+        doneToolbar.barStyle = .default
+        doneToolbar.items = [
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dismissKeyboard))
+        ]
+        doneToolbar.sizeToFit()
+
+        playerNameTextField.inputAccessoryView = doneToolbar
+        questionGoalTextField.inputAccessoryView = doneToolbar
+        maxPlayersTextField.inputAccessoryView = doneToolbar
+    }
+
     func setupUI() {
         view.backgroundColor = .systemBackground
 
@@ -72,6 +86,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
             field.autocapitalizationType = .none
         }
 
+        addDoneButtonOnKeyboard()
         playerNameTextField.keyboardType = .asciiCapable
         questionGoalTextField.keyboardType = .numberPad
         maxPlayersTextField.keyboardType = .numberPad
