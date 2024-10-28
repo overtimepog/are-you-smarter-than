@@ -56,12 +56,12 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     func addDoneButtonOnKeyboard() {
         let doneToolbar: UIToolbar = UIToolbar()
         doneToolbar.barStyle = .default
-        doneToolbar.translatesAutoresizingMaskIntoConstraints = false
+        doneToolbar.translatesAutoresizingMaskIntoConstraints = true
         doneToolbar.items = [
             UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
             UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dismissKeyboard))
         ]
-        doneToolbar.sizeToFit()
+        doneToolbar.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: 44)
 
         playerNameTextField.inputAccessoryView = doneToolbar
         questionGoalTextField.inputAccessoryView = doneToolbar
