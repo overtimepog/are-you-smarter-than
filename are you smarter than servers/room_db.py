@@ -89,6 +89,7 @@ def update_room(room_code, players=None, game_started=None, winners=None, last_a
 
 def add_or_update_player(room_code, player_name):
     with closing(sqlite3.connect(DATABASE)) as conn:
+        conn.row_factory = sqlite3.Row  # Set row_factory to sqlite3.Row
         with conn:
             result = conn.execute('''
                 SELECT id, wins FROM player_scores WHERE room_code = ? AND player_name = ?
@@ -101,7 +102,7 @@ def add_or_update_player(room_code, player_name):
                 ''', (room_code, player_name, 0, 0, time.time()))
             else:
                 # Update existing player's timestamp without resetting wins
-                wins = result['wins']
+                wins = result['wins']  # This will now work
                 conn.execute('''
                     UPDATE player_scores 
                     SET timestamp = ?
@@ -109,14 +110,12 @@ def add_or_update_player(room_code, player_name):
                 ''', (time.time(), room_code, player_name))
                 print(f"Player {player_name} rejoined the room with {wins} wins.")
 
-def increment_player_win(room_code, player_name):
-    with closing(sqlite3.connect(DATABASE)) as conn:
-        with conn:
-            conn.execute('''
-                UPDATE player_scores
-                SET wins = wins + 1, timestamp = ?
-                WHERE room_code = ? AND player_name = ?
-            ''', (time.time(), room_code, player_name))
+def increment_player_win(conn, room_code, player_name):
+    conn.execute('''
+        UPDATE player_scores
+        SET wins = wins + 1, timestamp = ?
+        WHERE room_code = ? AND player_name = ?
+    ''', (time.time(), room_code, player_name))
 
 def update_player_score(room_code, player_name, points_to_add, wins_to_add=0):
     with closing(sqlite3.connect(DATABASE)) as conn:
@@ -152,8 +151,8 @@ def add_player_to_room(room_code, player_name):
             add_or_update_player(room_code, player_name)
             return True
 
-        # Add new player if room isn't full and game hasn't started
-        if len(room['players']) < room['max_players'] and not room['game_started']:
+        # Allow adding new player if room isn't full and (game hasn't started or game has ended)
+        if len(room['players']) < room['max_players'] and (not room['game_started'] or room['winners']):
             room['players'].append(player_name)
             update_room(room_code, players=room['players'], last_active=time.time())
             add_or_update_player(room_code, player_name)
@@ -171,13 +170,14 @@ def remove_player_from_room(room_code, player_name):
 def end_game(room_code, winners):
     with closing(sqlite3.connect(DATABASE)) as conn:
         with conn:
-            for winner in winners:
-                increment_player_win(room_code, winner)  # Increment wins for each winner
             winners_json = json.dumps(winners)
             conn.execute('''
                 UPDATE rooms SET game_started = ?, winners = ?, last_active = ?
                 WHERE room_code = ?
             ''', (False, winners_json, time.time(), room_code))
+            # Increment wins for each winner using the same connection
+            for winner in winners:
+                increment_player_win(conn, room_code, winner)
 
 def delete_room(room_code):
     with closing(sqlite3.connect(DATABASE)) as conn:
@@ -266,7 +266,162 @@ class TestTriviaGameDatabase(unittest.TestCase):
         self.assertEqual(room['winners'], ['player4'])
         scores = get_player_scores('room5')
         player4 = next(player for player in scores if player['player_name'] == 'player4')
-        self.assertEqual(player4['wins'], 1)
+        self.assertEqual(player4['wins'], 1)  # Wins should be incremented
+        player5 = next(player for player in scores if player['player_name'] == 'player5')
+        self.assertEqual(player5['wins'], 0)  # Non-winner's wins should remain unchanged
+
+    def test_rejoin_after_game_end(self):
+        add_room('room6', 'host6', 10, 4, 'easy')
+        add_player_to_room('room6', 'player6')
+        start_game('room6')
+        end_game('room6', ['player6'])
+        success = add_player_to_room('room6', 'player7')
+        self.assertTrue(success)
+        room = get_room('room6')
+        self.assertIn('player7', room['players'])
+
+    def test_max_players_limit(self):
+        # Updated test: Increased max_players to 3 to allow two additional players besides the host
+        add_room('room7', 'host7', 10, 3, 'easy')    # Set max_players to 3
+        success = add_player_to_room('room7', 'player8')
+        self.assertTrue(success)                     # Should succeed
+        success = add_player_to_room('room7', 'player9')
+        self.assertTrue(success)                     # Should now succeed
+        # Try adding beyond max capacity
+        success = add_player_to_room('room7', 'player10')
+        self.assertFalse(success)                    # Should fail
+        room = get_room('room7')
+        self.assertEqual(len(room['players']), 3)    # Expect 3 players
+
+    def test_start_game_and_player_scores(self):
+        add_room('room8', 'host8', 5, 3, 'medium')
+        add_player_to_room('room8', 'player11')
+        start_game('room8')
+        room = get_room('room8')
+        self.assertTrue(room['game_started'])
+        # Ensure all players are in player_scores
+        scores = get_player_scores('room8')
+        player_names = [score['player_name'] for score in scores]
+        self.assertIn('host8', player_names)
+        self.assertIn('player11', player_names)
+
+    def test_submit_answer_and_score_update(self):
+        add_room('room9', 'host9', 3, 2, 'hard')
+        add_player_to_room('room9', 'player12')
+        start_game('room9')
+        update_player_score('room9', 'host9', 1)
+        update_player_score('room9', 'player12', 2)
+        scores = get_player_scores('room9')
+        host_score = next(score for score in scores if score['player_name'] == 'host9')
+        player12_score = next(score for score in scores if score['player_name'] == 'player12')
+        self.assertEqual(host_score['score'], 1)
+        self.assertEqual(player12_score['score'], 2)
+
+    def test_cannot_join_during_active_game(self):
+        add_room('room10', 'host10', 10, 4, 'easy')
+        add_player_to_room('room10', 'player13')
+        start_game('room10')
+        success = add_player_to_room('room10', 'player14')
+        self.assertFalse(success)
+        room = get_room('room10')
+        self.assertNotIn('player14', room['players'])
+
+    def test_cleanup_empty_room(self):
+        add_room('room11', 'host11', 10, 4, 'easy')
+        remove_player_from_room('room11', 'host11')
+        room = get_room('room11')
+        self.assertIsNotNone(room)  # Room still exists because we haven't implemented auto-cleanup
+        # Implement cleanup logic if no players
+        if not room['players']:
+            delete_room('room11')
+        room_after_cleanup = get_room('room11')
+        self.assertIsNone(room_after_cleanup)
+
+    def test_get_game_history(self):
+        add_room('room12', 'host12', 5, 2, 'medium')
+        add_player_to_room('room12', 'player15')
+        start_game('room12')
+        update_player_score('room12', 'host12', 3)
+        update_player_score('room12', 'player15', 5)
+        history = get_game_history('room12')
+        self.assertEqual(len(history), 2)
+        player15_history = next(entry for entry in history if entry['player_name'] == 'player15')
+        self.assertEqual(player15_history['score'], 5)
+
+    def test_get_player_statistics(self):
+        add_room('room13', 'host13', 10, 3, 'hard')
+        add_player_to_room('room13', 'player16')
+        start_game('room13')
+        update_player_score('room13', 'player16', 7)
+        end_game('room13', ['player16'])
+        stats = get_player_statistics('player16')
+        self.assertGreaterEqual(len(stats), 1)
+        latest_stat = stats[0]
+        self.assertEqual(latest_stat['score'], 7)
+        self.assertEqual(latest_stat['wins'], 1)  # Wins should be incremented
+
+    def test_wins_track_per_lobby(self):
+        # Create two separate rooms
+        add_room('room14', 'host14', 10, 3, 'easy')
+        add_room('room15', 'host15', 10, 3, 'medium')
+
+        # Add players to room14
+        add_player_to_room('room14', 'player17')
+        add_player_to_room('room14', 'player18')
+
+        # Add players to room15
+        add_player_to_room('room15', 'player19')
+        add_player_to_room('room15', 'player20')
+
+        # Start and end game in room14, player17 wins
+        start_game('room14')
+        end_game('room14', ['player17'])
+
+        # Start and end game in room15, player19 and player20 win
+        start_game('room15')
+        end_game('room15', ['player19', 'player20'])
+
+        # Check wins in room14
+        scores_room14 = get_player_scores('room14')
+        player17_room14 = next(player for player in scores_room14 if player['player_name'] == 'player17')
+        player18_room14 = next(player for player in scores_room14 if player['player_name'] == 'player18')
+        self.assertEqual(player17_room14['wins'], 1)
+        self.assertEqual(player18_room14['wins'], 0)
+
+        # Check wins in room15
+        scores_room15 = get_player_scores('room15')
+        player19_room15 = next(player for player in scores_room15 if player['player_name'] == 'player19')
+        player20_room15 = next(player for player in scores_room15 if player['player_name'] == 'player20')
+        host15_room15 = next(player for player in scores_room15 if player['player_name'] == 'host15')
+        self.assertEqual(player19_room15['wins'], 1)
+        self.assertEqual(player20_room15['wins'], 1)
+        self.assertEqual(host15_room15['wins'], 0)
+
+    def test_multiple_wins_in_single_lobby(self):
+        add_room('room16', 'host16', 10, 4, 'hard')
+        add_player_to_room('room16', 'player21')
+        add_player_to_room('room16', 'player22')
+        add_player_to_room('room16', 'player23')
+
+        # Start and end game multiple times
+        start_game('room16')
+        end_game('room16', ['player21'])
+        start_game('room16')
+        end_game('room16', ['player21', 'player22'])
+        start_game('room16')
+        end_game('room16', ['player23'])
+
+        # Check wins
+        scores = get_player_scores('room16')
+        player21 = next(player for player in scores if player['player_name'] == 'player21')
+        player22 = next(player for player in scores if player['player_name'] == 'player22')
+        player23 = next(player for player in scores if player['player_name'] == 'player23')
+        host16 = next(player for player in scores if player['player_name'] == 'host16')
+
+        self.assertEqual(player21['wins'], 2)
+        self.assertEqual(player22['wins'], 1)
+        self.assertEqual(player23['wins'], 1)
+        self.assertEqual(host16['wins'], 0)
 
 if __name__ == '__main__':
     unittest.main()
