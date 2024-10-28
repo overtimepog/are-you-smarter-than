@@ -29,6 +29,7 @@ class JoinRoomViewController: UIViewController {
     func addDoneButtonOnKeyboard() {
         let doneToolbar: UIToolbar = UIToolbar()
         doneToolbar.barStyle = .default
+        doneToolbar.translatesAutoresizingMaskIntoConstraints = false
         doneToolbar.items = [
             UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
             UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dismissKeyboard))
