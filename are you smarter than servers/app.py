@@ -163,6 +163,13 @@ def create_room():
 
     first_player_name = data.get('player_name')
     categories = data.get('categories', [])  # Get selected categories
+    if not isinstance(categories, list):
+        return jsonify({'success': False, 'message': 'Categories must be a list'}), 400
+    # Validate category IDs
+    valid_category_ids = range(9, 33)  # Valid category IDs from 9 to 32
+    if not all(isinstance(cat_id, int) and cat_id in valid_category_ids for cat_id in categories):
+        return jsonify({'success': False, 'message': 'Invalid category IDs'}), 400
+    
     add_room(room_code, first_player_name, question_goal, max_players, difficulty, categories)  # Add room to the database with first player as host
     used_room_codes.add(room_code)  # Add the new room code to the set of used codes
     print(f"[DEBUG] Room created successfully with room code: {room_code}, host: {first_player_name}")

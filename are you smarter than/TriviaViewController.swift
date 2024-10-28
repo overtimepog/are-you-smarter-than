@@ -82,9 +82,11 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             if let data = data {
                 do {
                     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                    if let categoriesStr = json?["categories"] as? String,
-                       let categories = try? JSONSerialization.jsonObject(with: Data(categoriesStr.utf8)) as? [Int] {
+                    if let categories = json?["categories"] as? [Int] {
                         self.roomCategories = categories
+                    } else {
+                        print("No categories found in room data")
+                        self.roomCategories = [] // Empty array as fallback
                     }
                 } catch {
                     print("Error parsing room categories: \(error)")
