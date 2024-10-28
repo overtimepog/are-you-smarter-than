@@ -159,7 +159,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     lobbyVC.playerName = playerName
                     lobbyVC.roomCode = roomCode
                     lobbyVC.modalPresentationStyle = .fullScreen
-                    self.present(lobbyVC, animated: true)
+                    self.present(lobbyVC, animated: true) { [weak self] in
+                        self?.dismiss(animated: false, completion: nil)
+                    }
                 }
             } else {
                 let message = json["message"].stringValue
