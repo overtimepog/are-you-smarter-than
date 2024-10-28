@@ -253,3 +253,29 @@ class LobbyViewController: UIViewController, UITableViewDataSource {
 }
 
 // MARK: - UITableViewDataSource
+extension LobbyViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return players.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "PlayerCell", for: indexPath)
+        let playerName = players[indexPath.row]
+        cell.textLabel?.text = "\(playerName) - Wins: \(playerWins[playerName] ?? 0)"
+        return cell
+    }
+}
+
+// Define RoomInfo struct
+struct RoomInfo {
+    let room_code: String
+    let players: [String]
+    let playerWins: [String: Int]
+    let question_goal: Int
+    let max_players: Int
+    let game_started: Int
+    let winners: [String]
+    let categories: [String]
+}
+
+// MARK: - UITableViewDataSource
