@@ -43,6 +43,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground // Set background color first
         setupUI()
 
         // Add next button
@@ -96,9 +97,15 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Setup the UI
     func setupUI() {
-        view.backgroundColor = UIColor.systemBackground
-
-        // Question label
+        // Set initial frames for UI elements to avoid NaN values
+        let screenBounds = UIScreen.main.bounds
+        let safeAreaInsets = view.safeAreaInsets
+        
+        // Question label with initial frame
+        questionLabel.frame = CGRect(x: 20, 
+                                   y: safeAreaInsets.top + 80,
+                                   width: screenBounds.width - 40,
+                                   height: 100)
         questionLabel.translatesAutoresizingMaskIntoConstraints = false
         questionLabel.textAlignment = .center
         questionLabel.numberOfLines = 0
@@ -112,6 +119,10 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         ])
 
         // Score and Question label
+        scoreAndQuestionLabel.frame = CGRect(x: 0,
+                                           y: safeAreaInsets.top + 10,
+                                           width: screenBounds.width,
+                                           height: 40)
         scoreAndQuestionLabel.translatesAutoresizingMaskIntoConstraints = false
         scoreAndQuestionLabel.textAlignment = .center
         scoreAndQuestionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
