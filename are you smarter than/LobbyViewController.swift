@@ -57,7 +57,11 @@ class LobbyViewController: UIViewController {
                 }
             }
         }
-        SocketIOManager.shared.socket.on("update_view") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+        SocketIOManager.shared.socket.on("player_count_changed") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            guard let self = self else { return }
+            print("[DEBUG] Player count changed, fetching updated room data.")
+            self.fetchRoomData()
+        }
             guard let self = self else { return }
             if let newView = data[0] as? [String: Any], let viewName = newView["new_view"] as? String {
                 self.handleViewChange(viewName: viewName)
