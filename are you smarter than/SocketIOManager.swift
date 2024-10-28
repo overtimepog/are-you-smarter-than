@@ -20,6 +20,7 @@ class SocketIOManager {
             print("[DEBUG] Socket attempting to reconnect")
         }
     }
+}
 
     func reconnect() {
         if socket.status != .connected {

@@ -29,12 +29,12 @@ class LobbyViewController: UIViewController {
         super.viewDidLoad()
         print("[DEBUG] LobbyViewController loaded with roomCode: \(roomCode), playerName: \(playerName), isHost: \(isHost)")
         setupUI()
-        fetchRoomData()  // Fetch room data when the view loads
+        self.fetchRoomData()  // Fetch room data when the view loads
         playersTableView.dataSource = self
         // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
         // Set up a timer to refresh room data every 60 seconds
-        refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
+        refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.refreshRoomData), userInfo: nil, repeats: true)
         // Listen for player join and leave events
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
@@ -62,10 +62,27 @@ class LobbyViewController: UIViewController {
             print("[DEBUG] Player count changed, fetching updated room data.")
             self.fetchRoomData()
         }
+        SocketIOManager.shared.socket.on("update_view") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let newView = data[0] as? [String: Any], let viewName = newView["new_view"] as? String {
                 self.handleViewChange(viewName: viewName)
             }
+        }
+        }
+    }
+
+    func handleViewChange(viewName: String) {
+        print("[DEBUG] [handleViewChange] Changing view to: \(viewName)")
+        // Implement logic to transition to the specified view
+        // For example, if viewName is "TriviaView", present the TriviaViewController
+        if viewName == "TriviaView" {
+            let triviaVC = TriviaViewController()
+            triviaVC.modalPresentationStyle = .fullScreen
+            triviaVC.roomCode = self.roomCode
+            triviaVC.playerName = self.playerName
+            triviaVC.questionGoal = self.questionGoal
+            triviaVC.categories = self.categories
+            self.present(triviaVC, animated: true)
         }
     }
 
