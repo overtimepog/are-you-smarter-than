@@ -1,5 +1,6 @@
 import UIKit
 import SwiftyJSON
+import SocketIO
 
 class WinViewController: UIViewController {
 
@@ -14,7 +15,14 @@ class WinViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         print("[DEBUG] WinViewController loaded with roomCode: \(roomCode), playerName: \(playerName), rankings: \(rankings)")
+        // Establish socket connection
+        SocketIOManager.shared.establishConnection()
         setupUI()
+    }
+
+    deinit {
+        // Close socket connection when the view controller is deinitialized
+        SocketIOManager.shared.closeConnection()
         fetchPlayerStatistics() // Fetch latest player statistics
         rankingsTableView.reloadData() // Ensure rankings are displayed
     }
@@ -190,6 +198,9 @@ extension WinViewController: UITableViewDataSource {
                     let joinJson = JSON(joinData)
                     if joinJson["success"].boolValue {
                         DispatchQueue.main.async {
+                            // Emit event to notify other players about the view change
+                            SocketIOManager.shared.socket.emit("host_view_change", ["room_code": self.roomCode, "new_view": "LobbyView"])
+
                             let lobbyVC = LobbyViewController()
                             lobbyVC.isHost = isHost
                             lobbyVC.playerName = self.playerName

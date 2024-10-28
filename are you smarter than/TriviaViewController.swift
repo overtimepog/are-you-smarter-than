@@ -1,4 +1,5 @@
 import UIKit
+import SocketIO
 
 // Make categoryEmojis accessible from other classes
 let categoryEmojis: [Int: String] = [
@@ -53,6 +54,13 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         fetchRoomCategories() // Fetch room categories first
         questionLabel.isHidden = true
         scoreAndQuestionLabel.isHidden = false
+        // Establish socket connection
+        SocketIOManager.shared.establishConnection()
+    }
+
+    deinit {
+        // Close socket connection when the view controller is deinitialized
+        SocketIOManager.shared.closeConnection()
     }
 
     // Fetch categories from the room data
@@ -482,6 +490,9 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
 
     // Send the result to the server
     func sendResultToServer(correct: Bool) {
+        // Emit event to notify other players about the game end
+        SocketIOManager.shared.socket.emit("host_view_change", ["room_code": roomCode, "new_view": "WinView"])
+
         let parameters: [String: Any] = [
             "room_code": roomCode,
             "player_name": playerName,
