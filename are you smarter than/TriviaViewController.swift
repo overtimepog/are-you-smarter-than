@@ -568,8 +568,8 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
             "player_name": playerName
         ]
 
-        guard let url = URL(string: "https://api.areyousmarterthan.xyz/increment_win") else {
-            print("Invalid URL for incrementing win")
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/end_game") else {
+            print("Invalid URL for ending game")
             return
         }
 
