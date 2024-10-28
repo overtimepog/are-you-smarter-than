@@ -189,7 +189,10 @@ extension WinViewController: UITableViewDataSource {
             }
 
             DispatchQueue.main.async {
-                self.dismiss(animated: true, completion: nil)
+                // Present the main menu
+                let mainMenuVC = MainMenuViewController()
+                mainMenuVC.modalPresentationStyle = .fullScreen
+                self.present(mainMenuVC, animated: true, completion: nil)
             }
         }.resume()
     }
