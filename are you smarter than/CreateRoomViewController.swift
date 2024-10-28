@@ -126,6 +126,7 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         categoryDropdown.layer.borderColor = UIColor.systemGray4.cgColor
         categoryDropdown.layer.cornerRadius = 8
         categoryDropdown.translatesAutoresizingMaskIntoConstraints = false
+        categoryDropdown.isScrollEnabled = true
         
         view.addSubview(backButton)
         view.addSubview(playerNameTextField)
