@@ -429,8 +429,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
         let parameters: [String: Any] = [
             "room_code": roomCode,
             "player_name": playerName,
-            "player_id": playerId,
-            "correct": correct
+            "is_correct": correct
         ]
 
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/submit_answer") else {
