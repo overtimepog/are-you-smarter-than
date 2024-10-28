@@ -78,8 +78,9 @@ extension WinViewController: UITableViewDataSource {
         
         let playerData = rankings[indexPath.row]
         if let playerName = playerData["player_name"] as? String,
-           let score = playerData["score"] as? Int {
-            cell.textLabel?.text = "\(indexPath.row + 1). \(playerName) - Score: \(score)"
+           let score = playerData["score"] as? Int,
+           let wins = playerData["wins"] as? Int {
+            cell.textLabel?.text = "\(indexPath.row + 1). \(playerName) - Score: \(score), Wins: \(wins)"
             cell.textLabel?.font = UIFont.systemFont(ofSize: 18)
         }
         

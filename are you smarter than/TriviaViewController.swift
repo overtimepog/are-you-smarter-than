@@ -531,6 +531,11 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                         if let gameEnded = json["game_ended"] as? Bool, gameEnded, let rankings = json["rankings"] as? [[String: Any]] {
                             DispatchQueue.main.async {
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
+                                if let winner = rankings.first(where: { $0["player_name"] as? String == self.playerName }) {
+                                    if let wins = winner["wins"] as? Int {
+                                        print("Congratulations \(self.playerName)! You have \(wins) wins.")
+                                    }
+                                }
                             }
                         }
                     } else {
