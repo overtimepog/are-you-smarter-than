@@ -365,8 +365,20 @@ def get_player_scores_route(room_code):
     print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
     return jsonify({'room_code': room_code, 'scores': scores}), 200
 
-@socketio.on('disconnect')
-def handle_disconnect():
+@app.route('/increment_win', methods=['POST'])
+def increment_win():
+    # Handle incrementing a player's win count
+    data = request.json
+    room_code = data['room_code']
+    player_name = data['player_name']
+    print(f"[DEBUG] [increment_win] Incrementing win for player {player_name} in room {room_code}")
+
+    try:
+        increment_player_win(room_code, player_name)
+        return jsonify({'success': True, 'message': f'Win incremented for player {player_name}'}), 200
+    except Exception as e:
+        print(f"[ERROR] [increment_win] Failed to increment win for player {player_name} in room {room_code}: {e}")
+        return jsonify({'success': False, 'message': 'Failed to increment win'}), 500
     # Handle a player disconnecting from the server
     sid = request.sid
     if sid in session_to_player:
