@@ -56,6 +56,11 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
     func setupUI() {
         view.backgroundColor = .systemBackground
 
+        // Ensure UI elements are configured correctly
+        playerNameTextField.delegate = self
+        questionGoalTextField.delegate = self
+        maxPlayersTextField.delegate = self
+
         let textFields = [playerNameTextField, questionGoalTextField, maxPlayersTextField]
         textFields.forEach { field in
             field.borderStyle = .roundedRect
@@ -228,6 +233,14 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
 
         print("[DEBUG] Sending request to create room with parameters: \(parameters)")
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            // Add error handling for network requests
+            if let error = error {
+                print("[DEBUG] Network error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self?.statusLabel.text = "Network error: \(error.localizedDescription)"
+                }
+                return
+            }
             print("[DEBUG] Received response from create room request")
             guard let self = self else { return }
 
