@@ -258,10 +258,26 @@ def submit_answer():
         scores = get_player_scores(room_code)
         update_last_active(room_code)
         
+        # Check if player has reached the question goal
+        room = get_room(room_code)
+        if room:
+            player_score = next((score for score in scores if score['player_name'] == player_name), None)
+            if player_score and player_score['score'] >= room['question_goal']:
+                # End the game with this player as winner
+                end_game(room_code, [player_name])
+                return jsonify({
+                    'success': True,
+                    'scores': scores,
+                    'message': 'Answer submitted successfully',
+                    'game_ended': True,
+                    'rankings': scores
+                }), 200
+        
         return jsonify({
             'success': True,
             'scores': scores,
-            'message': 'Answer submitted successfully'
+            'message': 'Answer submitted successfully',
+            'game_ended': False
         }), 200
     except Exception as e:
         print(f"[ERROR] Failed to submit answer: {e}")
