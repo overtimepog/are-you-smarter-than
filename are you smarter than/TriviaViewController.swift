@@ -534,7 +534,7 @@ class TriviaViewController: UIViewController, CAAnimationDelegate {
                                 // Update player's win count on the server
                                 self.endGame()
                                 self.showWinViewController(with: rankings, roomCode: self.roomCode, playerName: self.playerName)
-                                if let winner = rankings.first(where: { $0["player_name"] as? String == self.playerName }) {
+                                if rankings.contains(where: { $0["player_name"] as? String == self.playerName }) {
                                     if let playerIndex = self.rankings.firstIndex(where: { $0["player_name"] as? String == self.playerName }),
                                        let wins = self.rankings[playerIndex]["wins"] as? Int {
                                         print("Congratulations \(self.playerName)! You have \(wins) wins.")
