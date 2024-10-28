@@ -114,27 +114,31 @@ class JoinRoomViewController: UIViewController {
                 return
             }
 
-            let json = JSON(data)
-            if json["success"].boolValue {
-                DispatchQueue.main.async {
-                    let lobbyVC = LobbyViewController()
-                    lobbyVC.isHost = false
-                    lobbyVC.playerName = playerName
-                    lobbyVC.roomCode = roomCode
-                    lobbyVC.modalPresentationStyle = .fullScreen
-                    lobbyVC.modalTransitionStyle = .crossDissolve
-                    if let presentingVC = self.presentingViewController {
-                        presentingVC.dismiss(animated: true) {
-                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                               let window = windowScene.windows.first {
-                                window.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+            do {
+                let json = try JSON(data: data)
+                if json["success"].boolValue {
+                    DispatchQueue.main.async {
+                        let lobbyVC = LobbyViewController()
+                        lobbyVC.isHost = false
+                        lobbyVC.playerName = playerName
+                        lobbyVC.roomCode = roomCode
+                        lobbyVC.modalPresentationStyle = .fullScreen
+                        lobbyVC.modalTransitionStyle = .crossDissolve
+                        if let presentingVC = self.presentingViewController {
+                            presentingVC.dismiss(animated: true) {
+                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                   let window = windowScene.windows.first {
+                                    window.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+                                }
                             }
                         }
                     }
+                } else {
+                    let message = json["message"].stringValue
+                    DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to join room." : message }
                 }
-            } else {
-                let message = json["message"].stringValue
-                DispatchQueue.main.async { self.statusLabel.text = message.isEmpty ? "Failed to join room." : message }
+            } catch {
+                DispatchQueue.main.async { self.statusLabel.text = "Failed to parse server response." }
             }
         }.resume()
     }
