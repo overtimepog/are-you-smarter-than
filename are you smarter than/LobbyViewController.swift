@@ -3,7 +3,7 @@ import SwiftyJSON
 import SocketIO
 
 
-class LobbyViewController: UIViewController {
+class LobbyViewController: UIViewController, UITableViewDataSource {
 
     var roomCode: String = ""  // Set this when transitioning to the lobby
     var playerName: String = "" // Set this when transitioning to the lobby
@@ -31,17 +31,15 @@ class LobbyViewController: UIViewController {
         setupUI()
         SocketIOManager.shared.establishConnection()
         playersTableView.dataSource = self
-        // Hide the start game button if the game has already started
         startGameButton.isHidden = gameStarted || !isHost
-        // Set up a timer to refresh room data every 60 seconds
-        refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(self.refreshRoomData), userInfo: nil, repeats: true)
-        // Ensure socket is connected before setting up listeners
+        refreshTimer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(refreshRoomData), userInfo: nil, repeats: true)
         SocketIOManager.shared.socket.on(clientEvent: .connect) { [weak self] data, ack in
             guard let self = self else { return }
             print("[DEBUG] Socket connected, setting up event listeners")
             self.setupSocketListeners()
         }
-    func setupSocketListeners() {
+    }
+    @objc func setupSocketListeners() {
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let playerName = data.first as? String {
@@ -79,7 +77,7 @@ class LobbyViewController: UIViewController {
     }
 
 
-    func handleViewChange(viewName: String) {
+    @objc func handleViewChange(viewName: String) {
         print("[DEBUG] [handleViewChange] Changing view to: \(viewName)")
         // Implement logic to transition to the specified view
         // For example, if viewName is "TriviaView", present the TriviaViewController
@@ -167,7 +165,7 @@ class LobbyViewController: UIViewController {
     }
 
     // Fetch room data from the API
-    func fetchRoomData() {
+    @objc func fetchRoomData() {
         print("[DEBUG] [fetchRoomData] Fetching room data for roomCode: \(roomCode)")
         guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
             print("Invalid URL")
@@ -218,7 +216,7 @@ class LobbyViewController: UIViewController {
     }
 
     // Update the UI with fetched room data
-    func updateUI(with roomInfo: RoomInfo) {
+    @objc func updateUI(with roomInfo: RoomInfo) {
         self.players = roomInfo.players
         self.playerWins = roomInfo.playerWins
         self.questionGoal = roomInfo.question_goal
