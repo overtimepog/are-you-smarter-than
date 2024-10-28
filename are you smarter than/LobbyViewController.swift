@@ -53,8 +53,6 @@ class LobbyViewController: UIViewController {
                 DispatchQueue.main.async {
                     self.playersTableView.reloadData()
                 }
-                // Emit event to notify all players about the view update
-                SocketIOManager.shared.socket.emit("update_view", ["room_code": self.roomCode, "new_view": "LobbyView"])
             }
         }
 
