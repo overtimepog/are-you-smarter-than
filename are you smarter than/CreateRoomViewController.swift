@@ -51,7 +51,9 @@ class CreateRoomViewController: UIViewController, UIPickerViewDelegate, UIPicker
         print("[DEBUG] CreateRoomViewController loaded")
         setupUI()
         print("[DEBUG] UI setup complete")
+        print("[DEBUG] UI setup complete")
         setupGestureRecognizer()
+        print("[DEBUG] Gesture recognizers setup complete")
         print("[DEBUG] Gesture recognizers setup complete")
     }
 
