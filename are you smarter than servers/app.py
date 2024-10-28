@@ -3,7 +3,7 @@ from room_db import update_player_score  # Ensure this import is present
 from flask_compress import Compress
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import random
-from room_db import init_db, add_room, get_room, get_all_rooms, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win, update_player_score
+from room_db import init_db, add_room, get_room, get_all_rooms, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win
 import time
 import string
 import uuid
@@ -155,7 +155,7 @@ def join_room_route():
             return jsonify({'success': False, 'message': f'Player name {player_name} is already taken in room {room_code}'}), 400
 
         # Allow joining if the game has ended
-        if room['game_started'] and room['winners']:
+        if not room['game_started'] and room['winners']:
             print(f"[DEBUG] [join_room_route] Game has ended, allowing player {player_name} to join room {room_code}")
             add_player_to_room(room_code, player_name)
             update_last_active(room_code)
@@ -250,6 +250,29 @@ def start_game_route():
     print(f"[DEBUG] [start_game_route] Room not found for room code: {room_code}")
     return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
 
+def end_game_logic(room_code, winners):
+    room = get_room(room_code)
+    if room:
+        if not room['game_started']:
+            print(f"[DEBUG] [end_game_logic] Game has not started yet for room {room_code}")
+            return False, 'Game has not started yet'
+
+        end_game(room_code, winners)
+
+        # Increment win count for each winner
+        for winner in winners:
+            try:
+                increment_player_win(room_code, winner)
+                print(f"[DEBUG] [end_game_logic] Incremented win for player {winner} in room {room_code}")
+            except Exception as e:
+                print(f"[ERROR] [end_game_logic] Failed to increment win for player {winner} in room {room_code}: {e}")
+                return False, f'Failed to increment win for player {winner}: {e}'
+        print(f"[DEBUG] [end_game_logic] Game ended for room {room_code}")
+        return True, 'Game ended successfully'
+    else:
+        print(f"[DEBUG] [end_game_logic] Room not found for room code: {room_code}")
+        return False, f'Room with code {room_code} not found'
+
 @app.route('/end_game', methods=['POST'])
 def end_game_route():
     # Handle ending the game and updating player wins
@@ -260,28 +283,11 @@ def end_game_route():
         return jsonify({'success': False, 'message': 'Missing room_code'}), 400
 
     print(f"[DEBUG] [end_game_route] Attempting to end game for room {room_code}")
-    room = get_room(room_code)
-    if room:
-        if not room['game_started']:
-            print(f"[DEBUG] [end_game_route] Game has not started yet for room {room_code}")
-            return jsonify({'success': False, 'message': 'Game has not started yet'}), 400
-        
-        end_game(room_code, winners)
-        
-        # Increment win count for each winner
-        for winner in winners:
-            try:
-                increment_player_win(room_code, winner)
-                print(f"[DEBUG] [end_game_route] Incremented win for player {winner} in room {room_code}")
-            except Exception as e:
-                print(f"[ERROR] [end_game_route] Failed to increment win for player {winner} in room {room_code}: {e}")
-                return jsonify({'success': False, 'message': f'Failed to increment win for player {winner}'}), 500
-        
-        print(f"[DEBUG] [end_game_route] Game ended for room {room_code}")
+    success, message = end_game_logic(room_code, winners)
+    if success:
         return jsonify({'success': True, 'message': 'Game ended', 'winners': winners}), 200
-    
-    print(f"[DEBUG] [end_game_route] Room not found for room code: {room_code}")
-    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
+    else:
+        return jsonify({'success': False, 'message': message}), 400
 
 @socketio.on('join_game')
 def handle_join_game(data):
@@ -359,12 +365,11 @@ def submit_answer():
         if player_score and player_score['score'] >= room['question_goal']:
             # End the game with this player as winner
             print(f"[DEBUG] [submit_answer] Player {player_name} reached the question goal in room {room_code}")
-            # Call the end_game_route to handle ending the game
-            response = end_game_route()
-            if response[1] == 200:
+            success, message = end_game_logic(room_code, [player_name])
+            if success:
                 print(f"[DEBUG] [submit_answer] Game ended successfully for room {room_code}")
             else:
-                print(f"[ERROR] [submit_answer] Failed to end game for room {room_code}: {response[0].get_json()}")
+                print(f"[ERROR] [submit_answer] Failed to end game for room {room_code}: {message}")
             return jsonify({
                 'success': True,
                 'scores': scores,
