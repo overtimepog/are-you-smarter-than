@@ -128,7 +128,7 @@ async def leave_room_route(data: dict):
         if room and not room['players']:
             print(f"[DEBUG] [leave_room_route] No players left in room {room_code}, cleaning up room.")
             cleanup_room(room_code)  # Clean up the room if no players are left
-        return jsonify({'success': True, 'message': 'Player left the room'}), 200
+        return JSONResponse(content={'success': True, 'message': 'Player left the room'})
     print(f"[DEBUG] [leave_room_route] Room or player not found for room code: {room_code}, player name: {player_name}")
     raise HTTPException(status_code=404, detail=f'Room with code {room_code} or player {player_name} not found')
 
@@ -307,7 +307,7 @@ async def handle_join_game(sid, data):
             session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
             update_last_active(room_code)
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
-            emit('player_joined', player_name, room=room_code)
+            await sio.emit('player_joined', player_name, room=room_code)
             print(f"[DEBUG] [handle_join_game] Emitted 'player_joined' event for player {player_name} in room {room_code}")
             # Emit updated room data to all clients in the room
             updated_room_data = get_room(room_code)
@@ -423,11 +423,6 @@ async def post_lobby_wins(room_code: str, data: dict):
         except Exception as e:
             print(f"[ERROR] [lobby_wins] Failed to update wins for player {player_name} in room {room_code}: {e}")
             raise HTTPException(status_code=500, detail=f'Failed to update wins for player {player_name}')
-# Fetch the scores of all players in a specific room
-print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
-scores = get_player_scores(room_code)
-print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
-return JSONResponse(content={'room_code': room_code, 'scores': scores})
 
 @app.get("/get_all_rooms")
 async def get_all_rooms_route():
