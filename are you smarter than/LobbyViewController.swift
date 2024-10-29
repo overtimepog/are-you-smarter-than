@@ -46,7 +46,9 @@ class LobbyViewController: UIViewController {
         }
     }
     func setupSocketListeners() {
+        print("[DEBUG] [setupSocketListeners] Setting up socket listeners")
         SocketIOManager.shared.socket.on("player_joined") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            print("[DEBUG] [player_joined] Event received with data: \(data)")
             guard let self = self else { return }
             if let playerName = data.first as? String {
                 print("[DEBUG] Player joined: \(playerName)")
@@ -58,6 +60,7 @@ class LobbyViewController: UIViewController {
         }
 
         SocketIOManager.shared.socket.on("player_left") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            print("[DEBUG] [player_left] Event received with data: \(data)")
             guard let self = self else { return }
             if let playerName = data.first as? String {
                 print("[DEBUG] Player left: \(playerName)")
@@ -69,12 +72,14 @@ class LobbyViewController: UIViewController {
         }
 
         SocketIOManager.shared.socket.on("player_count_changed") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            print("[DEBUG] [player_count_changed] Event received with data: \(data)")
             guard let self = self else { return }
             print("[DEBUG] Player count changed, fetching updated room data.")
             self.fetchRoomData()
         }
 
         SocketIOManager.shared.socket.on("room_data_updated") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            print("[DEBUG] [room_data_updated] Event received with data: \(data)")
             guard let self = self else { return }
             if let roomData = data.first as? [String: Any] {
                 print("[DEBUG] Room data updated: \(roomData)")
@@ -99,6 +104,7 @@ class LobbyViewController: UIViewController {
         }
 
         SocketIOManager.shared.socket.on("update_view") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            print("[DEBUG] [update_view] Event received with data: \(data)")
             guard let self = self else { return }
             if let newView = data[0] as? [String: Any], let viewName = newView["new_view"] as? String {
                 self.handleViewChange(viewName: viewName)
