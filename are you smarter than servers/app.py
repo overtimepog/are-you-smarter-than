@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify, render_template_string
-from room_db import update_player_score  # Ensure this import is present
-from flask_compress import Compress
-from flask_socketio import SocketIO, join_room, leave_room, emit
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from room_db import update_player_score
+from fastapi_socketio import SocketManager
 import random
 from room_db import init_db, add_room, get_room, get_all_rooms, update_room, delete_room, get_player_scores, add_or_update_player, get_player_statistics, get_game_history, add_player_to_room, remove_player_from_room, start_game, end_game, increment_player_win
 import time
@@ -10,9 +11,15 @@ import uuid
 import signal
 import sys
 
-app = Flask(__name__)
-Compress(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+sio = SocketManager(app=app)
 
 init_db()  # Initialize the database with the necessary tables
 
@@ -65,10 +72,9 @@ def cleanup_dead_rooms():
     print(f"[DEBUG] [cleanup_dead_rooms] Cleanup complete. {rooms_deleted} rooms deleted.")
     return rooms_deleted
 
-@app.route('/')
-def index():
-    # Render a simple page with a smiley face
-    smiley_html = '''
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    smiley_html = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -80,11 +86,11 @@ def index():
         <div style="font-size: 100px;">😊</div>
     </body>
     </html>
-    '''
-    return render_template_string(smiley_html)
+    """
+    return HTMLResponse(content=smiley_html)
 
-@app.route('/game_room/<room_code>', methods=['GET'])
-def get_room_info(room_code):
+@app.get("/game_room/{room_code}")
+async def get_room_info(room_code: str):
     # Fetch information about a specific game room
     print(f"[DEBUG] [get_room_info] Fetching room info for room code: {room_code}")
     room = get_room(room_code)
@@ -94,7 +100,7 @@ def get_room_info(room_code):
         player_scores = get_player_scores(room_code)
         player_wins = {score['player_name']: score['wins'] for score in player_scores}
 
-        return jsonify({
+        return JSONResponse(content={
             'room_code': room_code,
             'host': room.get('host'),  # Include host in response
             'players': players,
@@ -108,12 +114,10 @@ def get_room_info(room_code):
             'last_active': room.get('last_active', time.time())  # Correctly display the last active timestamp
         }), 200
     print(f"[DEBUG] [get_room_info] Room not found for room code: {room_code}")
-    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
+    raise HTTPException(status_code=404, detail=f'Room with code {room_code} not found')
 
-@app.route('/leave_room', methods=['POST'])
-def leave_room_route():
-    # Handle a player leaving a room
-    data = request.json
+@app.post("/leave_room")
+async def leave_room_route(data: dict):
     room_code = data['room_code']
     player_name = data['player_name']
     print(f"[DEBUG] [leave_room_route] Player {player_name} attempting to leave room {room_code}")
@@ -126,12 +130,10 @@ def leave_room_route():
             cleanup_room(room_code)  # Clean up the room if no players are left
         return jsonify({'success': True, 'message': 'Player left the room'}), 200
     print(f"[DEBUG] [leave_room_route] Room or player not found for room code: {room_code}, player name: {player_name}")
-    return jsonify({'success': False, 'message': f'Room with code {room_code} or player {player_name} not found'}), 404
+    raise HTTPException(status_code=404, detail=f'Room with code {room_code} or player {player_name} not found')
 
-@app.route('/join_room', methods=['POST'])
-def join_room_route():
-    # Handle a player attempting to join a room
-    data = request.json
+@app.post("/join_room")
+async def join_room_route(data: dict):
     room_code = data['room_code']
     player_name = data['player_name']
     print(f"[DEBUG] [join_room_route] Player {player_name} attempting to join room {room_code}")
@@ -139,17 +141,17 @@ def join_room_route():
     room = get_room(room_code)
     if not room:
         print(f"[DEBUG] [join_room_route] Room not found for room code: {room_code}")
-        return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
+        raise HTTPException(status_code=404, detail=f'Room with code {room_code} not found')
     try:
         # Check if the player name is already taken by another player
         if player_name in room['players']:
             print(f"[DEBUG] [join_room_route] Player name {player_name} is already taken in room {room_code}")
-            return jsonify({'success': False, 'message': f'Player name {player_name} is already taken in room {room_code}'}), 400
+            raise HTTPException(status_code=400, detail=f'Player name {player_name} is already taken in room {room_code}')
 
         # Check if the player name is already taken by another player
         if player_name in room['players']:
             print(f"[DEBUG] [join_room_route] Player name {player_name} is already taken in room {room_code}")
-            return jsonify({'success': False, 'message': f'Player name {player_name} is already taken in room {room_code}'}), 400
+            raise HTTPException(status_code=400, detail=f'Player name {player_name} is already taken in room {room_code}')
 
         # Allow joining if the game has ended
         if not room['game_started'] and room['winners']:
@@ -157,22 +159,20 @@ def join_room_route():
             add_player_to_room(room_code, player_name)
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-            emit('player_joined', player_name, room=room_code)
-            return jsonify({'success': True, 'player_id': player_id}), 200
+            await sio.emit('player_joined', player_name, room=room_code)
+            return JSONResponse(content={'success': True, 'player_id': player_id})
 
         if add_player_to_room(room_code, player_name):
             update_last_active(room_code)
             player_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
             print(f"[DEBUG] [join_room_route] Player {player_name} joined room {room_code}")
-            return jsonify({'success': True, 'player_id': player_id}), 200
+            return JSONResponse(content={'success': True, 'player_id': player_id})
     except Exception as e:
         print(f"[ERROR] [join_room_route] Failed to add player {player_name} to room {room_code}: {e}")
-        return jsonify({'success': False, 'message': f'Failed to add player {player_name} to room {room_code}'}), 500
+        raise HTTPException(status_code=500, detail=f'Failed to add player {player_name} to room {room_code}')
 
-@app.route('/create_room', methods=['POST'])
-def create_room():
-    # Handle creating a new room
-    data = request.json
+@app.post("/create_room")
+async def create_room(data: dict):
     print("[DEBUG] [create_room] Attempting to create a new room.")
 
     # First, check if the maximum number of rooms has been reached
@@ -184,7 +184,7 @@ def create_room():
         all_rooms = get_all_rooms()  # Refresh the room list after cleanup
         if len(all_rooms) >= MAX_ROOMS:
             print("[ERROR] [create_room] Maximum number of rooms still reached after cleanup.")
-            return jsonify({'success': False, 'message': 'Maximum number of rooms reached. Please try again later.'}), 503  # Service Unavailable
+            raise HTTPException(status_code=503, detail='Maximum number of rooms reached. Please try again later.')
 
     max_attempts = 10
     attempts = 0
@@ -196,19 +196,19 @@ def create_room():
     difficulty = data.get('difficulty', 'easy')  # Default to 'easy' if not provided
     if difficulty not in ['easy', 'medium', 'hard']:
         print("[DEBUG] [create_room] Invalid difficulty provided.")
-        return jsonify({'success': False, 'message': 'Invalid difficulty. It must be one of: easy, medium, hard.'}), 400
+        raise HTTPException(status_code=400, detail='Invalid difficulty. It must be one of: easy, medium, hard.')
     if not isinstance(question_goal, int) or question_goal <= 0:
         print("[DEBUG] [create_room] Invalid question goal provided.")
-        return jsonify({'success': False, 'message': 'Invalid question goal. It must be a positive integer.'}), 400
+        raise HTTPException(status_code=400, detail='Invalid question goal. It must be a positive integer.')
     if not isinstance(max_players, int) or max_players <= 0:
         print("[DEBUG] [create_room] Invalid max players provided.")
-        return jsonify({'success': False, 'message': 'Invalid max players. It must be a positive integer.'}), 400
+        raise HTTPException(status_code=400, detail='Invalid max players. It must be a positive integer.')
 
     # Check for room code collisions and regenerate if needed
     while room_code in used_room_codes or get_room(room_code):
         if attempts >= max_attempts:
             print("[ERROR] [create_room] Maximum attempts reached while generating a unique room code.")
-            return jsonify({'success': False, 'message': 'Unable to generate a unique room code after multiple attempts, please try again later.'}), 500
+            raise HTTPException(status_code=500, detail='Unable to generate a unique room code after multiple attempts, please try again later.')
         print(f"[DEBUG] [create_room] Collision detected for room code {room_code}, regenerating.")
         room_code = generate_room_code()
         attempts += 1
@@ -217,36 +217,34 @@ def create_room():
     categories = data.get('categories', [])  # Get selected categories
     if not isinstance(categories, list):
         print("[DEBUG] [create_room] Categories provided are not in list format.")
-        return jsonify({'success': False, 'message': 'Categories must be a list'}), 400
+        raise HTTPException(status_code=400, detail='Categories must be a list')
     # Validate category IDs
     valid_category_ids = range(9, 33)  # Valid category IDs from 9 to 32
     if not all(isinstance(cat_id, int) and cat_id in valid_category_ids for cat_id in categories):
         print("[DEBUG] [create_room] Invalid category IDs provided.")
-        return jsonify({'success': False, 'message': 'Invalid category IDs'}), 400
+        raise HTTPException(status_code=400, detail='Invalid category IDs')
 
     add_room(room_code, first_player_name, question_goal, max_players, difficulty, categories)  # Add room to the database with first player as host
     used_room_codes.add(room_code)  # Add the new room code to the set of used codes
     print(f"[DEBUG] [create_room] Room created successfully with room code: {room_code}, host: {first_player_name}")
 
-    return jsonify({'room_code': room_code, 'success': True}), 200
+    return JSONResponse(content={'room_code': room_code, 'success': True})
 
-@app.route('/start_game', methods=['POST'])
-def start_game_route():
-    # Handle starting the game
-    data = request.json
+@app.post("/start_game")
+async def start_game_route(data: dict):
     room_code = data['room_code']
     print(f"[DEBUG] [start_game_route] Attempting to start game for room {room_code}")
     room = get_room(room_code)
     if room:
         if room['game_started']:
             print(f"[DEBUG] [start_game_route] Game already started for room {room_code}")
-            return jsonify({'success': False, 'message': 'Game has already started'}), 400
+            raise HTTPException(status_code=400, detail='Game has already started')
         start_game(room_code)
         update_room(room_code, game_started=True)  # Ensure the game is marked as started
         print(f"[DEBUG] [start_game_route] Game started for room {room_code}")
-        return jsonify({'success': True, 'message': 'Game started'}), 200
+        return JSONResponse(content={'success': True, 'message': 'Game started'})
     print(f"[DEBUG] [start_game_route] Room not found for room code: {room_code}")
-    return jsonify({'success': False, 'message': f'Room with code {room_code} not found'}), 404
+    raise HTTPException(status_code=404, detail=f'Room with code {room_code} not found')
 
 def end_game_logic(room_code, winners):
     room = get_room(room_code)
@@ -271,36 +269,33 @@ def end_game_logic(room_code, winners):
         print(f"[DEBUG] [end_game_logic] Room not found for room code: {room_code}")
         return False, f'Room with code {room_code} not found'
 
-@app.route('/end_game', methods=['POST'])
-def end_game_route():
-    # Handle ending the game and updating player wins
-    data = request.json
+@app.post("/end_game")
+async def end_game_route(data: dict):
     room_code = data.get('room_code')
     winners = data.get('winners', [])
     if not room_code:
-        return jsonify({'success': False, 'message': 'Missing room_code'}), 400
+        raise HTTPException(status_code=400, detail='Missing room_code')
 
     print(f"[DEBUG] [end_game_route] Attempting to end game for room {room_code}")
     success, message = end_game_logic(room_code, winners)
     if success:
-        return jsonify({'success': True, 'message': 'Game ended', 'winners': winners}), 200
+        return JSONResponse(content={'success': True, 'message': 'Game ended', 'winners': winners})
     else:
-        return jsonify({'success': False, 'message': message}), 400
+        raise HTTPException(status_code=400, detail=message)
 
-@socketio.on('host_view_change')
-def handle_host_view_change(data):
+@sio.on('host_view_change')
+async def handle_host_view_change(sid, data):
     room_code = data['room_code']
     new_view = data['new_view']
     print(f"[DEBUG] [handle_host_view_change] Received data: {data}")
     print(f"[DEBUG] [handle_host_view_change] Host changed view to {new_view} in room {room_code}")
-    emit('update_view', {'new_view': new_view}, room=room_code)
+    await sio.emit('update_view', {'new_view': new_view}, room=room_code)
     print(f"[DEBUG] [handle_host_view_change] Emitted 'update_view' event to room {room_code}")
 
-@socketio.on('join_game')
-def handle_join_game(data):
+@sio.on('join_game')
+async def handle_join_game(sid, data):
     room_code = data['room_code']
     player_name = data['player_name']
-    sid = request.sid
 
     print(f"[DEBUG] [handle_join_game] Received data: {data}")
     print(f"[DEBUG] [handle_join_game] Player {player_name} attempting to join room {room_code} via SocketIO")
@@ -308,7 +303,7 @@ def handle_join_game(data):
     room = get_room(room_code)
     if room and player_name in room['players']:
         try:
-            join_room(room_code)
+            await sio.enter_room(sid, room_code)
             session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
             update_last_active(room_code)
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
@@ -316,37 +311,35 @@ def handle_join_game(data):
             print(f"[DEBUG] [handle_join_game] Emitted 'player_joined' event for player {player_name} in room {room_code}")
             # Emit updated room data to all clients in the room
             updated_room_data = get_room(room_code)
-            emit('room_data_updated', updated_room_data, room=room_code)
+            await sio.emit('room_data_updated', updated_room_data, room=room_code)
             print(f"[DEBUG] [handle_join_game] Emitted 'room_data_updated' event with data: {updated_room_data}")
         except Exception as e:
             print(f"[ERROR] [handle_join_game] Failed to join room {room_code}: {e}")
-            emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
+            await sio.emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
             print(f"[DEBUG] [handle_join_game] Emitted 'error' event to sid {sid}")
     else:
         print(f"[DEBUG] [handle_join_game] Player {player_name} did not join via HTTP endpoint or player ID mismatch for room {room_code}")
-        emit('error', {'message': f'Player {player_name} not found in room {room_code}'}, to=sid)
+        await sio.emit('error', {'message': f'Player {player_name} not found in room {room_code}'}, to=sid)
         print(f"[DEBUG] [handle_join_game] Emitted 'error' event to sid {sid}")
 
-@app.route('/get_player_statistics/<player_name>', methods=['GET'])
-def get_player_statistics_route(player_name):
+@app.get("/get_player_statistics/{player_name}")
+async def get_player_statistics_route(player_name: str):
     # Fetch statistics for a specific player
     print(f"[DEBUG] [get_player_statistics_route] Fetching statistics for player: {player_name}")
     stats = get_player_statistics(player_name)
     print(f"[DEBUG] [get_player_statistics_route] Statistics fetched for player {player_name}: {stats}")
-    return jsonify({'player_name': player_name, 'statistics': stats}), 200
+    return JSONResponse(content={'player_name': player_name, 'statistics': stats})
 
-@app.route('/get_game_history/<room_code>', methods=['GET'])
-def get_game_history_route(room_code):
+@app.get("/get_game_history/{room_code}")
+async def get_game_history_route(room_code: str):
     # Fetch the game history for a specific room
     print(f"[DEBUG] [get_game_history_route] Fetching game history for room code: {room_code}")
     history = get_game_history(room_code)
     print(f"[DEBUG] [get_game_history_route] Game history fetched for room {room_code}: {history}")
-    return jsonify({'room_code': room_code, 'history': history}), 200
+    return JSONResponse(content={'room_code': room_code, 'history': history})
 
-@app.route('/submit_answer', methods=['POST'])
-def submit_answer():
-    # Handle submitting an answer and updating score
-    data = request.json
+@app.post("/submit_answer")
+async def submit_answer(data: dict):
     room_code = data['room_code']
     player_name = data['player_name']
     is_correct = data['is_correct']
@@ -357,7 +350,7 @@ def submit_answer():
         room = get_room(room_code)
         if not room:
             print(f"[DEBUG] [submit_answer] Room not found for room code: {room_code}")
-            return jsonify({'success': False, 'message': 'Room not found'}), 404
+            raise HTTPException(status_code=404, detail='Room not found')
         # Allow rejoining even if the game has not started
         if not room['game_started']:
             print(f"[DEBUG] [submit_answer] Game has not started for room {room_code}, but rejoining is allowed.")
@@ -381,7 +374,7 @@ def submit_answer():
                 print(f"[DEBUG] [submit_answer] Game ended successfully for room {room_code}")
             else:
                 print(f"[ERROR] [submit_answer] Failed to end game for room {room_code}: {message}")
-            return jsonify({
+            return JSONResponse(content={
                 'success': True,
                 'scores': scores,
                 'message': 'Answer submitted successfully',
@@ -389,7 +382,7 @@ def submit_answer():
                 'rankings': scores
             }), 200
 
-        return jsonify({
+        return JSONResponse(content={
             'success': True,
             'scores': scores,
             'message': 'Answer submitted successfully',
@@ -397,58 +390,54 @@ def submit_answer():
         }), 200
     except Exception as e:
         print(f"[ERROR] [submit_answer] Exception occurred: {e}")
-        return jsonify({'success': False, 'message': f'Failed to submit answer: {str(e)}'}), 500
+        raise HTTPException(status_code=500, detail=f'Failed to submit answer: {str(e)}')
 
-@app.route('/get_player_scores/<room_code>', methods=['GET'])
-def get_player_scores_route(room_code):
+@app.get("/get_player_scores/{room_code}")
+async def get_player_scores_route(room_code: str):
     # Fetch the scores of all players in a specific room
     print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
     scores = get_player_scores(room_code)
     print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
-    return jsonify({'room_code': room_code, 'scores': scores}), 200
+    return JSONResponse(content={'room_code': room_code, 'scores': scores})
 
-@app.route('/lobby_wins/<room_code>', methods=['GET', 'POST'])
-def lobby_wins(room_code):
-    if request.method == 'GET':
+@app.get("/lobby_wins/{room_code}")
+async def get_lobby_wins(room_code: str):
         # Fetch player wins for the given room code
         print(f"[DEBUG] [lobby_wins] Fetching player wins for room code: {room_code}")
         scores = get_player_scores(room_code)
         player_wins = {score['player_name']: score['wins'] for score in scores}
-        return jsonify({'room_code': room_code, 'player_wins': player_wins}), 200
+        return JSONResponse(content={'room_code': room_code, 'player_wins': player_wins})
 
-    elif request.method == 'POST':
-        # Update player wins for the given room code
-        data = request.json
+@app.post("/lobby_wins/{room_code}")
+async def post_lobby_wins(room_code: str, data: dict):
         player_name = data.get('player_name')
         wins = data.get('wins')
 
         if not player_name or wins is None:
-            return jsonify({'success': False, 'message': 'Missing player_name or wins'}), 400
+            raise HTTPException(status_code=400, detail='Missing player_name or wins')
 
         try:
             update_player_score(room_code, player_name, 0, wins)  # Update wins without changing score
             print(f"[DEBUG] [lobby_wins] Updated wins for player {player_name} in room {room_code} to {wins}")
-            return jsonify({'success': True, 'message': 'Player wins updated'}), 200
+            return JSONResponse(content={'success': True, 'message': 'Player wins updated'})
         except Exception as e:
             print(f"[ERROR] [lobby_wins] Failed to update wins for player {player_name} in room {room_code}: {e}")
-            return jsonify({'success': False, 'message': f'Failed to update wins for player {player_name}'}), 500
+            raise HTTPException(status_code=500, detail=f'Failed to update wins for player {player_name}')
     # Fetch the scores of all players in a specific room
     print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
     scores = get_player_scores(room_code)
     print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
     return jsonify({'room_code': room_code, 'scores': scores}), 200
 
-@app.route('/get_all_rooms', methods=['GET'])
-def get_all_rooms_route():
+@app.get("/get_all_rooms")
+async def get_all_rooms_route():
     # Fetch information about all active rooms
     all_rooms = get_all_rooms()
     print(f"[DEBUG] [get_all_rooms_route] Fetching information for all rooms: {all_rooms}")
-    return jsonify({'rooms': all_rooms}), 200
+    return JSONResponse(content={'rooms': all_rooms})
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    # Handle a player disconnecting from the server
-    sid = request.sid
+@sio.on('disconnect')
+async def handle_disconnect(sid):
     if sid in session_to_player:
         player_info = session_to_player[sid]
         room_code = player_info['room_code']
@@ -460,10 +449,12 @@ def handle_disconnect():
         if room:
             if remove_player_from_room(room_code, player_name):
                 del session_to_player[sid]  # Remove player from session mapping
-                emit('player_left', player_name, room=room_code)
-                emit('player_count_changed', room=room_code)
+                await sio.emit('player_left', player_name, room=room_code)
+                await sio.emit('player_count_changed', room=room_code)
                 print(f"[DEBUG] [handle_disconnect] Player {player_name} removed from room {room_code}")
 
-if __name__ == '__main__':
+import uvicorn
+
+if __name__ == "__main__":
     print("[DEBUG] API is fully booted and ready to use.")
-    socketio.run(app, host='0.0.0.0', port=3000)
+    uvicorn.run(app, host="0.0.0.0", port=3000)
