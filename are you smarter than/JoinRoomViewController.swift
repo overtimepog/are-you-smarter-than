@@ -137,20 +137,7 @@ class JoinRoomViewController: UIViewController {
                 let json = try JSON(data: data)
                 if json["success"].boolValue {
                     DispatchQueue.main.async {
-                        let lobbyVC = LobbyViewController()
-                        lobbyVC.isHost = false
-                        lobbyVC.playerName = playerName
-                        lobbyVC.roomCode = roomCode
-                        lobbyVC.modalPresentationStyle = .fullScreen
-                        lobbyVC.modalTransitionStyle = .crossDissolve
-                        if let presentingVC = self.presentingViewController {
-                            presentingVC.dismiss(animated: true) {
-                                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                   let window = windowScene.windows.first {
-                                    window.rootViewController?.present(lobbyVC, animated: true, completion: nil)
-                                }
-                            }
-                        }
+                        self.fetchRoomDataAndPresentLobby(roomCode: roomCode, playerName: playerName)
                     }
                 } else if let message = json["message"].string {
                     DispatchQueue.main.async { self.statusLabel.text = message }
@@ -162,7 +149,55 @@ class JoinRoomViewController: UIViewController {
             }
         }.resume()
     }
-    @objc func goBack() {
+    func fetchRoomDataAndPresentLobby(roomCode: String, playerName: String) {
+        guard let url = URL(string: "https://api.areyousmarterthan.xyz/game_room/\(roomCode)") else {
+            DispatchQueue.main.async { self.statusLabel.text = "Invalid URL" }
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                DispatchQueue.main.async { self.statusLabel.text = "Error: \(error.localizedDescription)" }
+                return
+            }
+
+            guard let data = data else {
+                DispatchQueue.main.async { self.statusLabel.text = "No data received." }
+                return
+            }
+
+            do {
+                let json = try JSON(data: data)
+                let lobbyVC = LobbyViewController()
+                lobbyVC.isHost = false
+                lobbyVC.playerName = playerName
+                lobbyVC.roomCode = roomCode
+                lobbyVC.modalPresentationStyle = .fullScreen
+                lobbyVC.modalTransitionStyle = .crossDissolve
+                lobbyVC.players = json["players"].arrayValue.map { $0.stringValue }
+                lobbyVC.playerWins = json["player_wins"].dictionaryValue.mapValues { $0.intValue }
+                lobbyVC.questionGoal = json["question_goal"].intValue
+                lobbyVC.maxPlayers = json["max_players"].intValue
+                lobbyVC.gameStarted = json["game_started"].boolValue
+                lobbyVC.categories = json["categories"].arrayValue.map { $0.stringValue }
+
+                DispatchQueue.main.async {
+                    if let presentingVC = self.presentingViewController {
+                        presentingVC.dismiss(animated: true) {
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let window = windowScene.windows.first {
+                                window.rootViewController?.present(lobbyVC, animated: true, completion: nil)
+                            }
+                        }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async { self.statusLabel.text = "Failed to parse server response." }
+            }
+        }.resume()
+    }
         dismiss(animated: true, completion: nil)
     }
 }

@@ -236,9 +236,8 @@ class LobbyViewController: UIViewController {
     }
 
     @objc func refreshRoomData() {
-        DispatchQueue.main.async {
-            SocketIOManager.shared.socket.disconnect()
-        }
+        print("[DEBUG] [refreshRoomData] Refreshing room data for roomCode: \(roomCode)")
+        fetchRoomData()
     }
     
     @objc func startGame() {
