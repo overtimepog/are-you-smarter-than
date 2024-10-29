@@ -296,30 +296,27 @@ def handle_host_view_change(data):
 
 @socketio.on('join_game')
 def handle_join_game(data):
-    # Handle a player joining the game via SocketIO
     room_code = data['room_code']
     player_name = data['player_name']
-    player_id = data['player_id']
     sid = request.sid
 
-    print(f"[DEBUG] [handle_join_game] Player {player_name} with player ID {player_id} attempting to join room {room_code} via SocketIO")
+    print(f"[DEBUG] [handle_join_game] Player {player_name} attempting to join room {room_code} via SocketIO")
 
     room = get_room(room_code)
     if room and player_name in room['players']:
         try:
-            join_room(room_code)  # Attempt to join the room via SocketIO
-            session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}  # Store player info
-            current_players = room['players']
-            update_last_active(room_code)  # Update last active time
+            join_room(room_code)
+            session_to_player[sid] = {'room_code': room_code, 'player_name': player_name}
+            update_last_active(room_code)
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
+            emit('player_joined', player_name, room=room_code)
             emit('update_view', {'new_view': 'LobbyView'}, room=room_code)
         except Exception as e:
             print(f"[ERROR] [handle_join_game] Failed to join room {room_code}: {e}")
             emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
     else:
         print(f"[DEBUG] [handle_join_game] Player {player_name} did not join via HTTP endpoint or player ID mismatch for room {room_code}")
-        leave_room(room_code)
-        return
+        emit('error', {'message': f'Player {player_name} not found in room {room_code}'}, to=sid)
 
 @app.route('/get_player_statistics/<player_name>', methods=['GET'])
 def get_player_statistics_route(player_name):

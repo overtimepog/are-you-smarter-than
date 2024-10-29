@@ -32,8 +32,9 @@ class LobbyViewController: UIViewController {
         if SocketIOManager.shared.socket.status != .connected {
             SocketIOManager.shared.establishConnection()
         } else {
-            // Emit player_joined event if already connected
-            SocketIOManager.shared.socket.emit("player_joined", playerName)
+            // Emit join_game event if already connected
+            let playerData: [String: Any] = ["room_code": roomCode, "player_name": playerName]
+            SocketIOManager.shared.socket.emit("join_game", playerData)
         }
         playersTableView.dataSource = self
         startGameButton.isHidden = gameStarted || !isHost
