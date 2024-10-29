@@ -291,8 +291,10 @@ def end_game_route():
 def handle_host_view_change(data):
     room_code = data['room_code']
     new_view = data['new_view']
+    print(f"[DEBUG] [handle_host_view_change] Received data: {data}")
     print(f"[DEBUG] [handle_host_view_change] Host changed view to {new_view} in room {room_code}")
     emit('update_view', {'new_view': new_view}, room=room_code)
+    print(f"[DEBUG] [handle_host_view_change] Emitted 'update_view' event to room {room_code}")
 
 @socketio.on('join_game')
 def handle_join_game(data):
@@ -300,6 +302,7 @@ def handle_join_game(data):
     player_name = data['player_name']
     sid = request.sid
 
+    print(f"[DEBUG] [handle_join_game] Received data: {data}")
     print(f"[DEBUG] [handle_join_game] Player {player_name} attempting to join room {room_code} via SocketIO")
 
     room = get_room(room_code)
@@ -310,15 +313,19 @@ def handle_join_game(data):
             update_last_active(room_code)
             print(f"[DEBUG] [handle_join_game] Player {player_name} successfully joined room {room_code} via SocketIO")
             emit('player_joined', player_name, room=room_code)
+            print(f"[DEBUG] [handle_join_game] Emitted 'player_joined' event for player {player_name} in room {room_code}")
             # Emit updated room data to all clients in the room
             updated_room_data = get_room(room_code)
             emit('room_data_updated', updated_room_data, room=room_code)
+            print(f"[DEBUG] [handle_join_game] Emitted 'room_data_updated' event with data: {updated_room_data}")
         except Exception as e:
             print(f"[ERROR] [handle_join_game] Failed to join room {room_code}: {e}")
             emit('error', {'message': f'Failed to join room {room_code}'}, to=sid)
+            print(f"[DEBUG] [handle_join_game] Emitted 'error' event to sid {sid}")
     else:
         print(f"[DEBUG] [handle_join_game] Player {player_name} did not join via HTTP endpoint or player ID mismatch for room {room_code}")
         emit('error', {'message': f'Player {player_name} not found in room {room_code}'}, to=sid)
+        print(f"[DEBUG] [handle_join_game] Emitted 'error' event to sid {sid}")
 
 @app.route('/get_player_statistics/<player_name>', methods=['GET'])
 def get_player_statistics_route(player_name):
