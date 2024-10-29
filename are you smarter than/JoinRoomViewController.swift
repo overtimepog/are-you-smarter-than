@@ -201,5 +201,4 @@ class JoinRoomViewController: UIViewController {
             }
         }.resume()
     }
-    }
 }
