@@ -22,6 +22,9 @@ class JoinRoomViewController: UIViewController {
         setupUI()
     }
 
+    @objc func goBack() {
+    }
+
     @objc func dismissKeyboard() {
         view.endEditing(true)
     }
