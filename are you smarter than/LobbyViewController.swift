@@ -74,6 +74,30 @@ class LobbyViewController: UIViewController {
             self.fetchRoomData()
         }
 
+        SocketIOManager.shared.socket.on("room_data_updated") { [weak self] (data: [Any], ack: SocketAckEmitter) in
+            guard let self = self else { return }
+            if let roomData = data.first as? [String: Any] {
+                print("[DEBUG] Room data updated: \(roomData)")
+                // Update the UI with the new room data
+                if let jsonData = try? JSONSerialization.data(withJSONObject: roomData, options: []),
+                   let json = try? JSON(data: jsonData) {
+                    let roomInfo = RoomInfo(
+                        room_code: json["room_code"].stringValue,
+                        players: json["players"].arrayValue.map { $0.stringValue },
+                        playerWins: json["player_wins"].dictionaryValue.mapValues { $0.intValue },
+                        question_goal: json["question_goal"].intValue,
+                        max_players: json["max_players"].intValue,
+                        game_started: json["game_started"].intValue,
+                        winners: json["winners"].arrayValue.map { $0.stringValue },
+                        categories: json["categories"].arrayValue.map { $0.stringValue }
+                    )
+                    DispatchQueue.main.async {
+                        self.updateUI(with: roomInfo)
+                    }
+                }
+            }
+        }
+
         SocketIOManager.shared.socket.on("update_view") { [weak self] (data: [Any], ack: SocketAckEmitter) in
             guard let self = self else { return }
             if let newView = data[0] as? [String: Any], let viewName = newView["new_view"] as? String {
