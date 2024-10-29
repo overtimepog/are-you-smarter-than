@@ -423,11 +423,11 @@ async def post_lobby_wins(room_code: str, data: dict):
         except Exception as e:
             print(f"[ERROR] [lobby_wins] Failed to update wins for player {player_name} in room {room_code}: {e}")
             raise HTTPException(status_code=500, detail=f'Failed to update wins for player {player_name}')
-    # Fetch the scores of all players in a specific room
-    print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
-    scores = get_player_scores(room_code)
-    print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
-    return jsonify({'room_code': room_code, 'scores': scores}), 200
+# Fetch the scores of all players in a specific room
+print(f"[DEBUG] [get_player_scores_route] Fetching player scores for room code: {room_code}")
+scores = get_player_scores(room_code)
+print(f"[DEBUG] [get_player_scores_route] Player scores fetched for room {room_code}: {scores}")
+return JSONResponse(content={'room_code': room_code, 'scores': scores})
 
 @app.get("/get_all_rooms")
 async def get_all_rooms_route():
